@@ -121,6 +121,8 @@ class ParchiCard extends StatelessWidget {
             opaque: false,
             barrierDismissible: true,
             barrierColor: Colors.black87, 
+            transitionDuration: const Duration(milliseconds: 600), // Smooth entry
+            reverseTransitionDuration: const Duration(milliseconds: 500), // Smooth exit
             pageBuilder: (context, animation, secondaryAnimation) {
               return FadeTransition(
                 opacity: animation,
@@ -161,7 +163,7 @@ class ParchiCard extends StatelessWidget {
 }
 
 // =========================================================
-// DETAILED POPUP VIEW (Flip + Hover)
+// DETAILED POPUP VIEW (Flip + Hover + Smart Close)
 // =========================================================
 
 class ParchiCardDetail extends StatefulWidget {
@@ -172,11 +174,9 @@ class ParchiCardDetail extends StatefulWidget {
 }
 
 class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProviderStateMixin {
-  // Controller for the FLIP
   late AnimationController _flipController;
   late Animation<double> _flipAnimation;
 
-  // Controller for the HOVER (Float)
   late AnimationController _hoverController;
   late Animation<double> _hoverAnimation;
 
@@ -186,7 +186,7 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
   void initState() {
     super.initState();
 
-    // 1. Setup FLIP Animation
+    // 1. FLIP Animation
     _flipController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -196,18 +196,19 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
       curve: Curves.easeInOutBack,
     ));
 
-    // 2. Setup HOVER Animation (Continuous Loop)
+    // 2. HOVER Animation
     _hoverController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2), // Slow, breathing movement
-    )..repeat(reverse: true); // Moves up, then reverses down
+      duration: const Duration(seconds: 2), 
+    )..repeat(reverse: true);
 
     _hoverAnimation = Tween<double>(begin: -10, end: 10).animate(CurvedAnimation(
       parent: _hoverController,
-      curve: Curves.easeInOutSine, // Smooth sine wave
+      curve: Curves.easeInOutSine, 
     ));
   }
 
+  // Logic to toggle flip state
   void _flipCard() {
     if (_isFront) {
       _flipController.forward();
@@ -215,6 +216,23 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
       _flipController.reverse();
     }
     _isFront = !_isFront;
+  }
+
+  // LOGIC TO HANDLE CLOSING (The Magic Step)
+  Future<void> _handleClose() async {
+    // If the card is currently showing the BACK
+    if (!_isFront) {
+      // 1. Trigger the flip back to FRONT
+      _flipCard();
+      
+      // 2. Wait for the flip animation to finish
+      await Future.delayed(const Duration(milliseconds: 600));
+    }
+
+    // 3. Now that we are on the Front side, perform the Hero Pop
+    if (mounted) {
+      Navigator.pop(context);
+    }
   }
 
   @override
@@ -226,32 +244,28 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
 
   @override
   Widget build(BuildContext context) {
+    // Detect tap on the BACKGROUND
     return GestureDetector(
-      onTap: () {
-        Navigator.pop(context);
-      },
+      onTap: _handleClose, // Use our smart close logic
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: Center(
           child: GestureDetector(
             onTap: () {
-              // Trigger Flip on Card Tap
+              // Tap on CARD triggers flip
               _flipCard(); 
             },
-            // merge: Listen to both Flip and Hover animations
             child: AnimatedBuilder(
               animation: Listenable.merge([_flipAnimation, _hoverAnimation]),
               builder: (context, child) {
                 
-                // 1. Calculate Flip Rotation
                 final angle = _flipAnimation.value * pi;
                 final flipTransform = Matrix4.identity()
-                  ..setEntry(3, 2, 0.001) // Perspective
+                  ..setEntry(3, 2, 0.001) 
                   ..rotateY(angle);
 
-                // 2. Wrap everything in a Translation for the Hover effect
                 return Transform.translate(
-                  offset: Offset(0, _hoverAnimation.value), // Move Up/Down
+                  offset: Offset(0, _hoverAnimation.value), 
                   child: Transform(
                     transform: flipTransform,
                     alignment: Alignment.center,
@@ -259,6 +273,7 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
                       tag: 'parchi-card-hero',
                       child: Material(
                         color: Colors.transparent,
+                        // If angle is less than 90 deg, show front. Otherwise show back.
                         child: angle < pi / 2
                             ? _buildFrontFace()
                             : Transform(
@@ -278,7 +293,6 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
     );
   }
 
-  // --- FRONT FACE ---
   Widget _buildFrontFace() {
     return Container(
       height: 220,
@@ -291,8 +305,6 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
         ),
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
-          // Dynamic Shadow that pulses with the hover could be added here, 
-          // but a static large glow works best for performance/visuals.
           BoxShadow(
             color: const Color(0xFFE91E63).withOpacity(0.6),
             blurRadius: 40,
@@ -305,7 +317,6 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
     );
   }
 
-  // --- BACK FACE ---
   Widget _buildBackFace() {
     return Container(
       height: 220,

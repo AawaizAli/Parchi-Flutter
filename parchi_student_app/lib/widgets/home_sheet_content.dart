@@ -6,7 +6,23 @@ import 'restaurant_big_card.dart';
 class HomeSheetContent extends StatelessWidget {
   final ScrollController scrollController;
 
-  const HomeSheetContent({
+  // Dummy Data for Brands (Simulating API Response)
+  final List<Map<String, String>> brands = List.generate(10, (index) => {
+    "name": "Brand ${index + 1}",
+    "time": "${15 + index}-25 min",
+    "image": "https://placehold.co/100x100/png?text=Logo${index+1}"
+  });
+
+  // Dummy Data for Restaurants (Simulating API Response)
+  final List<Map<String, String>> restaurants = List.generate(8, (index) => {
+    "name": "Restaurant ${index + 1}",
+    "image": "https://placehold.co/600x300/png?text=Food${index+1}",
+    "rating": "${4.0 + (index % 10) / 10}",
+    "meta": "${20 + index} min • \$\$ • Cuisine",
+    "discount": "${10 + (index * 5)}% OFF",
+  });
+
+  HomeSheetContent({
     super.key,
     required this.scrollController,
   });
@@ -30,10 +46,8 @@ class HomeSheetContent extends StatelessWidget {
         child: CustomScrollView(
           controller: scrollController,
           slivers: [
-            // Spacer inside the sheet
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-            // 1. Top Brands Title
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.0),
@@ -50,26 +64,26 @@ class HomeSheetContent extends StatelessWidget {
             
             const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-            // 2. Top Brands Carousel
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 160,
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   scrollDirection: Axis.horizontal,
-                  itemCount: 10,
+                  itemCount: brands.length,
                   itemBuilder: (context, index) {
+                    final brand = brands[index];
+                    // Ensure keys match the BrandCard constructor
                     return BrandCard(
-                      name: "Brand ${index + 1}",
-                      time: "15-25 min",
-                      image: "https://placehold.co/100x100/png?text=Brand",
+                      name: brand["name"]!,
+                      time: brand["time"]!,
+                      image: brand["image"]!,
                     );
                   },
                 ),
               ),
             ),
 
-            // 3. "Up to 30% off" Header
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
@@ -90,20 +104,25 @@ class HomeSheetContent extends StatelessWidget {
               ),
             ),
 
-            // 4. Vertical List of Big Cards
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
-                    return const RestaurantBigCard();
+                    final rest = restaurants[index];
+                    return RestaurantBigCard(
+                      name: rest["name"]!,
+                      image: rest["image"]!,
+                      rating: rest["rating"]!,
+                      meta: rest["meta"]!,
+                      discount: rest["discount"]!,
+                    );
                   },
-                  childCount: 8,
+                  childCount: restaurants.length,
                 ),
               ),
             ),
             
-            // Bottom Spacer
             const SliverToBoxAdapter(child: SizedBox(height: 20)),
           ],
         ),

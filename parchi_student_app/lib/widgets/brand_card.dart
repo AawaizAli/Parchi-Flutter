@@ -16,7 +16,7 @@ class BrandCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 100, // Fixed width for carousel items
+      width: 100, // Fixed width for consistent carousel items
       margin: const EdgeInsets.only(right: 12),
       child: Column(
         children: [
@@ -43,6 +43,8 @@ class BrandCard extends StatelessWidget {
                 child: Image.network(
                   image,
                   fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => 
+                    const Icon(Icons.restaurant, color: AppColors.textSecondary),
                 ),
               ),
             ),

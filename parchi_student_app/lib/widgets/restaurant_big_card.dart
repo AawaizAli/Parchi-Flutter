@@ -2,7 +2,25 @@ import 'package:flutter/material.dart';
 import '../utils/colours.dart';
 
 class RestaurantBigCard extends StatelessWidget {
-  const RestaurantBigCard({super.key});
+  final String name;
+  final String image;
+  final String rating;
+  final String reviewCount;
+  final String meta; // "20-35 min • $$ • Western"
+  final String deliveryFee;
+  final String discount; // "30% OFF"
+
+  // Default dummy values provided
+  const RestaurantBigCard({
+    super.key,
+    this.name = "Del Frio - Jauhar",
+    this.image = "https://placehold.co/600x300/png",
+    this.rating = "4.3",
+    this.reviewCount = "(5000+)",
+    this.meta = "20-35 min • \$\$ • Western",
+    this.deliveryFee = "Rs. 129",
+    this.discount = "30% OFF",
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -11,7 +29,6 @@ class RestaurantBigCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        // No shadow needed if background is light grey, but adding subtle one for pop
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -29,13 +46,17 @@ class RestaurantBigCard extends StatelessWidget {
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                 child: Image.network(
-                  "https://placehold.co/600x300/png", // Replace with actual food image
+                  image, 
                   height: 180,
                   width: double.infinity,
                   fit: BoxFit.cover,
+                  errorBuilder: (ctx, err, stack) => Container(
+                    height: 180, 
+                    color: Colors.grey[300],
+                    child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                  ),
                 ),
               ),
-              // Top Right Heart Icon
               Positioned(
                 top: 12,
                 right: 12,
@@ -48,7 +69,6 @@ class RestaurantBigCard extends StatelessWidget {
                   child: const Icon(Icons.favorite_border, size: 20, color: AppColors.textPrimary),
                 ),
               ),
-              // Bottom Left Promo Tag
               Positioned(
                 bottom: 12,
                 left: 12,
@@ -58,9 +78,9 @@ class RestaurantBigCard extends StatelessWidget {
                     color: AppColors.primary,
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: const Text(
-                    "30% OFF",
-                    style: TextStyle(
+                  child: Text(
+                    discount,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -77,13 +97,12 @@ class RestaurantBigCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Name and Rating Row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      "Del Frio - Jauhar",
-                      style: TextStyle(
+                    Text(
+                      name,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
@@ -91,42 +110,36 @@ class RestaurantBigCard extends StatelessWidget {
                     ),
                     Row(
                       children: [
-                        const Icon(Icons.star, size: 16, color: AppColors.secondary), // Orange Star
+                        const Icon(Icons.star, size: 16, color: AppColors.secondary),
                         const SizedBox(width: 4),
-                        const Text(
-                          "4.3",
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                        Text(
+                          rating,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                         ),
                         Text(
-                          " (5000+)",
-                          style: TextStyle(color: AppColors.textSecondary.withOpacity(0.7), fontSize: 12),
+                          " $reviewCount",
+                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
                         ),
                       ],
                     ),
                   ],
                 ),
-                
                 const SizedBox(height: 4),
-                
-                // Meta Data (Time • Price • Cuisine)
-                const Text(
-                  "20-35 min • \$\$ • Western",
-                  style: TextStyle(
+                Text(
+                  meta,
+                  style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 13,
                   ),
                 ),
-                
                 const SizedBox(height: 8),
-                
-                // Delivery Fee
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.delivery_dining, size: 16, color: AppColors.textSecondary),
-                    SizedBox(width: 4),
+                    const Icon(Icons.delivery_dining, size: 16, color: AppColors.textSecondary),
+                    const SizedBox(width: 4),
                     Text(
-                      "Rs. 129",
-                      style: TextStyle(
+                      deliveryFee,
+                      style: const TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

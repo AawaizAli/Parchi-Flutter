@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Required for Clipboard
+import 'package:flutter/services.dart';
 import 'dart:math';
 import '../utils/colours.dart';
 
@@ -7,7 +7,15 @@ import '../utils/colours.dart';
 // 1. ENTRY POINT
 // =========================================================
 class ParchiCard extends StatelessWidget {
-  const ParchiCard({super.key});
+  final String studentName;
+  final String studentId;
+  
+  // In a real app, you might pass a 'User' model here
+  const ParchiCard({
+    super.key,
+    this.studentName = "AAWAIZ ALI", // Default/Dummy
+    this.studentId = "PK-12345",     // Default/Dummy
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +32,10 @@ class ParchiCard extends StatelessWidget {
             pageBuilder: (context, animation, secondaryAnimation) {
               return FadeTransition(
                 opacity: animation,
-                child: const ParchiCardDetail(),
+                child: ParchiCardDetail(
+                  studentName: studentName,
+                  studentId: studentId,
+                ),
               );
             },
           ));
@@ -51,7 +62,10 @@ class ParchiCard extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const CardFrontContent(), 
+              child: CardFrontContent(
+                studentName: studentName,
+                studentId: studentId,
+              ), 
             ),
           ),
         ),
@@ -64,13 +78,19 @@ class ParchiCard extends StatelessWidget {
 // 2. DETAIL VIEW
 // =========================================================
 class ParchiCardDetail extends StatefulWidget {
-  const ParchiCardDetail({super.key});
+  final String studentName;
+  final String studentId;
+
+  const ParchiCardDetail({
+    super.key,
+    required this.studentName,
+    required this.studentId,
+  });
 
   @override
   State<ParchiCardDetail> createState() => _ParchiCardDetailState();
 }
 
-// Enum to track the state of the back of the card
 enum BackFaceView { currentMonth, yearlyStats, monthDetail }
 
 class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProviderStateMixin {
@@ -81,8 +101,6 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
   late Animation<double> _hoverAnimation;
 
   bool _isFront = true;
-  
-  // State for the Back Face
   BackFaceView _backView = BackFaceView.currentMonth;
   String _selectedMonth = "";
 
@@ -110,44 +128,35 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
     ));
   }
 
-  // Logic to toggle flip state (Front <-> Back)
   void _flipCard() {
     if (_isFront) {
-      // Flipping to BACK
       _flipController.forward();
-      // Reset back view to default when opening
       setState(() {
         _backView = BackFaceView.currentMonth;
       });
     } else {
-      // Flipping to FRONT
       _flipController.reverse();
     }
     _isFront = !_isFront;
   }
 
-  // Logic for SWIPING inside the Back Face
   void _handleBackFaceSwipe(DragEndDetails details) {
-    if (_isFront) return; // Swipes only work on the back face
+    if (_isFront) return;
 
     double velocity = details.primaryVelocity ?? 0;
 
-    // Swipe Left (< 0): Go to NEXT view (Yearly Stats)
     if (velocity < 0) {
       if (_backView == BackFaceView.currentMonth) {
         setState(() {
           _backView = BackFaceView.yearlyStats;
         });
       }
-    } 
-    // Swipe Right (> 0): Go to PREVIOUS view (Current Month)
-    else if (velocity > 0) {
+    } else if (velocity > 0) {
       if (_backView == BackFaceView.yearlyStats) {
         setState(() {
           _backView = BackFaceView.currentMonth;
         });
       } else if (_backView == BackFaceView.monthDetail) {
-        // If in detail view, swipe right goes back to list
         setState(() {
           _backView = BackFaceView.yearlyStats;
         });
@@ -175,14 +184,12 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: _handleClose, // Tapping outside closes modal
+      onTap: _handleClose,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: Center(
           child: GestureDetector(
-            // Tapping the card flips it (Front <-> Back)
             onTap: _flipCard,
-            // Horizontal Drag handles the internal state changes of the Back Face
             onHorizontalDragEnd: _handleBackFaceSwipe,
             child: AnimatedBuilder(
               animation: Listenable.merge([_flipAnimation, _hoverAnimation]),
@@ -201,7 +208,6 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
                       tag: 'parchi-card-hero',
                       child: Material(
                         color: Colors.transparent,
-                        // If angle < 90deg (pi/2), show Front. Otherwise show Back.
                         child: angle < pi / 2
                             ? _buildFrontFace()
                             : Transform(
@@ -241,7 +247,10 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
           ),
         ],
       ),
-      child: const CardFrontContent(),
+      child: CardFrontContent(
+        studentName: widget.studentName,
+        studentId: widget.studentId,
+      ),
     );
   }
 
@@ -267,7 +276,6 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
       ),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
-        // Animated Switcher handles the fade between Month Stats & Yearly Graph
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 400),
           transitionBuilder: (Widget child, Animation<double> animation) {
@@ -290,8 +298,15 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
     }
   }
 
-  // --- VIEW 1: CURRENT MONTH (Initial Back View) ---
+  // --- DYNAMIC DATA PLACEHOLDERS ---
+  // Ideally, these would come from a model passed to this widget
+  
   Widget _buildCurrentMonthStats() {
+    // Dummy Data
+    const int usedCount = 15;
+    const int totalCount = 20;
+    const String totalSaved = "PKR 4,500";
+
     return Column(
       key: const ValueKey("CurrentMonth"),
       mainAxisAlignment: MainAxisAlignment.center,
@@ -316,17 +331,17 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
                     height: 100,
                     width: 100,
                     child: CircularProgressIndicator(
-                      value: 0.75,
+                      value: usedCount / totalCount,
                       color: AppColors.secondary,
                       strokeCap: StrokeCap.round,
                       strokeWidth: 8,
                     ),
                   ),
-                   const Column(
+                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text("15", style: TextStyle(color: AppColors.surface, fontSize: 24, fontWeight: FontWeight.bold)),
-                      Text("Used", style: TextStyle(color: AppColors.textSecondary, fontSize: 10)),
+                      Text("$usedCount", style: const TextStyle(color: AppColors.surface, fontSize: 24, fontWeight: FontWeight.bold)),
+                      const Text("Used", style: TextStyle(color: AppColors.textSecondary, fontSize: 10)),
                     ],
                   ),
                 ],
@@ -342,17 +357,16 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
                   Text("THIS MONTH", style: TextStyle(color: AppColors.textSecondary, fontSize: 10, letterSpacing: 1)),
                   Divider(color: Colors.white24),
                   SizedBox(height: 5),
-                  Text("Discounts: 15/20", style: TextStyle(color: AppColors.surface, fontSize: 16)),
+                  Text("Discounts: $usedCount/$totalCount", style: TextStyle(color: AppColors.surface, fontSize: 16)),
                   SizedBox(height: 5),
                   Text("Total Saved:", style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                  Text("PKR 4,500", style: TextStyle(color: AppColors.success, fontSize: 20, fontWeight: FontWeight.bold)),
+                  Text(totalSaved, style: TextStyle(color: AppColors.success, fontSize: 20, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
           ],
         ),
         const Spacer(),
-        // Helper Text at Bottom
         const Text(
           "Swipe left for yearly stats →",
           style: TextStyle(color: Colors.white30, fontSize: 10, fontStyle: FontStyle.italic),
@@ -361,8 +375,8 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
     );
   }
 
-  // --- VIEW 2: YEARLY STATS (Bar Chart) ---
   Widget _buildYearlyStats() {
+    // Dummy Data
     final months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
     final values = [0.3, 0.5, 0.8, 0.4, 0.9, 0.6]; 
 
@@ -381,7 +395,6 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
             crossAxisAlignment: CrossAxisAlignment.end,
             children: List.generate(months.length, (index) {
               return GestureDetector(
-                // Tapping bar goes to detail
                 onTap: () {
                   setState(() {
                     _selectedMonth = months[index];
@@ -421,8 +434,9 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
     );
   }
 
-  // --- VIEW 3: MONTH DETAIL (List) ---
   Widget _buildMonthDetail() {
+    // Dummy Data for List
+    // In real app, fetch history based on _selectedMonth
     return Column(
       key: const ValueKey("MonthDetail"),
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -483,7 +497,14 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
 // 3. UI HELPER (Front Face Content)
 // =========================================================
 class CardFrontContent extends StatelessWidget {
-  const CardFrontContent({super.key});
+  final String studentName;
+  final String studentId;
+
+  const CardFrontContent({
+    super.key,
+    required this.studentName,
+    required this.studentId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -513,14 +534,14 @@ class CardFrontContent extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "AAWAIZ ALI",
-                    style: TextStyle(color: AppColors.textOnPrimary, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+                  Text(
+                    studentName,
+                    style: const TextStyle(color: AppColors.textOnPrimary, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.5),
                   ),
                   const SizedBox(height: 4),
                   GestureDetector(
                     onTap: () {
-                      Clipboard.setData(const ClipboardData(text: "PK-12345"));
+                      Clipboard.setData(ClipboardData(text: studentId));
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text("ID copied to clipboard!"),
@@ -539,9 +560,9 @@ class CardFrontContent extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text(
-                            "ID: PK-12345",
-                            style: TextStyle(color: AppColors.textOnPrimary, fontSize: 12, fontFamily: 'Courier', fontWeight: FontWeight.bold),
+                          Text(
+                            "ID: $studentId",
+                            style: const TextStyle(color: AppColors.textOnPrimary, fontSize: 12, fontFamily: 'Courier', fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(width: 6),
                           Icon(Icons.copy, size: 12, color: AppColors.textOnPrimary.withOpacity(0.8)),

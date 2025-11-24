@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math'; // Required for the Flip Math (pi)
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -8,7 +9,7 @@ class HomeScreen extends StatelessWidget {
     return SafeArea(
       child: CustomScrollView(
         slivers: [
-          // Section 1: Header (Search + Notification)
+          // Section 1: Header
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -61,7 +62,7 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
 
-          // Section 2: Parchi ID Card (Now Clickable with Animation)
+          // Section 2: Parchi ID Card (Clickable)
           const SliverToBoxAdapter(
             child: ParchiCard(),
           ),
@@ -104,7 +105,7 @@ class HomeScreen extends StatelessWidget {
 }
 
 // =========================================================
-// PARCHI CARD WIDGET (With Hero Animation & Glow Effect)
+// PARCHI CARD WIDGET (Entry Point)
 // =========================================================
 
 class ParchiCard extends StatelessWidget {
@@ -116,11 +117,10 @@ class ParchiCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: GestureDetector(
         onTap: () {
-          // Trigger the 'Lift and Zoom' animation
           Navigator.of(context).push(PageRouteBuilder(
-            opaque: false, // Allows transparency so we see the home screen behind
+            opaque: false,
             barrierDismissible: true,
-            barrierColor: Colors.black54, // Dim the background
+            barrierColor: Colors.black87, // Darker background for focus
             pageBuilder: (context, animation, secondaryAnimation) {
               return FadeTransition(
                 opacity: animation,
@@ -129,7 +129,6 @@ class ParchiCard extends StatelessWidget {
             },
           ));
         },
-        // Wrap with Hero for the flight animation
         child: Hero(
           tag: 'parchi-card-hero',
           child: Material(
@@ -145,7 +144,6 @@ class ParchiCard extends StatelessWidget {
                 ),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
-                  // INITIAL SHADOW (Subtle)
                   BoxShadow(
                     color: Colors.purple.withOpacity(0.3),
                     blurRadius: 10,
@@ -153,7 +151,107 @@ class ParchiCard extends StatelessWidget {
                   ),
                 ],
               ),
-              child: _buildCardContent(),
+              child: const CardFrontContent(), // Extracted widget
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// =========================================================
+// DETAILED POPUP VIEW (Handles the Flip)
+// =========================================================
+
+class ParchiCardDetail extends StatefulWidget {
+  const ParchiCardDetail({super.key});
+
+  @override
+  State<ParchiCardDetail> createState() => _ParchiCardDetailState();
+}
+
+class _ParchiCardDetailState extends State<ParchiCardDetail> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  bool _isFront = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _animation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOutBack, // Bouncy flip effect
+    ));
+  }
+
+  void _flipCard() {
+    if (_isFront) {
+      _controller.forward();
+    } else {
+      _controller.reverse();
+    }
+    _isFront = !_isFront;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        // Tap outside to close (if needed), but we want to tap card to flip.
+        // We handle card tap below, so this detects background taps.
+        Navigator.pop(context);
+      },
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: GestureDetector(
+            onTap: () {
+              // Stop the tap from propagating to the background (which closes modal)
+              // Instead, trigger flip.
+              _flipCard(); 
+            },
+            // We use AnimatedBuilder to redraw the transform frame by frame
+            child: AnimatedBuilder(
+              animation: _animation,
+              builder: (context, child) {
+                // Calculate rotation angle (0 to pi)
+                final angle = _animation.value * pi;
+                
+                // Matrix logic for 3D flip
+                final transform = Matrix4.identity()
+                  ..setEntry(3, 2, 0.001) // Perspective
+                  ..rotateY(angle);
+
+                return Transform(
+                  transform: transform,
+                  alignment: Alignment.center,
+                  child: Hero(
+                    tag: 'parchi-card-hero',
+                    child: Material(
+                      color: Colors.transparent,
+                      // Decide whether to show front or back based on angle
+                      child: angle < pi / 2
+                          ? _buildFrontFace()
+                          : Transform(
+                              alignment: Alignment.center,
+                              transform: Matrix4.identity()..rotateY(pi), // Mirror back
+                              child: _buildBackFace(),
+                            ),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ),
@@ -161,8 +259,144 @@ class ParchiCard extends StatelessWidget {
     );
   }
 
-  // Extracted content to reuse in both Small and Big cards
-  Widget _buildCardContent() {
+  // --- FRONT FACE (Same as Home) ---
+  Widget _buildFrontFace() {
+    return Container(
+      height: 220,
+      width: MediaQuery.of(context).size.width * 0.9,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0D1B59), Color(0xFFE91E63)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFE91E63).withOpacity(0.6),
+            blurRadius: 40,
+            spreadRadius: 10,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: const CardFrontContent(),
+    );
+  }
+
+  // --- BACK FACE (New Stats View) ---
+  Widget _buildBackFace() {
+    return Container(
+      height: 220,
+      width: MediaQuery.of(context).size.width * 0.9,
+      decoration: BoxDecoration(
+        // Darker, sleeker gradient for the back
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1A1A2E), Color(0xFF16213E)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(25),
+        border: Border.all(color: const Color(0xFFE91E63).withOpacity(0.5), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFE91E63).withOpacity(0.3),
+            blurRadius: 40,
+            spreadRadius: 5,
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Row(
+          children: [
+            // Left Side: The "Circular Thingy" (Stats)
+            Expanded(
+              flex: 4,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Background Circle
+                  SizedBox(
+                    height: 100,
+                    width: 100,
+                    child: CircularProgressIndicator(
+                      value: 1.0,
+                      color: Colors.white.withOpacity(0.1),
+                      strokeWidth: 8,
+                    ),
+                  ),
+                  // Progress Circle
+                  const SizedBox(
+                    height: 100,
+                    width: 100,
+                    child: CircularProgressIndicator(
+                      value: 0.75, // 75% utilized
+                      color: Color(0xFFE91E63),
+                      strokeCap: StrokeCap.round,
+                      strokeWidth: 8,
+                    ),
+                  ),
+                  // Text in Middle
+                   const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "15",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        "Used",
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            
+            const SizedBox(width: 15),
+
+            // Right Side: Text Stats
+            const Expanded(
+              flex: 6,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text("MONTHLY STATS", style: TextStyle(color: Colors.grey, fontSize: 10, letterSpacing: 1)),
+                  Divider(color: Colors.white24),
+                  SizedBox(height: 5),
+                  Text("Discounts: 15/20", style: TextStyle(color: Colors.white, fontSize: 16)),
+                  SizedBox(height: 5),
+                  Text("Total Saved:", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  Text("PKR 4,500", style: TextStyle(color: Color(0xFF00E676), fontSize: 20, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// =========================================================
+// REUSABLE CARD CONTENT (FRONT)
+// =========================================================
+
+class CardFrontContent extends StatelessWidget {
+  const CardFrontContent({super.key});
+
+  @override
+  Widget build(BuildContext context) {
     return Stack(
       children: [
         Positioned(
@@ -224,58 +458,6 @@ class ParchiCard extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-// =========================================================
-// DETAILED POPUP VIEW (The destination of the animation)
-// =========================================================
-
-class ParchiCardDetail extends StatelessWidget {
-  const ParchiCardDetail({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.pop(context); // Close on tap
-      },
-      child: Scaffold(
-        backgroundColor: Colors.transparent, // Transparent to show dim background
-        body: Center(
-          child: Hero(
-            tag: 'parchi-card-hero', // Must match the tag above
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                // Make the card slightly larger in the detailed view
-                height: 220, 
-                width: MediaQuery.of(context).size.width * 0.9,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF0D1B59), Color(0xFFE91E63)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(25),
-                  boxShadow: [
-                    // ANIMATED STATE SHADOW (Huge & Glowing)
-                    BoxShadow(
-                      color: const Color(0xFFE91E63).withOpacity(0.6),
-                      blurRadius: 40,  // Massive blur for glow
-                      spreadRadius: 10, // Spreads outward
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                // Reuse the exact same content code
-                child: const ParchiCard()._buildCardContent(),
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

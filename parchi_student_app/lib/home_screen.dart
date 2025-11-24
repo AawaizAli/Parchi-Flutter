@@ -61,7 +61,7 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
 
-          // Section 2: Parchi ID Card (NayaPay Style - Horizontal)
+          // Section 2: Parchi ID Card (Now Clickable with Animation)
           const SliverToBoxAdapter(
             child: ParchiCard(),
           ),
@@ -77,13 +77,13 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
 
-          // Section 3: Restaurants Grid (4 per row)
+          // Section 4: Restaurants Grid
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             sliver: SliverGrid(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4, // 4 restaurants per row
-                childAspectRatio: 0.7, // Taller to fit image + text
+                crossAxisCount: 4,
+                childAspectRatio: 0.7,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
               ),
@@ -91,12 +91,11 @@ class HomeScreen extends StatelessWidget {
                 (context, index) {
                   return const RestaurantMiniCard();
                 },
-                childCount: 12, // Dummy count
+                childCount: 12,
               ),
             ),
           ),
           
-          // Bottom spacer
           const SliverToBoxAdapter(child: SizedBox(height: 20)),
         ],
       ),
@@ -104,7 +103,10 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-// Widget for the NayaPay-style horizontal card
+// =========================================================
+// PARCHI CARD WIDGET (With Hero Animation & Glow Effect)
+// =========================================================
+
 class ParchiCard extends StatelessWidget {
   const ParchiCard({super.key});
 
@@ -112,96 +114,173 @@ class ParchiCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Container(
-        height: 180, // Horizontal aspect ratio
-        width: double.infinity,
-        decoration: BoxDecoration(
-          // Gradient similar to the NayaPay image uploaded
-          gradient: const LinearGradient(
-            colors: [Color(0xFF0D1B59), Color(0xFFE91E63)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.purple.withOpacity(0.3),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            // Background Decorative Element
-            Positioned(
-              right: -20,
-              top: -20,
-              child: Icon(Icons.school, size: 150, color: Colors.white.withOpacity(0.1)),
-            ),
-            
-            // Card Content
-            Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Icon(Icons.nfc, color: Colors.white, size: 30),
-                      Text(
-                        "PARCHI STUDENT",
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "AAWAIZ ALI", // Placeholder Name
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          "ID: PK-12345", // The requested User ID
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontFamily: 'Courier', 
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
+      child: GestureDetector(
+        onTap: () {
+          // Trigger the 'Lift and Zoom' animation
+          Navigator.of(context).push(PageRouteBuilder(
+            opaque: false, // Allows transparency so we see the home screen behind
+            barrierDismissible: true,
+            barrierColor: Colors.black54, // Dim the background
+            pageBuilder: (context, animation, secondaryAnimation) {
+              return FadeTransition(
+                opacity: animation,
+                child: const ParchiCardDetail(),
+              );
+            },
+          ));
+        },
+        // Wrap with Hero for the flight animation
+        child: Hero(
+          tag: 'parchi-card-hero',
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              height: 180,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF0D1B59), Color(0xFFE91E63)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  // INITIAL SHADOW (Subtle)
+                  BoxShadow(
+                    color: Colors.purple.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
                   ),
                 ],
               ),
+              child: _buildCardContent(),
             ),
-          ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Extracted content to reuse in both Small and Big cards
+  Widget _buildCardContent() {
+    return Stack(
+      children: [
+        Positioned(
+          right: -20,
+          top: -20,
+          child: Icon(Icons.school, size: 150, color: Colors.white.withOpacity(0.1)),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Icon(Icons.nfc, color: Colors.white, size: 30),
+                  Text(
+                    "PARCHI STUDENT",
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "AAWAIZ ALI",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      "ID: PK-12345",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontFamily: 'Courier',
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// =========================================================
+// DETAILED POPUP VIEW (The destination of the animation)
+// =========================================================
+
+class ParchiCardDetail extends StatelessWidget {
+  const ParchiCardDetail({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.pop(context); // Close on tap
+      },
+      child: Scaffold(
+        backgroundColor: Colors.transparent, // Transparent to show dim background
+        body: Center(
+          child: Hero(
+            tag: 'parchi-card-hero', // Must match the tag above
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                // Make the card slightly larger in the detailed view
+                height: 220, 
+                width: MediaQuery.of(context).size.width * 0.9,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0D1B59), Color(0xFFE91E63)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(25),
+                  boxShadow: [
+                    // ANIMATED STATE SHADOW (Huge & Glowing)
+                    BoxShadow(
+                      color: const Color(0xFFE91E63).withOpacity(0.6),
+                      blurRadius: 40,  // Massive blur for glow
+                      spreadRadius: 10, // Spreads outward
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                // Reuse the exact same content code
+                child: const ParchiCard()._buildCardContent(),
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-// Widget for the Grid items (Foodpanda Style)
+// Helper Widget for Restaurants
 class RestaurantMiniCard extends StatelessWidget {
   const RestaurantMiniCard({super.key});
 
@@ -215,7 +294,7 @@ class RestaurantMiniCard extends StatelessWidget {
               color: Colors.grey[300],
               borderRadius: BorderRadius.circular(12),
               image: const DecorationImage(
-                image: NetworkImage("https://placehold.co/100x100/png"), // Placeholder
+                image: NetworkImage("https://placehold.co/100x100/png"),
                 fit: BoxFit.cover,
               ),
             ),

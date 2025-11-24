@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/colours.dart';
 import '../widgets/parchi_card.dart';
-import '../widgets/brand_card.dart';
-import '../widgets/restaurant_big_card.dart';
+import '../widgets/home_sheet_content.dart'; // Import the new separated widget
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -54,16 +53,19 @@ class _HomeScreenState extends State<HomeScreen> {
     // Card Height (Approx height of ParchiCard widget)
     final double cardHeight = 180.0;
     
-    // THE GAP: Space between Card and White Sheet
-    // Increased to 50.0 to ensure a visible gap
-    const double gap = 50.0;
+    // GAP 1: Space between Card and Sheet (Initial State)
+    const double initialGap = 50.0;
+    
+    // GAP 2: Space between Search Bar and Sheet (Expanded State)
+    const double expandedGap = 20.0;
 
     // 2. CALCULATE SHEET LIMITS
-    // Max Size: Stops exactly at the bottom of the Header
-    _maxSheetSize = (screenHeight - headerHeight) / screenHeight;
+    
+    // Max Size: Stops below the Header + Expanded Gap
+    _maxSheetSize = (screenHeight - (headerHeight + expandedGap)) / screenHeight;
 
-    // Min Size: Stops after Header + Card + Gap
-    _minSheetSize = (screenHeight - (headerHeight + cardHeight + gap)) / screenHeight;
+    // Min Size: Stops after Header + Card + Initial Gap
+    _minSheetSize = (screenHeight - (headerHeight + cardHeight + initialGap)) / screenHeight;
 
     // Safety Clamps (Prevent crash on very small screens)
     if (_minSheetSize < 0.2) _minSheetSize = 0.2;
@@ -101,102 +103,10 @@ class _HomeScreenState extends State<HomeScreen> {
             initialChildSize: _minSheetSize,
             minChildSize: _minSheetSize,
             maxChildSize: _maxSheetSize,
-            snap: true, // Snap to Start or End (no floating in middle)
+            snap: true, // Snap to Start or End
             builder: (BuildContext context, ScrollController scrollController) {
-              return Container(
-                decoration: const BoxDecoration(
-                  color: AppColors.backgroundLight,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 10,
-                      offset: Offset(0, -5),
-                    )
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-                  child: CustomScrollView(
-                    controller: scrollController,
-                    slivers: [
-                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-                      // 1. Top Brands
-                      const SliverToBoxAdapter(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Text(
-                            "Top Brands",
-                            style: TextStyle(
-                              fontSize: 18, 
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary
-                            ),
-                          ),
-                        ),
-                      ),
-                      
-                      const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-                      // Carousel
-                      SliverToBoxAdapter(
-                        child: SizedBox(
-                          height: 160,
-                          child: ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            scrollDirection: Axis.horizontal,
-                            itemCount: 10,
-                            itemBuilder: (context, index) {
-                              return BrandCard(
-                                name: "Brand ${index + 1}",
-                                time: "15-25 min",
-                                image: "https://placehold.co/100x100/png?text=Brand",
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-
-                      // 2. Up to 30% off
-                      const SliverToBoxAdapter(
-                        child: Padding(
-                          padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                "Up to 30% off!",
-                                style: TextStyle(
-                                  fontSize: 18, 
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary
-                                ),
-                              ),
-                              Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.primary)
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      // List of Restaurants
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              return const RestaurantBigCard();
-                            },
-                            childCount: 8,
-                          ),
-                        ),
-                      ),
-                      
-                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                    ],
-                  ),
-                ),
-              );
+              // Using the extracted widget here for cleaner code
+              return HomeSheetContent(scrollController: scrollController);
             },
           ),
 
@@ -236,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         
-                        // Notification Icon (Shrinks)
+                        // Notification Icon (Shrinks & Fades)
                         SizeTransition(
                           sizeFactor: AlwaysStoppedAnimation(1.0 - progress),
                           axis: Axis.horizontal,

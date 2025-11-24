@@ -1,242 +1,238 @@
-// home_screen.dart
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
+    return SafeArea(
+      child: CustomScrollView(
+        slivers: [
+          // Section 1: Header (Search + Notification)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 45,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(25),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.2),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const TextField(
+                        decoration: InputDecoration(
+                          hintText: "Search restaurants...",
+                          prefixIcon: Icon(Icons.search, color: Colors.grey),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(vertical: 10),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.notifications_none, color: Colors.black),
+                      onPressed: () {},
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Section 2: Parchi ID Card (NayaPay Style - Horizontal)
+          const SliverToBoxAdapter(
+            child: ParchiCard(),
+          ),
+
+          // Section 3: Restaurants Header
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
+              child: Text(
+                "All Restaurants",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+
+          // Section 3: Restaurants Grid (4 per row)
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverGrid(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4, // 4 restaurants per row
+                childAspectRatio: 0.7, // Taller to fit image + text
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+              ),
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  return const RestaurantMiniCard();
+                },
+                childCount: 12, // Dummy count
+              ),
+            ),
+          ),
+          
+          // Bottom spacer
+          const SliverToBoxAdapter(child: SizedBox(height: 20)),
+        ],
+      ),
+    );
+  }
+}
+
+// Widget for the NayaPay-style horizontal card
+class ParchiCard extends StatelessWidget {
+  const ParchiCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Container(
+        height: 180, // Horizontal aspect ratio
+        width: double.infinity,
+        decoration: BoxDecoration(
+          // Gradient similar to the NayaPay image uploaded
+          gradient: const LinearGradient(
+            colors: [Color(0xFF0D1B59), Color(0xFFE91E63)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.purple.withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Stack(
           children: [
-            // Section 1: Header with notification and search
-            _buildHeaderSection(),
+            // Background Decorative Element
+            Positioned(
+              right: -20,
+              top: -20,
+              child: Icon(Icons.school, size: 150, color: Colors.white.withOpacity(0.1)),
+            ),
             
-            // Section 2: User Card (like Nayapay)
-            _buildUserCardSection(),
-            
-            // Section 3: Restaurants Grid (like Foodpanda)
-            _buildRestaurantsSection(),
+            // Card Content
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Icon(Icons.nfc, color: Colors.white, size: 30),
+                      Text(
+                        "PARCHI STUDENT",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "AAWAIZ ALI", // Placeholder Name
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          "ID: PK-12345", // The requested User ID
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontFamily: 'Courier', 
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildHeaderSection() {
-    return Container(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search for restaurants and groceries',
-                      prefixIcon: Icon(Icons.search),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16),
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(width: 16),
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.grey[200],
-                ),
-                child: IconButton(
-                  icon: Icon(Icons.notifications),
-                  onPressed: () {},
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+// Widget for the Grid items (Foodpanda Style)
+class RestaurantMiniCard extends StatelessWidget {
+  const RestaurantMiniCard({super.key});
 
-  Widget _buildUserCardSection() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16),
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [Colors.blue, Colors.purple],
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'John Doe',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'PK-12345',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Student ID',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            width: 60,
-            height: 60,
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(
+          child: Container(
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.2),
-            ),
-            child: Icon(
-              Icons.qr_code,
-              color: Colors.white,
-              size: 30,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRestaurantsSection() {
-    // Sample restaurant data
-    final List<Map<String, dynamic>> restaurants = [
-      {'name': 'Burger King', 'rating': '4.3', 'deliveryTime': '20-30 min'},
-      {'name': 'Pizza Hut', 'rating': '4.1', 'deliveryTime': '25-35 min'},
-      {'name': 'KFC', 'rating': '4.0', 'deliveryTime': '15-25 min'},
-      {'name': 'McDonald\'s', 'rating': '4.2', 'deliveryTime': '20-30 min'},
-      {'name': 'Subway', 'rating': '4.4', 'deliveryTime': '15-25 min'},
-      {'name': 'Domino\'s', 'rating': '4.3', 'deliveryTime': '30-40 min'},
-      {'name': 'Hardee\'s', 'rating': '4.1', 'deliveryTime': '25-35 min'},
-      {'name': 'OPTP', 'rating': '4.5', 'deliveryTime': '20-30 min'},
-    ];
-
-    return Container(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Restaurants',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(12),
+              image: const DecorationImage(
+                image: NetworkImage("https://placehold.co/100x100/png"), // Placeholder
+                fit: BoxFit.cover,
+              ),
             ),
           ),
-          SizedBox(height: 16),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 0.8,
-            ),
-            itemCount: restaurants.length,
-            itemBuilder: (context, index) {
-              return Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.2),
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      height: 120,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(12),
-                        ),
-                        color: Colors.grey[300],
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.restaurant,
-                          size: 40,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.all(8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            restaurants[index]['name'],
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Icon(Icons.star, color: Colors.amber, size: 16),
-                              SizedBox(width: 4),
-                              Text(restaurants[index]['rating']),
-                            ],
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            restaurants[index]['deliveryTime'],
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          "KFC",
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+        ),
+        const Text(
+          "20% OFF",
+          style: TextStyle(fontSize: 10, color: Color(0xFFE91E63), fontWeight: FontWeight.w700),
+        ),
+      ],
     );
   }
 }

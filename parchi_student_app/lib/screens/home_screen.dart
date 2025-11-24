@@ -18,14 +18,9 @@ class _HomeScreenState extends State<HomeScreen> {
   // Animation values
   final ValueNotifier<double> _expandProgress = ValueNotifier(0.0);
 
-  // Layout Constants
-  final double _headerHeight = 80.0; // Approx height of Top Section
-  final double _cardHeight = 200.0;  // Height of ParchiCard + Padding
-  
-  // Sheet Extents (0.0 to 1.0 of screen height)
-  // We'll calculate these dynamically in the build method based on screen size
-  double _minSheetSize = 0.55; 
-  final double _maxSheetSize = 0.92; // Stops just below the top header
+  // We will calculate these in build() based on screen size
+  double _minSheetSize = 0.5; 
+  double _maxSheetSize = 0.9;
 
   @override
   void initState() {
@@ -34,15 +29,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onSheetChanged() {
-    // Calculate progress from 0.0 (Collapsed) to 1.0 (Expanded)
-    // We normalize the size between min and max
     double currentSize = _sheetController.size;
+    // Normalize progress (0.0 = collapsed, 1.0 = fully expanded)
     double progress = (currentSize - _minSheetSize) / (_maxSheetSize - _minSheetSize);
-    
-    // Clamp between 0 and 1
-    progress = progress.clamp(0.0, 1.0);
-    
-    _expandProgress.value = progress;
+    _expandProgress.value = progress.clamp(0.0, 1.0);
   }
 
   @override
@@ -54,19 +44,31 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Dynamic calculation for initial sheet position
-    final screenHeight = MediaQuery.of(context).size.height;
-    final topPadding = MediaQuery.of(context).padding.top;
+    // 1. MEASUREMENTS
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final double topPadding = MediaQuery.of(context).padding.top;
     
-    // Calculate how much space the Header + Card takes
-    // The sheet should start right after them.
-    // 1.0 is full screen. We subtract the pixels taken by top elements.
-    double contentTopPixels = _headerHeight + _cardHeight + topPadding;
-    _minSheetSize = 1.0 - (contentTopPixels / screenHeight);
+    // Header Height = Top Safe Area + Vertical Padding (16*2) + Search Bar Height (45)
+    final double headerHeight = topPadding + 32.0 + 45.0; 
+    
+    // Card Height (Approx height of ParchiCard widget)
+    final double cardHeight = 180.0;
+    
+    // THE GAP: Space between Card and White Sheet
+    // Increased to 50.0 to ensure a visible gap
+    const double gap = 50.0;
 
-    // Safety clamp to prevent errors on very small screens
+    // 2. CALCULATE SHEET LIMITS
+    // Max Size: Stops exactly at the bottom of the Header
+    _maxSheetSize = (screenHeight - headerHeight) / screenHeight;
+
+    // Min Size: Stops after Header + Card + Gap
+    _minSheetSize = (screenHeight - (headerHeight + cardHeight + gap)) / screenHeight;
+
+    // Safety Clamps (Prevent crash on very small screens)
     if (_minSheetSize < 0.2) _minSheetSize = 0.2;
-    if (_minSheetSize > _maxSheetSize) _minSheetSize = _maxSheetSize - 0.1;
+    if (_maxSheetSize > 0.95) _maxSheetSize = 0.95;
+    if (_minSheetSize > _maxSheetSize) _minSheetSize = _maxSheetSize - 0.05;
 
     return Scaffold(
       backgroundColor: AppColors.secondary, // Orange Background
@@ -76,15 +78,15 @@ class _HomeScreenState extends State<HomeScreen> {
           // LAYER 1: Parchi Card (Behind the sheet)
           // ==========================================
           Positioned(
-            top: topPadding + _headerHeight - 10, // Position right below header
+            top: headerHeight, // Starts exactly where header ends
             left: 0,
             right: 0,
             child: ValueListenableBuilder<double>(
               valueListenable: _expandProgress,
               builder: (context, progress, child) {
-                // Fade out card as sheet goes up (Opacity 1.0 -> 0.0)
+                // Fade out card as sheet goes up
                 return Opacity(
-                  opacity: (1.0 - (progress * 2)).clamp(0.0, 1.0), // Fades out twice as fast
+                  opacity: (1.0 - (progress * 3)).clamp(0.0, 1.0), 
                   child: const ParchiCard(),
                 );
               },
@@ -99,7 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
             initialChildSize: _minSheetSize,
             minChildSize: _minSheetSize,
             maxChildSize: _maxSheetSize,
-            snap: true, // Snap to min or max, don't float in middle
+            snap: true, // Snap to Start or End (no floating in middle)
             builder: (BuildContext context, ScrollController scrollController) {
               return Container(
                 decoration: const BoxDecoration(
@@ -118,10 +120,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: CustomScrollView(
                     controller: scrollController,
                     slivers: [
-                      // Spacer inside the sheet
                       const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-                      // 1. Top Brands Title
+                      // 1. Top Brands
                       const SliverToBoxAdapter(
                         child: Padding(
                           padding: EdgeInsets.symmetric(horizontal: 16.0),
@@ -138,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       
                       const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-                      // 2. Top Brands Carousel
+                      // Carousel
                       SliverToBoxAdapter(
                         child: SizedBox(
                           height: 160,
@@ -157,7 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
 
-                      // 3. "Up to 30% off" Header
+                      // 2. Up to 30% off
                       const SliverToBoxAdapter(
                         child: Padding(
                           padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
@@ -178,7 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
 
-                      // 4. Vertical List of Big Cards
+                      // List of Restaurants
                       SliverPadding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         sliver: SliverList(
@@ -191,7 +192,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       
-                      // Bottom Spacer
                       const SliverToBoxAdapter(child: SizedBox(height: 20)),
                     ],
                   ),
@@ -201,7 +201,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
 
           // ==========================================
-          // LAYER 3: Fixed Header (Search & Notif)
+          // LAYER 3: Fixed Header (Stays on Top)
           // ==========================================
           Positioned(
             top: 0,
@@ -210,13 +210,13 @@ class _HomeScreenState extends State<HomeScreen> {
             child: SafeArea(
               bottom: false,
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
                 child: ValueListenableBuilder<double>(
                   valueListenable: _expandProgress,
                   builder: (context, progress, child) {
                     return Row(
                       children: [
-                        // Expanded Search Bar
+                        // Search Bar (Expands)
                         Expanded(
                           child: Container(
                             height: 45,
@@ -236,8 +236,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         
-                        // Animated Container for Notification
-                        // Width shrinks to 0 and Opacity fades to 0 as progress -> 1
+                        // Notification Icon (Shrinks)
                         SizeTransition(
                           sizeFactor: AlwaysStoppedAnimation(1.0 - progress),
                           axis: Axis.horizontal,

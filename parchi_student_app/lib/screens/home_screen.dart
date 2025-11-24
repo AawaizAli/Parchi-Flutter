@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../utils/colours.dart';
 import '../widgets/parchi_card.dart';
-import '../widgets/restaurant_mini_card.dart';
+import '../widgets/brand_card.dart';       
+import '../widgets/restaurant_big_card.dart'; 
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -11,7 +12,9 @@ class HomeScreen extends StatelessWidget {
     return SafeArea(
       child: CustomScrollView(
         slivers: [
-          // Section 1: Header
+          // ==========================================
+          // SECTION 1: Header (Search & Notification)
+          // ==========================================
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -65,17 +68,21 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
 
-          // Section 2: Parchi ID Card
+          // ==========================================
+          // SECTION 2: Parchi ID Card
+          // ==========================================
           const SliverToBoxAdapter(
             child: ParchiCard(),
           ),
 
-          // Section 3: Restaurants Header
+          // ==========================================
+          // SECTION 3: TOP BRANDS (Horizontal Carousel)
+          // ==========================================
           const SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
+              padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
               child: Text(
-                "All Restaurants",
+                "Top Brands",
                 style: TextStyle(
                   fontSize: 18, 
                   fontWeight: FontWeight.bold,
@@ -85,21 +92,58 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
 
-          // Section 4: Restaurants Grid
+          // Horizontal ListView for Brands
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 160, // Height to fit card + text
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                scrollDirection: Axis.horizontal,
+                itemCount: 10,
+                itemBuilder: (context, index) {
+                  return BrandCard(
+                    name: "Brand ${index + 1}",
+                    time: "15-25 min",
+                    image: "https://placehold.co/100x100/png?text=Brand",
+                  );
+                },
+              ),
+            ),
+          ),
+
+          // ==========================================
+          // SECTION 4: UP TO 30% OFF (Vertical List)
+          // ==========================================
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(16, 12, 16, 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Up to 30% off!",
+                    style: TextStyle(
+                      fontSize: 18, 
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary
+                    ),
+                  ),
+                  Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.primary)
+                ],
+              ),
+            ),
+          ),
+
+          // Vertical List of Big Cards
+          // We use SliverList instead of SliverGrid now
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-                childAspectRatio: 0.7,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-              ),
+            sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
-                  return const RestaurantMiniCard();
+                  return const RestaurantBigCard();
                 },
-                childCount: 12,
+                childCount: 8,
               ),
             ),
           ),

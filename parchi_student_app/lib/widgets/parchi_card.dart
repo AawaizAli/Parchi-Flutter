@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import '../utils/colours.dart';
 
 // =========================================================
-// 1. ENTRY POINT (The card shown on Home Screen)
+// 1. ENTRY POINT
 // =========================================================
 class ParchiCard extends StatelessWidget {
   const ParchiCard({super.key});
@@ -36,14 +37,15 @@ class ParchiCard extends StatelessWidget {
               width: double.infinity,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF0D1B59), Color(0xFFE91E63)],
+                  // Using Primary (Blue) and BackgroundDark (Charcoal) for a sleek look
+                  colors: [AppColors.backgroundDark, AppColors.primary],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.purple.withOpacity(0.3),
+                    color: AppColors.primary.withOpacity(0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),
@@ -59,7 +61,7 @@ class ParchiCard extends StatelessWidget {
 }
 
 // =========================================================
-// 2. DETAIL VIEW (The Popup with Animations)
+// 2. DETAIL VIEW
 // =========================================================
 class ParchiCardDetail extends StatefulWidget {
   const ParchiCardDetail({super.key});
@@ -81,7 +83,6 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
   void initState() {
     super.initState();
 
-    // Setup Flip
     _flipController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -91,7 +92,6 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
       curve: Curves.easeInOutBack,
     ));
 
-    // Setup Hover
     _hoverController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2), 
@@ -112,7 +112,6 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
     _isFront = !_isFront;
   }
 
-  // Smart Close Logic
   Future<void> _handleClose() async {
     if (!_isFront) {
       _flipCard();
@@ -181,14 +180,14 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
       width: MediaQuery.of(context).size.width * 0.9,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF0D1B59), Color(0xFFE91E63)],
+          colors: [AppColors.backgroundDark, AppColors.primary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFE91E63).withOpacity(0.6),
+            color: AppColors.primary.withOpacity(0.6),
             blurRadius: 40,
             spreadRadius: 10,
             offset: const Offset(0, 10),
@@ -205,15 +204,16 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
       width: MediaQuery.of(context).size.width * 0.9,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1A1A2E), Color(0xFF16213E)],
+          // Back side uses Dark Background for contrast
+          colors: [AppColors.backgroundDark, Colors.black],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: const Color(0xFFE91E63).withOpacity(0.5), width: 1),
+        border: Border.all(color: AppColors.primary.withOpacity(0.5), width: 1),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFE91E63).withOpacity(0.3),
+            color: AppColors.primary.withOpacity(0.3),
             blurRadius: 40,
             spreadRadius: 5,
           ),
@@ -233,7 +233,7 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
                     width: 100,
                     child: CircularProgressIndicator(
                       value: 1.0,
-                      color: Colors.white.withOpacity(0.1),
+                      color: AppColors.textSecondary.withOpacity(0.1),
                       strokeWidth: 8,
                     ),
                   ),
@@ -242,7 +242,7 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
                     width: 100,
                     child: CircularProgressIndicator(
                       value: 0.75,
-                      color: Color(0xFFE91E63),
+                      color: AppColors.secondary, // Using Secondary (Orange) for stats
                       strokeCap: StrokeCap.round,
                       strokeWidth: 8,
                     ),
@@ -250,8 +250,8 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
                    const Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text("15", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                      Text("Used", style: TextStyle(color: Colors.grey, fontSize: 10)),
+                      Text("15", style: TextStyle(color: AppColors.surface, fontSize: 24, fontWeight: FontWeight.bold)),
+                      Text("Used", style: TextStyle(color: AppColors.textSecondary, fontSize: 10)),
                     ],
                   ),
                 ],
@@ -264,13 +264,14 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text("MONTHLY STATS", style: TextStyle(color: Colors.grey, fontSize: 10, letterSpacing: 1)),
+                  Text("MONTHLY STATS", style: TextStyle(color: AppColors.textSecondary, fontSize: 10, letterSpacing: 1)),
                   Divider(color: Colors.white24),
                   SizedBox(height: 5),
-                  Text("Discounts: 15/20", style: TextStyle(color: Colors.white, fontSize: 16)),
+                  Text("Discounts: 15/20", style: TextStyle(color: AppColors.surface, fontSize: 16)),
                   SizedBox(height: 5),
-                  Text("Total Saved:", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                  Text("PKR 4,500", style: TextStyle(color: Color(0xFF00E676), fontSize: 20, fontWeight: FontWeight.bold)),
+                  Text("Total Saved:", style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                  // Using Success color (Green) for money saved
+                  Text("PKR 4,500", style: TextStyle(color: AppColors.success, fontSize: 20, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -282,7 +283,7 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
 }
 
 // =========================================================
-// 3. UI HELPER (Visuals for Front Face)
+// 3. UI HELPER
 // =========================================================
 class CardFrontContent extends StatelessWidget {
   const CardFrontContent({super.key});
@@ -294,7 +295,7 @@ class CardFrontContent extends StatelessWidget {
         Positioned(
           right: -20,
           top: -20,
-          child: Icon(Icons.school, size: 150, color: Colors.white.withOpacity(0.1)),
+          child: Icon(Icons.school, size: 150, color: AppColors.surface.withOpacity(0.05)),
         ),
         Padding(
           padding: const EdgeInsets.all(20.0),
@@ -305,10 +306,10 @@ class CardFrontContent extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Icon(Icons.nfc, color: Colors.white, size: 30),
+                  const Icon(Icons.nfc, color: AppColors.textOnPrimary, size: 30),
                   Text(
                     "PARCHI STUDENT",
-                    style: TextStyle(color: Colors.white.withOpacity(0.7), fontWeight: FontWeight.bold),
+                    style: TextStyle(color: AppColors.textOnPrimary.withOpacity(0.7), fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -317,18 +318,18 @@ class CardFrontContent extends StatelessWidget {
                 children: [
                   const Text(
                     "AAWAIZ ALI",
-                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+                    style: TextStyle(color: AppColors.textOnPrimary, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.5),
                   ),
                   const SizedBox(height: 4),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: AppColors.surface.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: const Text(
                       "ID: PK-12345",
-                      style: TextStyle(color: Colors.white, fontSize: 12, fontFamily: 'Courier', fontWeight: FontWeight.bold),
+                      style: TextStyle(color: AppColors.textOnPrimary, fontSize: 12, fontFamily: 'Courier', fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],

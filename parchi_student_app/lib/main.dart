@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-import 'leaderboard_screen.dart';
-import 'profile_screen.dart';
+import 'utils/colours.dart';
+import 'screens/home_screen.dart';
+import 'screens/leaderboard_screen.dart';
+import 'screens/profile_screen.dart';
 
 void main() {
   runApp(const ParchiApp());
@@ -16,10 +17,20 @@ class ParchiApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Parchi MVP',
       theme: ThemeData(
-        // Using a color palette inspired by the uploaded images (Pink/Purple)
-        primaryColor: const Color(0xFFE91E63),
+        primaryColor: AppColors.primary,
         useMaterial3: true,
-        scaffoldBackgroundColor: Colors.grey[50],
+        scaffoldBackgroundColor: AppColors.backgroundLight,
+        // Define default app bar theme
+        appBarTheme: const AppBarTheme(
+          backgroundColor: AppColors.backgroundLight,
+          elevation: 0,
+          titleTextStyle: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+          iconTheme: IconThemeData(color: AppColors.textPrimary),
+        ),
       ),
       home: const MainScreen(),
     );
@@ -38,8 +49,8 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _pages = [
     const HomeScreen(),
-    const LeaderboardScreen(), 
-    const ProfileScreen(),     
+    const LeaderboardScreen(),
+    const ProfileScreen(),
   ];
 
   @override
@@ -53,8 +64,9 @@ class _MainScreenState extends State<MainScreen> {
             _currentIndex = index;
           });
         },
-        selectedItemColor: const Color(0xFFE91E63), // Foodpanda Pinkish
-        unselectedItemColor: Colors.grey,
+        backgroundColor: AppColors.surface,
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.textSecondary,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
           BottomNavigationBarItem(icon: Icon(Icons.leaderboard), label: "Leaderboard"),

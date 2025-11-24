@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../widgets/parchi_card.dart';        // Make sure this path matches your project structure
-import '../widgets/restaurant_mini_card.dart'; // Make sure this path matches your project structure
+import '../utils/colours.dart';
+import '../widgets/parchi_card.dart';
+import '../widgets/restaurant_mini_card.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -20,11 +21,11 @@ class HomeScreen extends StatelessWidget {
                     child: Container(
                       height: 45,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(25),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.2),
+                            color: AppColors.textSecondary.withOpacity(0.1),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -33,7 +34,8 @@ class HomeScreen extends StatelessWidget {
                       child: const TextField(
                         decoration: InputDecoration(
                           hintText: "Search restaurants...",
-                          prefixIcon: Icon(Icons.search, color: Colors.grey),
+                          hintStyle: TextStyle(color: AppColors.textSecondary),
+                          prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(vertical: 10),
                         ),
@@ -43,18 +45,18 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(width: 12),
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.2),
+                          color: AppColors.textSecondary.withOpacity(0.1),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
                       ],
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.notifications_none, color: Colors.black),
+                      icon: const Icon(Icons.notifications_none, color: AppColors.textPrimary),
                       onPressed: () {},
                     ),
                   ),
@@ -63,7 +65,7 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
 
-          // Section 2: Parchi ID Card (Cleaned up: Logic is now in widgets/parchi_card.dart)
+          // Section 2: Parchi ID Card
           const SliverToBoxAdapter(
             child: ParchiCard(),
           ),
@@ -74,7 +76,11 @@ class HomeScreen extends StatelessWidget {
               padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
               child: Text(
                 "All Restaurants",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 18, 
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary
+                ),
               ),
             ),
           ),

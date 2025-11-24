@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/colours.dart';
 
 class RestaurantMiniCard extends StatelessWidget {
   const RestaurantMiniCard({super.key});
@@ -10,7 +11,7 @@ class RestaurantMiniCard extends StatelessWidget {
         Expanded(
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: Colors.grey[300], // Placeholder image bg
               borderRadius: BorderRadius.circular(12),
               image: const DecorationImage(
                 image: NetworkImage("https://placehold.co/100x100/png"),
@@ -24,11 +25,12 @@ class RestaurantMiniCard extends StatelessWidget {
           "KFC",
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
         ),
         const Text(
           "20% OFF",
-          style: TextStyle(fontSize: 10, color: Color(0xFFE91E63), fontWeight: FontWeight.w700),
+          // Used Error color (Red) for discounts as it grabs attention
+          style: TextStyle(fontSize: 10, color: AppColors.error, fontWeight: FontWeight.w700),
         ),
       ],
     );

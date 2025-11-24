@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
 // This class contains the primary color palette for the application.
-// Using static const ensures these colors are accessible globally without
-// needing an instance of the class (e.g., AppColors.primary).
 class AppColors {
   // --- Primary Brand Colors ---
   static const Color primary = Color(0xFF007AFF); // A vibrant blue
@@ -18,6 +16,7 @@ class AppColors {
   static const Color textPrimary = Color(0xFF1C1C1E);
   static const Color textSecondary = Color(0xFF8E8E93);
   static const Color textLink = primary; // Links often use the primary color
+  static const Color textOnPrimary = Colors.white; // Text on colored backgrounds
 
   // --- Utility Colors ---
   static const Color error = Color(0xFFFF3B30); // Red for errors/danger

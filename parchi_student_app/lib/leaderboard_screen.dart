@@ -1,49 +1,28 @@
-// leaderboard_screen.dart
 import 'package:flutter/material.dart';
 
 class LeaderboardScreen extends StatelessWidget {
+  const LeaderboardScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Leaderboard'),
+        title: const Text("Leaderboard"),
         centerTitle: true,
       ),
-      body: ListView.builder(
-        itemCount: 20, // Sample data
+      body: ListView.separated(
+        itemCount: 10,
+        separatorBuilder: (ctx, i) => const Divider(),
         itemBuilder: (context, index) {
           return ListTile(
-            leading: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.blue[100],
-              ),
-              child: Center(
-                child: Text(
-                  '${index + 1}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+            leading: CircleAvatar(
+              backgroundColor: index < 3 ? Colors.amber : Colors.grey[300],
+              child: Text("#${index + 1}"),
             ),
-            title: Text('Student ${index + 1}'),
-            subtitle: Text('PK-${10000 + index}'),
-            trailing: Container(
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.green[50],
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                '${(index + 1) * 250} PKR',
-                style: TextStyle(
-                  color: Colors.green[800],
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            title: Text("Student ${index + 1}"),
+            trailing: Text(
+              "${1000 - (index * 50)} Saved",
+              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
             ),
           );
         },

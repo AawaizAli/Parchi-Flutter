@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:math'; // Required for the Flip Math (pi)
+import 'dart:math';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -120,7 +120,7 @@ class ParchiCard extends StatelessWidget {
           Navigator.of(context).push(PageRouteBuilder(
             opaque: false,
             barrierDismissible: true,
-            barrierColor: Colors.black87, // Darker background for focus
+            barrierColor: Colors.black87, 
             pageBuilder: (context, animation, secondaryAnimation) {
               return FadeTransition(
                 opacity: animation,
@@ -151,7 +151,7 @@ class ParchiCard extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const CardFrontContent(), // Extracted widget
+              child: const CardFrontContent(), 
             ),
           ),
         ),
@@ -161,7 +161,7 @@ class ParchiCard extends StatelessWidget {
 }
 
 // =========================================================
-// DETAILED POPUP VIEW (Handles the Flip)
+// DETAILED POPUP VIEW (Flip + Hover)
 // =========================================================
 
 class ParchiCardDetail extends StatefulWidget {
@@ -171,36 +171,56 @@ class ParchiCardDetail extends StatefulWidget {
   State<ParchiCardDetail> createState() => _ParchiCardDetailState();
 }
 
-class _ParchiCardDetailState extends State<ParchiCardDetail> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
+class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProviderStateMixin {
+  // Controller for the FLIP
+  late AnimationController _flipController;
+  late Animation<double> _flipAnimation;
+
+  // Controller for the HOVER (Float)
+  late AnimationController _hoverController;
+  late Animation<double> _hoverAnimation;
+
   bool _isFront = true;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+
+    // 1. Setup FLIP Animation
+    _flipController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    _animation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOutBack, // Bouncy flip effect
+    _flipAnimation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(
+      parent: _flipController,
+      curve: Curves.easeInOutBack,
+    ));
+
+    // 2. Setup HOVER Animation (Continuous Loop)
+    _hoverController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2), // Slow, breathing movement
+    )..repeat(reverse: true); // Moves up, then reverses down
+
+    _hoverAnimation = Tween<double>(begin: -10, end: 10).animate(CurvedAnimation(
+      parent: _hoverController,
+      curve: Curves.easeInOutSine, // Smooth sine wave
     ));
   }
 
   void _flipCard() {
     if (_isFront) {
-      _controller.forward();
+      _flipController.forward();
     } else {
-      _controller.reverse();
+      _flipController.reverse();
     }
     _isFront = !_isFront;
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _flipController.dispose();
+    _hoverController.dispose();
     super.dispose();
   }
 
@@ -208,8 +228,6 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with SingleTickerPr
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Tap outside to close (if needed), but we want to tap card to flip.
-        // We handle card tap below, so this detects background taps.
         Navigator.pop(context);
       },
       child: Scaffold(
@@ -217,37 +235,38 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with SingleTickerPr
         body: Center(
           child: GestureDetector(
             onTap: () {
-              // Stop the tap from propagating to the background (which closes modal)
-              // Instead, trigger flip.
+              // Trigger Flip on Card Tap
               _flipCard(); 
             },
-            // We use AnimatedBuilder to redraw the transform frame by frame
+            // merge: Listen to both Flip and Hover animations
             child: AnimatedBuilder(
-              animation: _animation,
+              animation: Listenable.merge([_flipAnimation, _hoverAnimation]),
               builder: (context, child) {
-                // Calculate rotation angle (0 to pi)
-                final angle = _animation.value * pi;
                 
-                // Matrix logic for 3D flip
-                final transform = Matrix4.identity()
+                // 1. Calculate Flip Rotation
+                final angle = _flipAnimation.value * pi;
+                final flipTransform = Matrix4.identity()
                   ..setEntry(3, 2, 0.001) // Perspective
                   ..rotateY(angle);
 
-                return Transform(
-                  transform: transform,
-                  alignment: Alignment.center,
-                  child: Hero(
-                    tag: 'parchi-card-hero',
-                    child: Material(
-                      color: Colors.transparent,
-                      // Decide whether to show front or back based on angle
-                      child: angle < pi / 2
-                          ? _buildFrontFace()
-                          : Transform(
-                              alignment: Alignment.center,
-                              transform: Matrix4.identity()..rotateY(pi), // Mirror back
-                              child: _buildBackFace(),
-                            ),
+                // 2. Wrap everything in a Translation for the Hover effect
+                return Transform.translate(
+                  offset: Offset(0, _hoverAnimation.value), // Move Up/Down
+                  child: Transform(
+                    transform: flipTransform,
+                    alignment: Alignment.center,
+                    child: Hero(
+                      tag: 'parchi-card-hero',
+                      child: Material(
+                        color: Colors.transparent,
+                        child: angle < pi / 2
+                            ? _buildFrontFace()
+                            : Transform(
+                                alignment: Alignment.center,
+                                transform: Matrix4.identity()..rotateY(pi),
+                                child: _buildBackFace(),
+                              ),
+                      ),
                     ),
                   ),
                 );
@@ -259,7 +278,7 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with SingleTickerPr
     );
   }
 
-  // --- FRONT FACE (Same as Home) ---
+  // --- FRONT FACE ---
   Widget _buildFrontFace() {
     return Container(
       height: 220,
@@ -272,6 +291,8 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with SingleTickerPr
         ),
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
+          // Dynamic Shadow that pulses with the hover could be added here, 
+          // but a static large glow works best for performance/visuals.
           BoxShadow(
             color: const Color(0xFFE91E63).withOpacity(0.6),
             blurRadius: 40,
@@ -284,13 +305,12 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with SingleTickerPr
     );
   }
 
-  // --- BACK FACE (New Stats View) ---
+  // --- BACK FACE ---
   Widget _buildBackFace() {
     return Container(
       height: 220,
       width: MediaQuery.of(context).size.width * 0.9,
       decoration: BoxDecoration(
-        // Darker, sleeker gradient for the back
         gradient: const LinearGradient(
           colors: [Color(0xFF1A1A2E), Color(0xFF16213E)],
           begin: Alignment.topLeft,
@@ -310,13 +330,11 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with SingleTickerPr
         padding: const EdgeInsets.all(20.0),
         child: Row(
           children: [
-            // Left Side: The "Circular Thingy" (Stats)
             Expanded(
               flex: 4,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  // Background Circle
                   SizedBox(
                     height: 100,
                     width: 100,
@@ -326,18 +344,16 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with SingleTickerPr
                       strokeWidth: 8,
                     ),
                   ),
-                  // Progress Circle
                   const SizedBox(
                     height: 100,
                     width: 100,
                     child: CircularProgressIndicator(
-                      value: 0.75, // 75% utilized
+                      value: 0.75,
                       color: Color(0xFFE91E63),
                       strokeCap: StrokeCap.round,
                       strokeWidth: 8,
                     ),
                   ),
-                  // Text in Middle
                    const Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -361,10 +377,7 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with SingleTickerPr
                 ],
               ),
             ),
-            
             const SizedBox(width: 15),
-
-            // Right Side: Text Stats
             const Expanded(
               flex: 6,
               child: Column(
@@ -462,7 +475,6 @@ class CardFrontContent extends StatelessWidget {
   }
 }
 
-// Helper Widget for Restaurants
 class RestaurantMiniCard extends StatelessWidget {
   const RestaurantMiniCard({super.key});
 

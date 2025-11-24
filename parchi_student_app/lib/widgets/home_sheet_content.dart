@@ -73,7 +73,7 @@ class HomeSheetContent extends StatelessWidget {
                   itemCount: brands.length,
                   itemBuilder: (context, index) {
                     final brand = brands[index];
-                    // Ensure keys match the BrandCard constructor
+                    // Correctly aligned with BrandCard definition
                     return BrandCard(
                       name: brand["name"]!,
                       time: brand["time"]!,

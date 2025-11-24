@@ -17,7 +17,6 @@ class _HomeScreenState extends State<HomeScreen> {
   double _minSheetSize = 0.5; 
   double _maxSheetSize = 0.9;
 
-  // Dummy User Data (Simulating API Response)
   final String _userName = "AAWAIZ ALI";
   final String _userId = "PK-12345";
 
@@ -62,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: AppColors.secondary,
       body: Stack(
         children: [
-          // LAYER 1: Parchi Card (With Dynamic Data)
+          // LAYER 1: Parchi Card
           Positioned(
             top: headerHeight, 
             left: 0,

@@ -5,9 +5,7 @@ class RestaurantBigCard extends StatelessWidget {
   final String name;
   final String image;
   final String rating;
-  final String reviewCount;
   final String meta; // "20-35 min • $$ • Western"
-  final String deliveryFee;
   final String discount; // "30% OFF"
 
   // Default dummy values provided
@@ -16,9 +14,7 @@ class RestaurantBigCard extends StatelessWidget {
     this.name = "Del Frio - Jauhar",
     this.image = "https://placehold.co/600x300/png",
     this.rating = "4.3",
-    this.reviewCount = "(5000+)",
     this.meta = "20-35 min • \$\$ • Western",
-    this.deliveryFee = "Rs. 129",
     this.discount = "30% OFF",
   });
 
@@ -114,11 +110,11 @@ class RestaurantBigCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           rating,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.textPrimary),
                         ),
-                        Text(
-                          " $reviewCount",
-                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                        const Text(
+                          " (5000+)",
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                         ),
                       ],
                     ),
@@ -133,13 +129,13 @@ class RestaurantBigCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Row(
+                const Row(
                   children: [
-                    const Icon(Icons.delivery_dining, size: 16, color: AppColors.textSecondary),
-                    const SizedBox(width: 4),
+                    Icon(Icons.delivery_dining, size: 16, color: AppColors.textSecondary),
+                    SizedBox(width: 4),
                     Text(
-                      deliveryFee,
-                      style: const TextStyle(
+                      "Rs. 129",
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

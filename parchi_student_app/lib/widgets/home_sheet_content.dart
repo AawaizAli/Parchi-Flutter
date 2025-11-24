@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../utils/colours.dart';
 import 'brand_card.dart';
 import 'restaurant_big_card.dart';
+import 'restaurant_medium_card.dart'; // Import the new medium card
 
 class HomeSheetContent extends StatelessWidget {
   final ScrollController scrollController;
@@ -13,8 +14,17 @@ class HomeSheetContent extends StatelessWidget {
     "image": "https://placehold.co/100x100/png?text=Logo${index+1}"
   });
 
-  // Dummy Data for Restaurants (Simulating API Response)
-  final List<Map<String, String>> restaurants = List.generate(8, (index) => {
+  // Dummy Data for Horizontal Restaurants (30% OFF)
+  final List<Map<String, String>> promoRestaurants = List.generate(8, (index) => {
+    "name": "Promo Rest ${index + 1}",
+    "image": "https://placehold.co/600x300/png?text=Promo${index+1}",
+    "rating": "4.5",
+    "meta": "15-25 min • \$\$",
+    "discount": "30% OFF",
+  });
+
+  // Dummy Data for Vertical Restaurants (All Restaurants)
+  final List<Map<String, String>> allRestaurants = List.generate(8, (index) => {
     "name": "Restaurant ${index + 1}",
     "image": "https://placehold.co/600x300/png?text=Food${index+1}",
     "rating": "${4.0 + (index % 10) / 10}",
@@ -48,6 +58,7 @@ class HomeSheetContent extends StatelessWidget {
           slivers: [
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
+            // --- SECTION: TOP BRANDS ---
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.0),
@@ -73,7 +84,6 @@ class HomeSheetContent extends StatelessWidget {
                   itemCount: brands.length,
                   itemBuilder: (context, index) {
                     final brand = brands[index];
-                    // Correctly aligned with BrandCard definition
                     return BrandCard(
                       name: brand["name"]!,
                       time: brand["time"]!,
@@ -84,6 +94,7 @@ class HomeSheetContent extends StatelessWidget {
               ),
             ),
 
+            // --- SECTION: 30% OFF (Horizontal Scroll) ---
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
@@ -104,12 +115,48 @@ class HomeSheetContent extends StatelessWidget {
               ),
             ),
 
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 180, // Height for the medium cards
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: promoRestaurants.length,
+                  itemBuilder: (context, index) {
+                    final rest = promoRestaurants[index];
+                    return RestaurantMediumCard(
+                      name: rest["name"]!,
+                      image: rest["image"]!,
+                      rating: rest["rating"]!,
+                      meta: rest["meta"]!,
+                      discount: rest["discount"]!,
+                    );
+                  },
+                ),
+              ),
+            ),
+
+            // --- SECTION: ALL RESTAURANTS (Vertical List) ---
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
+                child: Text(
+                  "All Restaurants",
+                  style: TextStyle(
+                    fontSize: 18, 
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary
+                  ),
+                ),
+              ),
+            ),
+
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
-                    final rest = restaurants[index];
+                    final rest = allRestaurants[index];
                     return RestaurantBigCard(
                       name: rest["name"]!,
                       image: rest["image"]!,
@@ -118,7 +165,7 @@ class HomeSheetContent extends StatelessWidget {
                       discount: rest["discount"]!,
                     );
                   },
-                  childCount: restaurants.length,
+                  childCount: allRestaurants.length,
                 ),
               ),
             ),

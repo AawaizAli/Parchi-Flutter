@@ -9,7 +9,7 @@ class AppColors {
   static const Color primary = Color(0xFF007AFF); // A vibrant blue
 
   // Used for: Main App Background (Top Section), Leaderboard Top 3 Ranks, Stats Progress Ring
-  static const Color secondary = Color(0xFFFF9500); // A warm orange
+  static const Color secondary = Color.fromARGB(255, 87, 27, 143); // A warm orange
 
   // Used for: Success messages, "Total Saved" green text
   static const Color accent = Color(0xFF34C759); // A bright green

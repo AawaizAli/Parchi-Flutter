@@ -3,6 +3,7 @@ import 'utils/colours.dart';
 import 'screens/home_screen.dart';
 import 'screens/leaderboard_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/login_screen.dart'; // Import LoginScreen
 
 void main() {
   runApp(const ParchiApp());
@@ -32,7 +33,8 @@ class ParchiApp extends StatelessWidget {
           iconTheme: IconThemeData(color: AppColors.textPrimary),
         ),
       ),
-      home: const MainScreen(),
+      // Changed home to LoginScreen to start the auth flow
+      home: const LoginScreen(),
     );
   }
 }

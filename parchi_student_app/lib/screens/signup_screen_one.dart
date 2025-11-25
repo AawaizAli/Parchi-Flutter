@@ -27,121 +27,139 @@ class _SignupScreenOneState extends State<SignupScreenOne> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFFE8F5E9), Color(0xFFF5F7FA)],
+              ),
+            ),
+          ),
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(child: Container(height: 4, color: AppColors.primary)),
-                  const SizedBox(width: 8),
-                  Expanded(child: Container(height: 4, color: AppColors.textSecondary.withOpacity(0.2))),
-                ],
-              ),
-              const SizedBox(height: 24),
-              
-              const Text(
-                "Create Account",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const Text(
-                "Tell us about yourself.",
-                style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 32),
-
-              _buildLabel("Full Name"),
-              _buildTextField(_nameController, "John Doe", Icons.person_outline),
-              const SizedBox(height: 20),
-
-              _buildLabel("Personal Email"),
-              _buildTextField(_emailController, "john@gmail.com", Icons.email_outlined),
-              const SizedBox(height: 20),
-
-              _buildLabel("University"),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+                  // Nav
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: const Icon(Icons.arrow_back, size: 20, color: AppColors.textPrimary),
                     ),
-                  ],
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedUniversity,
-                    hint: const Text("Select University", style: TextStyle(color: Colors.grey)),
-                    isExpanded: true,
-                    icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.textPrimary),
-                    items: _universities.map((String uni) {
-                      return DropdownMenuItem<String>(
-                        value: uni,
-                        child: Text(uni, style: const TextStyle(color: AppColors.textPrimary)),
-                      );
-                    }).toList(),
-                    onChanged: (newValue) {
-                      setState(() {
-                        _selectedUniversity = newValue;
-                      });
-                    },
                   ),
-                ),
-              ),
-              const SizedBox(height: 20),
+                  
+                  const SizedBox(height: 30),
+                  
+                  const Text(
+                    "Create Account",
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    "Enter your personal details to get started.",
+                    style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 40),
 
-              _buildLabel("Age"),
-              _buildTextField(_ageController, "21", Icons.calendar_today, isNumber: true),
-              
-              const SizedBox(height: 40),
+                  _buildInputLabel("Full Name"),
+                  _buildAfluctaTextField(_nameController, "John Doe", Icons.person_outline),
+                  const SizedBox(height: 24),
 
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => SignupScreenTwo(
-                          name: _nameController.text,
-                          email: _emailController.text,
-                          university: _selectedUniversity ?? "",
-                          age: _ageController.text,
+                  _buildInputLabel("Personal Email"),
+                  _buildAfluctaTextField(_emailController, "john@gmail.com", Icons.email_outlined),
+                  const SizedBox(height: 24),
+
+                  _buildInputLabel("University"),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedUniversity,
+                        hint: Text("Select University", style: TextStyle(color: Colors.grey.shade400)),
+                        isExpanded: true,
+                        icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey.shade500),
+                        items: _universities.map((String uni) {
+                          return DropdownMenuItem<String>(
+                            value: uni,
+                            child: Text(uni, style: const TextStyle(color: AppColors.textPrimary)),
+                          );
+                        }).toList(),
+                        onChanged: (newValue) {
+                          setState(() {
+                            _selectedUniversity = newValue;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  _buildInputLabel("Age"),
+                  _buildAfluctaTextField(_ageController, "21", Icons.calendar_today, isNumber: true),
+                  
+                  const SizedBox(height: 40),
+
+                  // Neon Button
+                  Container(
+                    width: double.infinity,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppColors.primary, Color(0xFF27AE60)],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.3),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SignupScreenTwo(
+                              name: _nameController.text,
+                              email: _emailController.text,
+                              university: _selectedUniversity ?? "",
+                              age: _ageController.text,
+                            ),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
                         ),
                       ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 2,
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
+                      child: const Text(
                         "Next Step",
                         style: TextStyle(
                           color: Colors.white,
@@ -149,20 +167,19 @@ class _SignupScreenOneState extends State<SignupScreenOne> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward, color: Colors.white),
-                    ],
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 20),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildLabel(String text) {
+  Widget _buildInputLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0, left: 4.0),
       child: Text(
@@ -170,31 +187,27 @@ class _SignupScreenOneState extends State<SignupScreenOne> {
         style: const TextStyle(
           color: AppColors.textPrimary,
           fontWeight: FontWeight.w600,
+          fontSize: 14,
         ),
       ),
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, IconData icon, {bool isNumber = false}) {
+  Widget _buildAfluctaTextField(TextEditingController controller, String hint, IconData icon, {bool isNumber = false}) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade300),
       ),
       child: TextField(
         controller: controller,
         keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+        style: const TextStyle(color: AppColors.textPrimary),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(color: AppColors.textSecondary.withOpacity(0.5)),
-          prefixIcon: Icon(icon, color: AppColors.textSecondary),
+          hintStyle: TextStyle(color: Colors.grey.shade400),
+          prefixIcon: Icon(icon, color: Colors.grey.shade500),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         ),

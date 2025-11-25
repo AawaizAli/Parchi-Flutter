@@ -27,104 +27,132 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFFE8F5E9), Color(0xFFF5F7FA)],
+              ),
+            ),
+          ),
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(child: Container(height: 4, color: AppColors.primary)),
-                  const SizedBox(width: 8),
-                  Expanded(child: Container(height: 4, color: AppColors.primary)),
+                  // Nav
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: const Icon(Icons.arrow_back, size: 20, color: AppColors.textPrimary),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 30),
+
+                  const Text(
+                    "Verify Student",
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    "Upload documents to prove your status.",
+                    style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 40),
+
+                  _buildInputLabel("University Timetable"),
+                  _buildUploadBox(
+                    "Upload Timetable",
+                    _timetableUploaded,
+                    () {
+                      setState(() {
+                        _timetableUploaded = !_timetableUploaded;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 24),
+
+                  _buildInputLabel("Fee Challan"),
+                  _buildUploadBox(
+                    "Upload Fee Challan",
+                    _feeChallanUploaded,
+                    () {
+                      setState(() {
+                        _feeChallanUploaded = !_feeChallanUploaded;
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  Container(
+                    width: double.infinity,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppColors.primary, Color(0xFF27AE60)],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.3),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const SignupVerificationScreen()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      child: const Text(
+                        "Submit Verification",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 24),
-
-              const Text(
-                "Verification",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const Text(
-                "Upload documents to prove student status.",
-                style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 32),
-
-              _buildLabel("University Timetable"),
-              _buildUploadBox(
-                "Tap to upload Timetable",
-                _timetableUploaded,
-                () {
-                  setState(() {
-                    _timetableUploaded = !_timetableUploaded;
-                  });
-                },
-              ),
-              const SizedBox(height: 24),
-
-              _buildLabel("Fee Challan"),
-              _buildUploadBox(
-                "Tap to upload Fee Challan",
-                _feeChallanUploaded,
-                () {
-                  setState(() {
-                    _feeChallanUploaded = !_feeChallanUploaded;
-                  });
-                },
-              ),
-
-              const SizedBox(height: 40),
-
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const SignupVerificationScreen()),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.success,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 2,
-                  ),
-                  child: const Text(
-                    "Submit Verification",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildLabel(String text) {
+  Widget _buildInputLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0, left: 4.0),
       child: Text(
@@ -132,6 +160,7 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
         style: const TextStyle(
           color: AppColors.textPrimary,
           fontWeight: FontWeight.w600,
+          fontSize: 14,
         ),
       ),
     );
@@ -141,15 +170,14 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 150,
+        height: 120,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: isUploaded ? AppColors.success.withOpacity(0.1) : AppColors.surface,
+          color: isUploaded ? AppColors.primary.withOpacity(0.1) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isUploaded ? AppColors.success : AppColors.textSecondary.withOpacity(0.3),
+            color: isUploaded ? AppColors.primary : Colors.grey.shade300,
             width: 1.5,
-            style: BorderStyle.solid, 
           ),
         ),
         child: Column(
@@ -157,25 +185,17 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
           children: [
             Icon(
               isUploaded ? Icons.check_circle : Icons.cloud_upload_outlined,
-              size: 40,
-              color: isUploaded ? AppColors.success : AppColors.primary,
+              size: 32,
+              color: isUploaded ? AppColors.primary : Colors.grey.shade500,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
-              isUploaded ? "Document Uploaded" : text,
+              isUploaded ? "Uploaded Successfully" : text,
               style: TextStyle(
-                color: isUploaded ? AppColors.success : AppColors.textSecondary,
+                color: isUploaded ? AppColors.primary : AppColors.textPrimary,
                 fontWeight: FontWeight.w600,
               ),
             ),
-            if (!isUploaded)
-              Text(
-                "Supported: JPG, PNG, PDF",
-                style: TextStyle(
-                  color: AppColors.textSecondary.withOpacity(0.5),
-                  fontSize: 12,
-                ),
-              ),
           ],
         ),
       ),

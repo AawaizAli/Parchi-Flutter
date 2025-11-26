@@ -5,20 +5,50 @@ class User {
   final String email;
   final String role;
   final bool isActive;
+  
+  // [NEW] Added student specific fields as nullable
+  final String? firstName;
+  final String? lastName;
+  final String? parchiId;
+  final String? university;
 
   User({
     required this.id,
     required this.email,
     required this.role,
     required this.isActive,
+    this.firstName,
+    this.lastName,
+    this.parchiId,
+    this.university,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
+    // [LOGIC ADDED] Check for nested student object from backend
+    final studentData = json['student'];
+
     return User(
       id: json['id'] as String,
       email: json['email'] as String,
       role: json['role'] as String,
       isActive: json['is_active'] as bool? ?? false,
+      
+      // [LOGIC ADDED] Extract details from student object or fallback
+      firstName: studentData != null 
+          ? studentData['first_name'] 
+          : json['firstName'],
+      
+      lastName: studentData != null 
+          ? studentData['last_name'] 
+          : json['lastName'],
+      
+      parchiId: studentData != null 
+          ? studentData['parchi_id'] 
+          : json['parchiId'],
+          
+      university: studentData != null 
+          ? studentData['university'] 
+          : json['university'],
     );
   }
 
@@ -28,6 +58,10 @@ class User {
       'email': email,
       'role': role,
       'is_active': isActive,
+      'firstName': firstName,
+      'lastName': lastName,
+      'parchiId': parchiId,
+      'university': university,
     };
   }
 }
@@ -108,8 +142,11 @@ class ProfileResponse {
   });
 
   factory ProfileResponse.fromJson(Map<String, dynamic> json) {
+    // Handle the wrapper if it exists, or direct data
+    final userData = json['data'] ?? json;
+    
     return ProfileResponse(
-      user: User.fromJson(json['data'] as Map<String, dynamic>),
+      user: User.fromJson(userData as Map<String, dynamic>),
       status: json['status'] as int? ?? 200,
       message: json['message'] as String? ?? '',
     );
@@ -211,4 +248,3 @@ class ServerException implements Exception {
   @override
   String toString() => message;
 }
-

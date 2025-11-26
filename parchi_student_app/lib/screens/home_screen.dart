@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../utils/colours.dart';
 import '../widgets/parchi_card.dart';
 import '../widgets/home_sheet_content.dart';
+import '../services/auth_service.dart'; // [NEW] Added import
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,13 +18,51 @@ class _HomeScreenState extends State<HomeScreen> {
   double _minSheetSize = 0.5; 
   double _maxSheetSize = 0.9;
 
-  final String _userName = "AAWAIZ ALI";
-  final String _userId = "PK-12345";
+  // [CHANGED] Use state variables initialized to loading
+  String _userName = "LOADING...";
+  String _userId = "....";
 
   @override
   void initState() {
     super.initState();
     _sheetController.addListener(_onSheetChanged);
+    // [LOGIC ADDED] Fetch profile on screen load
+    _loadUserProfile();
+  }
+
+  // [LOGIC ADDED] Method to fetch real user data
+  Future<void> _loadUserProfile() async {
+    try {
+      // 1. Fetch from backend API
+      final profileResponse = await authService.getProfile();
+      
+      if (mounted) {
+        setState(() {
+          // 2. Parse User Data
+          // Combine First + Last Name
+          final String firstName = profileResponse.user.firstName ?? "Student";
+          final String lastName = profileResponse.user.lastName ?? "";
+          
+          _userName = "$firstName $lastName".trim().toUpperCase();
+          
+          // Get Parchi ID (fallback to Pending if null)
+          _userId = profileResponse.user.parchiId ?? "PENDING";
+        });
+      }
+    } catch (e) {
+      // 3. Fallback: If network fails, try to load from local storage
+      print("Network fetch failed: $e. Trying local storage...");
+      
+      final localUser = await authService.getUser();
+      if (localUser != null && mounted) {
+        setState(() {
+          final String firstName = localUser.firstName ?? "Student";
+          final String lastName = localUser.lastName ?? "";
+          _userName = "$firstName $lastName".trim().toUpperCase();
+          _userId = localUser.parchiId ?? "PK-????";
+        });
+      }
+    }
   }
 
   void _onSheetChanged() {
@@ -72,8 +111,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 return Opacity(
                   opacity: (1.0 - (progress * 3)).clamp(0.0, 1.0), 
                   child: ParchiCard(
-                    studentName: _userName,
-                    studentId: _userId,
+                    studentName: _userName, // [CHANGED] Uses real state variable
+                    studentId: _userId,     // [CHANGED] Uses real state variable
                   ),
                 );
               },

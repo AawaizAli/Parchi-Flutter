@@ -9,16 +9,35 @@ import '../../utils/colours.dart';
 class ParchiCard extends StatelessWidget {
   final String studentName;
   final String studentId;
+  final bool isGolden; // [NEW] Gold Mode Flag
   
-  // In a real app, you might pass a 'User' model here
   const ParchiCard({
     super.key,
-    this.studentName = "AAWAIZ ALI", // Default/Dummy
-    this.studentId = "PK-12345",     // Default/Dummy
+    this.studentName = "AAWAIZ ALI", 
+    this.studentId = "PK-12345",
+    this.isGolden = false, // Default is standard
   });
 
   @override
   Widget build(BuildContext context) {
+    // Define Gradients
+    final standardGradient = const LinearGradient(
+      colors: [AppColors.backgroundDark, AppColors.primary],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+
+    final goldGradient = const LinearGradient(
+      colors: [
+        Color(0xFFDAA520), // Goldenrod
+        Color(0xFFFFD700), // Gold
+        Color(0xFFB8860B), // Dark Goldenrod
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      stops: [0.1, 0.5, 0.9],
+    );
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: GestureDetector(
@@ -35,29 +54,29 @@ class ParchiCard extends StatelessWidget {
                 child: ParchiCardDetail(
                   studentName: studentName,
                   studentId: studentId,
+                  isGolden: isGolden, // Pass state to detail view
                 ),
               );
             },
           ));
         },
         child: Hero(
-          tag: 'parchi-card-hero',
+          tag: isGolden ? 'gold-parchi-card' : 'parchi-card-hero',
           child: Material(
             color: Colors.transparent,
             child: Container(
               height: 180,
               width: double.infinity,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.backgroundDark, AppColors.primary],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                gradient: isGolden ? goldGradient : standardGradient,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
-                    blurRadius: 10,
+                    color: isGolden 
+                        ? Colors.amber.withOpacity(0.6) 
+                        : AppColors.primary.withOpacity(0.3),
+                    blurRadius: isGolden ? 20 : 10,
+                    spreadRadius: isGolden ? 2 : 0,
                     offset: const Offset(0, 5),
                   ),
                 ],
@@ -65,6 +84,7 @@ class ParchiCard extends StatelessWidget {
               child: CardFrontContent(
                 studentName: studentName,
                 studentId: studentId,
+                isGolden: isGolden,
               ), 
             ),
           ),
@@ -80,11 +100,13 @@ class ParchiCard extends StatelessWidget {
 class ParchiCardDetail extends StatefulWidget {
   final String studentName;
   final String studentId;
+  final bool isGolden;
 
   const ParchiCardDetail({
     super.key,
     required this.studentName,
     required this.studentId,
+    this.isGolden = false,
   });
 
   @override
@@ -205,7 +227,7 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
                     transform: flipTransform,
                     alignment: Alignment.center,
                     child: Hero(
-                      tag: 'parchi-card-hero',
+                      tag: widget.isGolden ? 'gold-parchi-card' : 'parchi-card-hero',
                       child: Material(
                         color: Colors.transparent,
                         child: angle < pi / 2
@@ -228,19 +250,27 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
   }
 
   Widget _buildFrontFace() {
+    final standardGradient = const LinearGradient(
+      colors: [AppColors.backgroundDark, AppColors.primary],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+
+    final goldGradient = const LinearGradient(
+      colors: [Color(0xFFDAA520), Color(0xFFFFD700), Color(0xFFB8860B)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+
     return Container(
       height: 220,
       width: MediaQuery.of(context).size.width * 0.9,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.backgroundDark, AppColors.primary],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: widget.isGolden ? goldGradient : standardGradient,
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.6),
+            color: widget.isGolden ? Colors.amber.withOpacity(0.6) : AppColors.primary.withOpacity(0.6),
             blurRadius: 40,
             spreadRadius: 10,
             offset: const Offset(0, 10),
@@ -250,11 +280,13 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
       child: CardFrontContent(
         studentName: widget.studentName,
         studentId: widget.studentId,
+        isGolden: widget.isGolden,
       ),
     );
   }
 
   Widget _buildBackFace() {
+    // Keep back face standard for readability or make it dark gold
     return Container(
       height: 220,
       width: MediaQuery.of(context).size.width * 0.9,
@@ -265,10 +297,13 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: AppColors.primary.withOpacity(0.5), width: 1),
+        border: Border.all(
+          color: widget.isGolden ? Colors.amber : AppColors.primary.withOpacity(0.5), 
+          width: 1
+        ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
+            color: widget.isGolden ? Colors.amber.withOpacity(0.3) : AppColors.primary.withOpacity(0.3),
             blurRadius: 40,
             spreadRadius: 5,
           ),
@@ -298,11 +333,7 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
     }
   }
 
-  // --- DYNAMIC DATA PLACEHOLDERS ---
-  // Ideally, these would come from a model passed to this widget
-  
   Widget _buildCurrentMonthStats() {
-    // Dummy Data
     const int usedCount = 15;
     const int totalCount = 20;
     const String totalSaved = "PKR 4,500";
@@ -376,7 +407,6 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
   }
 
   Widget _buildYearlyStats() {
-    // Dummy Data
     final months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
     final values = [0.3, 0.5, 0.8, 0.4, 0.9, 0.6]; 
 
@@ -435,8 +465,6 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
   }
 
   Widget _buildMonthDetail() {
-    // Dummy Data for List
-    // In real app, fetch history based on _selectedMonth
     return Column(
       key: const ValueKey("MonthDetail"),
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -499,21 +527,32 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
 class CardFrontContent extends StatelessWidget {
   final String studentName;
   final String studentId;
+  final bool isGolden; // [NEW]
 
   const CardFrontContent({
     super.key,
     required this.studentName,
     required this.studentId,
+    this.isGolden = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Adjust colors for Gold Background readability
+    final textColor = isGolden ? Colors.black87 : AppColors.textOnPrimary;
+    final secondaryTextColor = isGolden ? Colors.black54 : AppColors.textOnPrimary.withOpacity(0.7);
+    final iconColor = isGolden ? Colors.white.withOpacity(0.3) : AppColors.surface.withOpacity(0.05);
+
     return Stack(
       children: [
         Positioned(
           right: -20,
           top: -20,
-          child: Icon(Icons.school, size: 150, color: AppColors.surface.withOpacity(0.05)),
+          child: Icon(
+            isGolden ? Icons.emoji_events : Icons.school, // Trophy for gold
+            size: 150, 
+            color: iconColor
+          ),
         ),
         Padding(
           padding: const EdgeInsets.all(20.0),
@@ -524,10 +563,10 @@ class CardFrontContent extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Icon(Icons.nfc, color: AppColors.textOnPrimary, size: 30),
+                  Icon(Icons.nfc, color: textColor, size: 30),
                   Text(
-                    "PARCHI STUDENT",
-                    style: TextStyle(color: AppColors.textOnPrimary.withOpacity(0.7), fontWeight: FontWeight.bold),
+                    isGolden ? "GOLD MEMBER" : "PARCHI STUDENT",
+                    style: TextStyle(color: secondaryTextColor, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -536,7 +575,7 @@ class CardFrontContent extends StatelessWidget {
                 children: [
                   Text(
                     studentName,
-                    style: const TextStyle(color: AppColors.textOnPrimary, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+                    style: TextStyle(color: textColor, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.5),
                   ),
                   const SizedBox(height: 4),
                   GestureDetector(
@@ -553,19 +592,19 @@ class CardFrontContent extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.surface.withOpacity(0.2),
+                        color: isGolden ? Colors.black12 : AppColors.surface.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.white24, width: 0.5),
+                        border: Border.all(color: isGolden ? Colors.black12 : Colors.white24, width: 0.5),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             "ID: $studentId",
-                            style: const TextStyle(color: AppColors.textOnPrimary, fontSize: 12, fontFamily: 'Courier', fontWeight: FontWeight.bold),
+                            style: TextStyle(color: textColor, fontSize: 12, fontFamily: 'Courier', fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(width: 6),
-                          Icon(Icons.copy, size: 12, color: AppColors.textOnPrimary.withOpacity(0.8)),
+                          Icon(Icons.copy, size: 12, color: secondaryTextColor),
                         ],
                       ),
                     ),

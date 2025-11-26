@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../utils/colours.dart';
+import '../../widgets/home_screen_widgets/bonus_reward_card.dart'; 
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -9,8 +10,38 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
-  // Toggle this to see the Empty State design
   final bool _isEmpty = false; 
+
+  // DUMMY DATA
+  final List<RewardModel> _rewards = [
+    // [NEW] COMPLETED CARD (Test the Gold Unlock here!)
+    RewardModel(
+      restaurantName: "Gold Burger",
+      currentCount: 5, // 5/5 = COMPLETED
+      targetCount: 5,
+      discountText: "Free Premium Meal",
+      gradientColors: [const Color(0xFFFFD700), const Color(0xFFFFA500)], 
+      shadowColor: const Color(0xFFFFD700),
+    ),
+    // Standard Card 1
+    RewardModel(
+      restaurantName: "KFC",
+      currentCount: 3,
+      targetCount: 5,
+      discountText: "Free Zinger",
+      gradientColors: [const Color(0xFFFF3B30), const Color(0xFFFF2D55)], 
+      shadowColor: const Color(0xFFFF2D55),
+    ),
+    // Standard Card 2
+    RewardModel(
+      restaurantName: "Pizza Max",
+      currentCount: 1,
+      targetCount: 3,
+      discountText: "Free Pizza",
+      gradientColors: [const Color(0xFF007AFF), const Color(0xFF5856D6)], 
+      shadowColor: const Color(0xFF5856D6),
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +50,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.surface,
         elevation: 0,
+        centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
@@ -27,12 +59,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
           "Notifications",
           style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined, color: AppColors.textPrimary),
-            onPressed: () {},
-          )
-        ],
       ),
       body: _isEmpty ? _buildEmptyState() : _buildNotificationList(),
     );
@@ -45,7 +71,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.backgroundLight,
               shape: BoxShape.circle,
             ),
@@ -54,11 +80,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           const SizedBox(height: 24),
           const Text(
             "No Notifications Yet",
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -73,10 +95,17 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   Widget _buildNotificationList() {
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
       children: [
+        // The Stack
+        Padding(
+          padding: const EdgeInsets.only(bottom: 24.0),
+          child: BonusRewardStack(rewards: _rewards),
+        ),
+        
         const SizedBox(height: 10),
-        _buildSectionHeader("New"),
+        
+        _buildSectionHeader("New Updates"),
         _buildNotificationItem(
           brandName: "KFC",
           message: "Flash Sale! Get 50% OFF on Zinger Burgers tonight.",
@@ -88,24 +117,17 @@ class _NotificationScreenState extends State<NotificationScreen> {
           brandName: "Parchi",
           message: "You successfully redeemed a discount at Burger O'Clock.",
           time: "1h ago",
-          imageUrl: "https://placehold.co/100x100/png?text=P", // Parchi Logo placeholder
+          imageUrl: "https://placehold.co/100x100/png?text=P",
           isUnread: true,
         ),
         
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         _buildSectionHeader("Yesterday"),
         _buildNotificationItem(
           brandName: "Outfitters",
           message: "New Winter Collection is out. Students get flat 20% off.",
           time: "1d ago",
           imageUrl: "https://placehold.co/100x100/png?text=OUT",
-          isUnread: false,
-        ),
-        _buildNotificationItem(
-          brandName: "Gloria Jeans",
-          message: "Buy 1 Get 1 Free on all coffees.",
-          time: "1d ago",
-          imageUrl: "https://placehold.co/100x100/png?text=GJ",
           isUnread: false,
         ),
       ],
@@ -139,13 +161,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Square Rounded Brand Image
           Container(
             height: 56,
             width: 56,
             decoration: BoxDecoration(
               color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(12), // Rounded Square
+              borderRadius: BorderRadius.circular(12),
               image: DecorationImage(
                 image: NetworkImage(imageUrl),
                 fit: BoxFit.cover,
@@ -159,10 +180,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               ],
             ),
           ),
-          
           const SizedBox(width: 16),
-          
-          // 2. Content
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -191,17 +209,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
               ],
             ),
           ),
-
-          // 3. Unread Dot (Optional)
           if (isUnread)
             Container(
               margin: const EdgeInsets.only(top: 8, left: 8),
               height: 8,
               width: 8,
-              decoration: const BoxDecoration(
-                color: AppColors.primary,
-                shape: BoxShape.circle,
-              ),
+              decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
             ),
         ],
       ),

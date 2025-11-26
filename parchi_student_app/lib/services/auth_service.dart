@@ -91,6 +91,18 @@ class AuthService {
     return true;
   }
 
+  // Check if user is authenticated and has student role
+  Future<bool> isStudentAuthenticated() async {
+    final isAuth = await isAuthenticated();
+    if (!isAuth) return false;
+
+    final user = await getUser();
+    if (user == null) return false;
+
+    // Only allow students to access the student app
+    return user.role.toLowerCase() == 'student';
+  }
+
   // Signup
   Future<AuthResponse> signup({
     required String email,

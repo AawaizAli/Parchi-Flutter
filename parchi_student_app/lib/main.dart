@@ -74,11 +74,21 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   Future<void> _checkAuthState() async {
     try {
-      final isAuth = await authService.isAuthenticated();
+      // Check if user is authenticated AND is a student
+      final isStudentAuth = await authService.isStudentAuthenticated();
       setState(() {
-        _isAuthenticated = isAuth;
+        _isAuthenticated = isStudentAuth;
         _isLoading = false;
       });
+
+      // If user is authenticated but not a student, logout them
+      if (!isStudentAuth) {
+        final isAuth = await authService.isAuthenticated();
+        if (isAuth) {
+          // User is logged in but not a student - logout them
+          await authService.logout();
+        }
+      }
     } catch (e) {
       setState(() {
         _isAuthenticated = false;

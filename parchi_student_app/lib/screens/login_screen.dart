@@ -63,9 +63,39 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       );
 
       if (mounted) {
-        // Check if account is active
+        // Check user role - only students can access the student app
         final user = await authService.getUser();
-        if (user != null && !user.isActive) {
+        if (user == null) {
+          setState(() {
+            _errorMessage = 'Failed to retrieve user information. Please try again.';
+            _isLoading = false;
+          });
+          return;
+        }
+
+        // Validate that user is a student
+        if (user.role.toLowerCase() != 'student') {
+          // Logout the user since they're not a student
+          await authService.logout();
+          setState(() {
+            _errorMessage = 'Access denied. This app is only for students. Please use the merchant app.';
+            _isLoading = false;
+          });
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Access denied. This app is only for students.'),
+                backgroundColor: AppColors.error,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+          return;
+        }
+
+        // Check if account is active
+        if (!user.isActive) {
           // Account pending approval
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -82,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             );
           }
         } else {
-          // Account is active, proceed to main screen
+          // Account is active and user is a student, proceed to main screen
           if (mounted) {
             Navigator.pushReplacement(
               context,

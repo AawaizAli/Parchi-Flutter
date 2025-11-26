@@ -10,10 +10,18 @@ class SignupScreenOne extends StatefulWidget {
 }
 
 class _SignupScreenOneState extends State<SignupScreenOne> {
-  final _nameController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _ageController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _graduationYearController = TextEditingController();
   String? _selectedUniversity;
+  
+  String? _firstNameError;
+  String? _lastNameError;
+  String? _emailError;
+  String? _universityError;
 
   final List<String> _universities = [
     "FAST NUCES",
@@ -23,6 +31,99 @@ class _SignupScreenOneState extends State<SignupScreenOne> {
     "Karachi University",
     "Szabist",
   ];
+
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _graduationYearController.dispose();
+    super.dispose();
+  }
+
+  bool _validateForm() {
+    bool isValid = true;
+    
+    // Reset errors
+    setState(() {
+      _firstNameError = null;
+      _lastNameError = null;
+      _emailError = null;
+      _universityError = null;
+    });
+
+    // Validate First Name
+    if (_firstNameController.text.trim().isEmpty) {
+      setState(() {
+        _firstNameError = "First name is required";
+      });
+      isValid = false;
+    }
+
+    // Validate Last Name
+    if (_lastNameController.text.trim().isEmpty) {
+      setState(() {
+        _lastNameError = "Last name is required";
+      });
+      isValid = false;
+    }
+
+    // Validate Email
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      setState(() {
+        _emailError = "Email is required";
+      });
+      isValid = false;
+    } else if (!_isValidEmail(email)) {
+      setState(() {
+        _emailError = "Please enter a valid email address";
+      });
+      isValid = false;
+    }
+
+    // Validate University
+    if (_selectedUniversity == null || _selectedUniversity!.isEmpty) {
+      setState(() {
+        _universityError = "Please select a university";
+      });
+      isValid = false;
+    }
+
+    return isValid;
+  }
+
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+  }
+
+  void _handleNextStep() {
+    if (_validateForm()) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SignupScreenTwo(
+            firstName: _firstNameController.text.trim(),
+            lastName: _lastNameController.text.trim(),
+            email: _emailController.text.trim(),
+            phone: _phoneController.text.trim(),
+            university: _selectedUniversity ?? "",
+            graduationYear: _graduationYearController.text.trim(),
+          ),
+        ),
+      );
+    } else {
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please fill in all required fields correctly"),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,9 +142,11 @@ class _SignupScreenOneState extends State<SignupScreenOne> {
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                   // Nav
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
@@ -76,21 +179,59 @@ class _SignupScreenOneState extends State<SignupScreenOne> {
                   ),
                   const SizedBox(height: 40),
 
-                  _buildInputLabel("Full Name"),
-                  _buildAfluctaTextField(_nameController, "John Doe", Icons.person_outline),
+                  _buildInputLabel("First Name *"),
+                  _buildAfluctaTextField(_firstNameController, "John", Icons.person_outline, errorText: _firstNameError),
+                  if (_firstNameError != null) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4.0, left: 4.0),
+                      child: Text(
+                        _firstNameError!,
+                        style: const TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+
+                  _buildInputLabel("Last Name *"),
+                  _buildAfluctaTextField(_lastNameController, "Doe", Icons.person_outline, errorText: _lastNameError),
+                  if (_lastNameError != null) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4.0, left: 4.0),
+                      child: Text(
+                        _lastNameError!,
+                        style: const TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+
+                  _buildInputLabel("Student Email ID *"),
+                  _buildAfluctaTextField(_emailController, "john@gmail.com", Icons.email_outlined, errorText: _emailError),
+                  if (_emailError != null) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4.0, left: 4.0),
+                      child: Text(
+                        _emailError!,
+                        style: const TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+
+                  _buildInputLabel("Phone Number (Optional)"),
+                  _buildAfluctaTextField(_phoneController, "+92 300 1234567", Icons.phone_outlined, isNumber: true),
                   const SizedBox(height: 24),
 
-                  _buildInputLabel("Personal Email"),
-                  _buildAfluctaTextField(_emailController, "john@gmail.com", Icons.email_outlined),
-                  const SizedBox(height: 24),
-
-                  _buildInputLabel("University"),
+                  _buildInputLabel("University *"),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade300),
+                      border: Border.all(
+                        color: _universityError != null ? Colors.red : Colors.grey.shade300,
+                        width: _universityError != null ? 1.5 : 1,
+                      ),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
@@ -107,15 +248,25 @@ class _SignupScreenOneState extends State<SignupScreenOne> {
                         onChanged: (newValue) {
                           setState(() {
                             _selectedUniversity = newValue;
+                            _universityError = null; // Clear error when selection is made
                           });
                         },
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  if (_universityError != null) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4.0, left: 4.0),
+                      child: Text(
+                        _universityError!,
+                        style: const TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
 
-                  _buildInputLabel("Age"),
-                  _buildAfluctaTextField(_ageController, "21", Icons.calendar_today, isNumber: true),
+                  _buildInputLabel("Graduation Year (Optional)"),
+                  _buildAfluctaTextField(_graduationYearController, "2025", Icons.calendar_today, isNumber: true),
                   
                   const SizedBox(height: 40),
 
@@ -139,19 +290,7 @@ class _SignupScreenOneState extends State<SignupScreenOne> {
                       ],
                     ),
                     child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => SignupScreenTwo(
-                              name: _nameController.text,
-                              email: _emailController.text,
-                              university: _selectedUniversity ?? "",
-                              age: _ageController.text,
-                            ),
-                          ),
-                        );
-                      },
+                      onPressed: _handleNextStep,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,
@@ -170,7 +309,8 @@ class _SignupScreenOneState extends State<SignupScreenOne> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -193,21 +333,38 @@ class _SignupScreenOneState extends State<SignupScreenOne> {
     );
   }
 
-  Widget _buildAfluctaTextField(TextEditingController controller, String hint, IconData icon, {bool isNumber = false}) {
+  Widget _buildAfluctaTextField(TextEditingController controller, String hint, IconData icon, {bool isNumber = false, String? errorText}) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(
+          color: errorText != null ? Colors.red : Colors.grey.shade300,
+          width: errorText != null ? 1.5 : 1,
+        ),
       ),
       child: TextField(
         controller: controller,
         keyboardType: isNumber ? TextInputType.number : TextInputType.text,
         style: const TextStyle(color: AppColors.textPrimary),
+        onChanged: (value) {
+          // Clear error when user starts typing
+          if (errorText != null) {
+            setState(() {
+              if (controller == _firstNameController) {
+                _firstNameError = null;
+              } else if (controller == _lastNameController) {
+                _lastNameError = null;
+              } else if (controller == _emailController) {
+                _emailError = null;
+              }
+            });
+          }
+        },
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(color: Colors.grey.shade400),
-          prefixIcon: Icon(icon, color: Colors.grey.shade500),
+          prefixIcon: Icon(icon, color: errorText != null ? Colors.red : Colors.grey.shade500),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         ),

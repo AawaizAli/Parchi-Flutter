@@ -1,11 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'config/supabase_config.dart';
 import 'utils/colours.dart';
 import 'screens/home_screen.dart';
 import 'screens/leaderboard_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/login_screen.dart'; // Import LoginScreen
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load environment variables from .env file
+  await dotenv.load(fileName: ".env");
+  
+  // Initialize Supabase
+  await Supabase.initialize(
+    url: SupabaseConfig.supabaseUrl,
+    anonKey: SupabaseConfig.supabaseAnonKey,
+  );
+  
   runApp(const ParchiApp());
 }
 

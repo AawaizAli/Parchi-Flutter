@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // [NEW] Import Riverpod
 import 'config/supabase_config.dart';
 import 'utils/colours.dart';
 import 'screens/home_screen.dart';
@@ -12,16 +13,19 @@ import 'services/auth_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Load environment variables from .env file
   await dotenv.load(fileName: ".env");
   
-  // Initialize Supabase
   await Supabase.initialize(
     url: SupabaseConfig.supabaseUrl,
     anonKey: SupabaseConfig.supabaseAnonKey,
   );
   
-  runApp(const ParchiApp());
+  runApp(
+    // [NEW] Wrap entire app in ProviderScope
+    const ProviderScope(
+      child: ParchiApp(),
+    ),
+  );
 }
 
 class ParchiApp extends StatelessWidget {
@@ -36,7 +40,6 @@ class ParchiApp extends StatelessWidget {
         primaryColor: AppColors.primary,
         useMaterial3: true,
         scaffoldBackgroundColor: AppColors.backgroundLight,
-        // Define default app bar theme
         appBarTheme: const AppBarTheme(
           backgroundColor: AppColors.backgroundLight,
           elevation: 0,
@@ -48,13 +51,11 @@ class ParchiApp extends StatelessWidget {
           iconTheme: IconThemeData(color: AppColors.textPrimary),
         ),
       ),
-      // Check authentication state on app start
       home: const AuthWrapper(),
     );
   }
 }
 
-// Widget to check authentication state and route accordingly
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
 
@@ -74,18 +75,15 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   Future<void> _checkAuthState() async {
     try {
-      // Check if user is authenticated AND is a student
       final isStudentAuth = await authService.isStudentAuthenticated();
       setState(() {
         _isAuthenticated = isStudentAuth;
         _isLoading = false;
       });
 
-      // If user is authenticated but not a student, logout them
       if (!isStudentAuth) {
         final isAuth = await authService.isAuthenticated();
         if (isAuth) {
-          // User is logged in but not a student - logout them
           await authService.logout();
         }
       }

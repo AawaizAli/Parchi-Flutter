@@ -1,68 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // [NEW]
 import '../utils/colours.dart';
 import '../widgets/parchi_card.dart';
 import '../widgets/home_sheet_content.dart';
-import '../services/auth_service.dart'; // [NEW] Added import
+import '../providers/user_provider.dart'; // [NEW]
 
-class HomeScreen extends StatefulWidget {
+// [CHANGED] Extend ConsumerStatefulWidget
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+// [CHANGED] Use ConsumerState
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   final DraggableScrollableController _sheetController = DraggableScrollableController();
   final ValueNotifier<double> _expandProgress = ValueNotifier(0.0);
 
   double _minSheetSize = 0.5; 
   double _maxSheetSize = 0.9;
 
-  // [CHANGED] Use state variables initialized to loading
-  String _userName = "LOADING...";
-  String _userId = "....";
-
   @override
   void initState() {
     super.initState();
     _sheetController.addListener(_onSheetChanged);
-    // [LOGIC ADDED] Fetch profile on screen load
-    _loadUserProfile();
-  }
-
-  // [LOGIC ADDED] Method to fetch real user data
-  Future<void> _loadUserProfile() async {
-    try {
-      // 1. Fetch from backend API
-      final profileResponse = await authService.getProfile();
-      
-      if (mounted) {
-        setState(() {
-          // 2. Parse User Data
-          // Combine First + Last Name
-          final String firstName = profileResponse.user.firstName ?? "Student";
-          final String lastName = profileResponse.user.lastName ?? "";
-          
-          _userName = "$firstName $lastName".trim().toUpperCase();
-          
-          // Get Parchi ID (fallback to Pending if null)
-          _userId = profileResponse.user.parchiId ?? "PENDING";
-        });
-      }
-    } catch (e) {
-      // 3. Fallback: If network fails, try to load from local storage
-      print("Network fetch failed: $e. Trying local storage...");
-      
-      final localUser = await authService.getUser();
-      if (localUser != null && mounted) {
-        setState(() {
-          final String firstName = localUser.firstName ?? "Student";
-          final String lastName = localUser.lastName ?? "";
-          _userName = "$firstName $lastName".trim().toUpperCase();
-          _userId = localUser.parchiId ?? "PK-????";
-        });
-      }
-    }
   }
 
   void _onSheetChanged() {
@@ -96,6 +58,10 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_maxSheetSize > 0.95) _maxSheetSize = 0.95;
     if (_minSheetSize > _maxSheetSize) _minSheetSize = _maxSheetSize - 0.05;
 
+    // [NEW] Watch the provider! 
+    // This 'userAsync' variable contains the Data, Loading state, OR Error.
+    final userAsync = ref.watch(userProfileProvider);
+
     return Scaffold(
       backgroundColor: AppColors.secondary,
       body: Stack(
@@ -110,9 +76,28 @@ class _HomeScreenState extends State<HomeScreen> {
               builder: (context, progress, child) {
                 return Opacity(
                   opacity: (1.0 - (progress * 3)).clamp(0.0, 1.0), 
-                  child: ParchiCard(
-                    studentName: _userName, // [CHANGED] Uses real state variable
-                    studentId: _userId,     // [CHANGED] Uses real state variable
+                  
+                  // [NEW] Handle states cleanly
+                  child: userAsync.when(
+                    data: (user) {
+                      final fname = user?.firstName ?? "Student";
+                      final lname = user?.lastName ?? "";
+                      final fullName = "$fname $lname".trim().toUpperCase();
+                      final pId = user?.parchiId ?? "PENDING";
+                      
+                      return ParchiCard(
+                        studentName: fullName.isEmpty ? "STUDENT" : fullName,
+                        studentId: pId,
+                      );
+                    },
+                    loading: () => const ParchiCard(
+                      studentName: "LOADING...",
+                      studentId: "PK-....",
+                    ),
+                    error: (err, stack) => const ParchiCard(
+                      studentName: "OFFLINE",
+                      studentId: "ERROR",
+                    ),
                   ),
                 );
               },

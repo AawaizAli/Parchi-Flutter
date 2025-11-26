@@ -5,7 +5,6 @@ import '../../../utils/colours.dart';
 import '../../../main.dart';
 import '../../../services/auth_service.dart';
 import '../../../providers/user_provider.dart'; // [NEW]
-import '../sign_up_screens/signup_screen_one.dart';
 
 // [CHANGED] Use ConsumerStatefulWidget
 class LoginScreen extends ConsumerStatefulWidget {

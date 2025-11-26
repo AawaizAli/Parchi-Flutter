@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // [NEW]
 import '../../utils/colours.dart';
-import '../../widgets/home screen (parchi card) widgets/parchi_card.dart';
-import '../../widgets/home screen (restruant) widgets/home_sheet_content.dart';
+import '../../widgets/home_screen_parchicard_widgets/parchi_card.dart';
+import '../../widgets/home_screen_restraunts_widgets/home_sheet_content.dart';
 import '../../providers/user_provider.dart'; // [NEW]
 
 // [CHANGED] Extend ConsumerStatefulWidget

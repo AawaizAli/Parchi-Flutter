@@ -4,9 +4,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // [NEW] Import Riverpod
 import 'config/supabase_config.dart';
 import 'utils/colours.dart';
-import 'screens/home screens/home_screen.dart';
-import 'screens/leaderboard screens/leaderboard_screen.dart';
-import 'screens/profile screens/profile_screen.dart';
+import 'screens/home/home_screen.dart';
+import 'screens/leaderboard/leaderboard_screen.dart';
+import 'screens/profile/profile_screen.dart';
 import 'screens/auth/login screens/login_screen.dart';
 import 'services/auth_service.dart';
 

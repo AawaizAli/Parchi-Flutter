@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../utils/colours.dart';
-import '../home screen (restruant) widgets/brand_card.dart';
-import '../home screen (restruant) widgets/restaurant_big_card.dart';
-import '../home screen (restruant) widgets/restaurant_medium_card.dart';
+import '../home_screen_restraunts_widgets/brand_card.dart';
+import '../home_screen_restraunts_widgets/restaurant_big_card.dart';
+import '../home_screen_restraunts_widgets/restaurant_medium_card.dart';
 
 class HomeSheetContent extends StatelessWidget {
   final ScrollController scrollController;

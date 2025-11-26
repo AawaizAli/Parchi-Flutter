@@ -7,7 +7,7 @@ import 'utils/colours.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/leaderboard/leaderboard_screen.dart';
 import 'screens/profile/profile_screen.dart';
-import 'screens/auth/login screens/login_screen.dart';
+import 'screens/auth/login_screens/login_screen.dart';
 import 'services/auth_service.dart';
 
 void main() async {

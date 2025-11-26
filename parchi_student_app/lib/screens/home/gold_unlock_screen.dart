@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import '../../utils/colours.dart';
-import '../../widgets/home_screen_parchicard_widgets/parchi_card.dart'; // Needed for CardFrontContent
+import '../../widgets/home_screen_parchicard_widgets/parchi_card.dart'; 
 import '../../widgets/home_screen_widgets/bonus_reward_card.dart'; 
 
 class GoldUnlockScreen extends StatefulWidget {
@@ -21,26 +21,24 @@ class GoldUnlockScreen extends StatefulWidget {
 }
 
 class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProviderStateMixin {
-  // Controller for the initial "Reveal" animation
   late AnimationController _entranceController;
   late Animation<double> _entranceFlip;
   late Animation<double> _entranceScale;
 
-  // Controller for the manual "Flip to see Reward" interaction
   late AnimationController _manualFlipController;
   late Animation<double> _manualFlipAnimation;
 
   late AnimationController _hoverController;
   late Animation<double> _hoverAnimation;
 
-  bool _hasRevealed = false; // True once the initial reveal is done
-  bool _showRewardSide = false; // False = ID Side, True = Reward Side
+  bool _hasRevealed = false; 
+  bool _showRewardSide = false; 
 
   @override
   void initState() {
     super.initState();
 
-    // 1. Entrance Animation (Unlocking -> Gold ID)
+    // 1. Entrance Animation
     _entranceController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -55,7 +53,7 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
       TweenSequenceItem(tween: Tween(begin: 0.8, end: 1.0), weight: 50), 
     ]).animate(CurvedAnimation(parent: _entranceController, curve: Curves.easeInOut));
 
-    // 2. Manual Flip Animation (Gold ID <-> Reward Detail)
+    // 2. Manual Flip Animation
     _manualFlipController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -65,7 +63,7 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
       CurvedAnimation(parent: _manualFlipController, curve: Curves.easeInOutBack),
     );
 
-    // 3. Hover (Breathing) Animation
+    // 3. Hover Animation
     _hoverController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -75,7 +73,7 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
       CurvedAnimation(parent: _hoverController, curve: Curves.easeInOutSine),
     );
 
-    // Listeners to toggle content visibility
+    // Listeners
     _entranceController.addListener(() {
       if (_entranceController.value >= 0.5 && !_hasRevealed) {
         setState(() { _hasRevealed = true; });
@@ -83,8 +81,6 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
     });
 
     _manualFlipController.addListener(() {
-      // If we are halfway through manual flip, toggle the view
-      // We use a small threshold logic to ensure we don't flicker
       final val = _manualFlipController.value;
       if (val >= 0.5 && !_showRewardSide) {
         setState(() => _showRewardSide = true);
@@ -93,7 +89,7 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
       }
     });
 
-    // Start Entrance
+    // Auto Start
     Future.delayed(const Duration(milliseconds: 300), () {
       _entranceController.forward();
     });
@@ -107,13 +103,18 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
     super.dispose();
   }
 
-  void _handleTap() {
-    // Only allow flipping after entrance is done
+  // [NEW] Close logic
+  void _handleBackgroundTap() {
+    Navigator.pop(context);
+  }
+
+  // [NEW] Flip logic
+  void _handleCardTap() {
     if (_entranceController.isCompleted) {
       if (_showRewardSide) {
-        _manualFlipController.reverse(); // Go back to ID
+        _manualFlipController.reverse(); 
       } else {
-        _manualFlipController.forward(); // Go to Reward
+        _manualFlipController.forward(); 
       }
     }
   }
@@ -123,13 +124,14 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
     return Scaffold(
       backgroundColor: Colors.black87, 
       body: GestureDetector(
-        onTap: _handleTap, // Tap anywhere to flip
-        behavior: HitTestBehavior.opaque,
+        // [UPDATED] Background tap closes the screen
+        onTap: _handleBackgroundTap,
+        behavior: HitTestBehavior.opaque, // Catch taps everywhere
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Dynamic Header Text
+              // Header
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 500),
                 child: Text(
@@ -150,54 +152,41 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
               AnimatedBuilder(
                 animation: Listenable.merge([_entranceController, _manualFlipController, _hoverController]),
                 builder: (context, child) {
-                  // Combined rotation: Entrance Flip (0 to 180) + Manual Flip (0 to 180)
-                  // Note: Entrance goes 0->1. Manual goes 0->1.
-                  // We use entrance value initially. Once revealed, we add manual flip value.
-                  
                   double angle;
                   double scale = _entranceScale.value;
 
                   if (!_entranceController.isCompleted) {
-                    angle = _entranceFlip.value * pi; // 0 to 180
+                    angle = _entranceFlip.value * pi; 
                   } else {
-                    // Start from 180 (PI) and add manual flip
                     angle = pi + (_manualFlipAnimation.value * pi);
                   }
                   
-                  // 3D Transform
                   final transform = Matrix4.identity()
-                    ..setEntry(3, 2, 0.001) // Perspective
+                    ..setEntry(3, 2, 0.001) 
                     ..rotateY(angle);
 
-                  // Correct text orientation logic
-                  // If angle is between 90 and 270, we are looking at the "Back" (ID)
-                  // If angle > 270, we are looking at the "Front" (Reward) again?
-                  // Let's simplify:
-                  // Entrance: Front (Lock) -> Back (ID). Ends at 180.
-                  // Manual: Starts at 180 (ID). Goes to 360 (Reward).
-                  
                   bool showBackFace = angle >= (pi / 2) && angle < (3 * pi / 2); 
-                  // Explanation:
-                  // 0-90: Lock Card
-                  // 90-270: Gold ID Card
-                  // 270-360: Reward Detail Card
 
                   return Transform.translate(
                     offset: Offset(0, _hasRevealed ? _hoverAnimation.value : 0), 
                     child: Transform.scale(
                       scale: scale,
-                      child: Transform(
-                        transform: transform,
-                        alignment: Alignment.center,
-                        child: showBackFace 
-                          ? Transform(
-                              alignment: Alignment.center,
-                              transform: Matrix4.identity()..rotateY(pi), // Mirror fix for ID
-                              child: _buildGoldParchiCard(),
-                            )
-                          : (_entranceController.isCompleted 
-                              ? _buildGoldRewardDetailCard() // The "What I Won" Card
-                              : _buildInitialLockCard()), // The "Unlocking" Card
+                      child: GestureDetector(
+                        // [UPDATED] Card Tap triggers flip (and stops propagation to background)
+                        onTap: _handleCardTap,
+                        child: Transform(
+                          transform: transform,
+                          alignment: Alignment.center,
+                          child: showBackFace 
+                            ? Transform(
+                                alignment: Alignment.center,
+                                transform: Matrix4.identity()..rotateY(pi), 
+                                child: _buildGoldParchiCard(), 
+                              )
+                            : (_entranceController.isCompleted 
+                                ? _buildGoldRewardDetailCard() 
+                                : _buildInitialLockCard()), 
+                        ),
                       ),
                     ),
                   );
@@ -211,7 +200,7 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
                 duration: const Duration(milliseconds: 500),
                 opacity: _entranceController.isCompleted ? 1.0 : 0.0,
                 child: const Text(
-                  "Tap card to flip details", 
+                  "Tap card to flip • Tap background to close", 
                   style: TextStyle(color: Colors.white38, fontSize: 12)
                 ),
               ),
@@ -224,11 +213,10 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
 
   // --- CARD FACES ---
 
-  // 1. Initial "Unlocking..." Card (Red/Gold)
   Widget _buildInitialLockCard() {
     return Container(
       height: 180,
-      width: MediaQuery.of(context).size.width - 32, // [FIXED] Matches ParchiCard width
+      width: MediaQuery.of(context).size.width - 32, 
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -258,13 +246,12 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
     );
   }
 
-  // 2. The Gold ID Card (Front Face after unlock)
   Widget _buildGoldParchiCard() {
     const goldGradient = LinearGradient(
       colors: [
-        Color(0xFFDAA520), // Goldenrod
-        Color(0xFFFFD700), // Gold
-        Color(0xFFB8860B), // Dark Goldenrod
+        Color(0xFFDAA520), 
+        Color(0xFFFFD700), 
+        Color(0xFFB8860B), 
       ],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
@@ -273,11 +260,11 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
 
     return Container(
       height: 180,
-      width: MediaQuery.of(context).size.width - 32, // [FIXED] Width
+      width: MediaQuery.of(context).size.width - 32, 
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         gradient: goldGradient,
-        borderRadius: BorderRadius.circular(20), // Match ParchiCard radius
+        borderRadius: BorderRadius.circular(20), 
         boxShadow: [
           BoxShadow(
             color: Colors.amber.withOpacity(0.6),
@@ -295,16 +282,14 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
     );
   }
 
-  // 3. The "What I Won" Card (Back Face after tap)
   Widget _buildGoldRewardDetailCard() {
-    // Same Gold Gradient to match texture
     const goldGradient = LinearGradient(
       colors: [
         Color(0xFFDAA520), 
         Color(0xFFFFD700), 
         Color(0xFFB8860B), 
       ],
-      begin: Alignment.topRight, // Reversed slightly for visual difference
+      begin: Alignment.topRight, 
       end: Alignment.bottomLeft,
       stops: [0.1, 0.5, 0.9],
     );
@@ -327,7 +312,6 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
       ),
       child: Stack(
         children: [
-          // Background Pattern
           Positioned(
             right: -30,
             bottom: -30,
@@ -351,7 +335,7 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
                 ),
                 Center(
                   child: Text(
-                    widget.reward.discountText.toUpperCase(), // e.g. "FREE PREMIUM MEAL"
+                    widget.reward.discountText.toUpperCase(), 
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       color: Colors.black87, 

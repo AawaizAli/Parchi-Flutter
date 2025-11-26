@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../utils/colours.dart';
+import '../../utils/colours.dart';
 import 'brand_card.dart';
 import 'restaurant_big_card.dart';
 import 'restaurant_medium_card.dart';

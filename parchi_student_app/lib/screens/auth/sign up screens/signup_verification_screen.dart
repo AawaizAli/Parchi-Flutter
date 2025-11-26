@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../utils/colours.dart';
-import 'login_screen.dart';
+import '../../../utils/colours.dart';
+import '../login screens/login_screen.dart';
 
 class SignupVerificationScreen extends StatefulWidget {
   final String? parchiId;

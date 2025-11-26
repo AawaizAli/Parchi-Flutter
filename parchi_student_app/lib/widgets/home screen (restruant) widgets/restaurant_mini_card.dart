@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../utils/colours.dart';
+import '../../utils/colours.dart';
 
 class RestaurantMiniCard extends StatelessWidget {
   const RestaurantMiniCard({super.key});

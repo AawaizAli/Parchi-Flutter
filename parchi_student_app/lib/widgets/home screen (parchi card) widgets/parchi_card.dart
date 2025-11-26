@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math';
-import '../utils/colours.dart';
+import '../../utils/colours.dart';
 
 // =========================================================
 // 1. ENTRY POINT

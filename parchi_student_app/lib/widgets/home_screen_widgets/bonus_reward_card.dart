@@ -1,7 +1,9 @@
-import 'dart:ui'; // Required for lerpDouble
+import 'dart:ui'; 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // [NEW]
 import '../../utils/colours.dart';
 import '../../screens/home/gold_unlock_screen.dart'; 
+import '../../providers/user_provider.dart'; // [NEW]
 
 // =========================================================
 // 1. DATA MODEL
@@ -25,7 +27,7 @@ class RewardModel {
 }
 
 // =========================================================
-// 2. STACK LOGIC (SWIPE PHYSICS)
+// 2. STACK LOGIC
 // =========================================================
 class BonusRewardStack extends StatefulWidget {
   final List<RewardModel> rewards;
@@ -43,7 +45,6 @@ class _BonusRewardStackState extends State<BonusRewardStack> with SingleTickerPr
   @override
   void initState() {
     super.initState();
-    // Physics controller: -1.0 (Down) to 1.0 (Up)
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -55,10 +56,8 @@ class _BonusRewardStackState extends State<BonusRewardStack> with SingleTickerPr
     _animationController.addStatusListener((status) {
       if (status == AnimationStatus.completed || status == AnimationStatus.dismissed) {
         setState(() {
-          // Cycle to next card
           _currentIndex = (_currentIndex + 1) % widget.rewards.length;
         });
-        // Reset instantly for next interaction
         _animationController.value = 0.0; 
       }
     });
@@ -71,7 +70,6 @@ class _BonusRewardStackState extends State<BonusRewardStack> with SingleTickerPr
   }
 
   void _onDragUpdate(DragUpdateDetails details) {
-    // Sensitivity control
     double delta = details.primaryDelta! / -250;
     _animationController.value += delta;
   }
@@ -80,7 +78,6 @@ class _BonusRewardStackState extends State<BonusRewardStack> with SingleTickerPr
     double velocity = details.primaryVelocity ?? 0;
     double currentVal = _animationController.value;
 
-    // Handle Snap Back or Fling based on velocity/distance
     if (currentVal > 0) {
       if (velocity < -800 || currentVal > 0.4) {
         _animationController.animateTo(1.0, curve: Curves.easeOut);
@@ -115,7 +112,6 @@ class _BonusRewardStackState extends State<BonusRewardStack> with SingleTickerPr
               return Stack(
                 alignment: Alignment.topCenter,
                 children: List.generate(renderCount, (i) {
-                  // Render Order: Back -> Front
                   final int stackPos = (renderCount - 1) - i;
                   final int dataIndex = (_currentIndex + stackPos) % totalItems;
                   final reward = widget.rewards[dataIndex];
@@ -149,13 +145,11 @@ class _BonusRewardStackState extends State<BonusRewardStack> with SingleTickerPr
     final double staticScale = 1.0 - (stackPos * 0.05);
 
     if (stackPos == 0) {
-      // Top Card Physics
       yOffset = staticY - (300 * animationValue);
       opacity = (1.0 - (absProgress * 1.5)).clamp(0.0, 1.0);
       scale = staticScale + (0.05 * absProgress);
       rotation = animationValue * 0.1; 
     } else {
-      // Background Cards Physics
       final int targetStackPos = stackPos - 1;
       final double targetY = targetStackPos * 15.0;
       final double targetScale = 1.0 - (targetStackPos * 0.05);
@@ -185,9 +179,9 @@ class _BonusRewardStackState extends State<BonusRewardStack> with SingleTickerPr
 }
 
 // =========================================================
-// 3. SINGLE CARD UI + HERO LOGIC
+// 3. SINGLE CARD UI + HERO LOGIC + USER DATA FETCH
 // =========================================================
-class SingleBonusCard extends StatelessWidget {
+class SingleBonusCard extends ConsumerWidget { // [UPDATED] Changed to ConsumerWidget
   final RewardModel reward;
   final bool isTopCard;
   final double animationValue;
@@ -200,14 +194,13 @@ class SingleBonusCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) { // [UPDATED] Added WidgetRef
     final double progress = (reward.currentCount / reward.targetCount).clamp(0.0, 1.0);
     final bool isCompleted = reward.currentCount >= reward.targetCount;
     final width = MediaQuery.of(context).size.width - 48;
 
     final bool isGoldTier = isCompleted; 
 
-    // Gold vs Standard Colors
     final List<Color> bgColors = isGoldTier 
         ? [const Color(0xFFDAA520), const Color(0xFFFFD700)] 
         : reward.gradientColors;
@@ -218,7 +211,6 @@ class SingleBonusCard extends StatelessWidget {
 
     double shadowOpacity = isTopCard ? 0.65 : (0.65 * animationValue);
     
-    // --- 1. DEFINE CARD UI ---
     Widget cardContent = Container(
       height: 180,
       width: width,
@@ -253,7 +245,7 @@ class SingleBonusCard extends StatelessWidget {
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     letterSpacing: isGoldTier ? 1.0 : 0,
-                    decoration: TextDecoration.none, // Important for Hero flight
+                    decoration: TextDecoration.none,
                   ),
                 ),
                 Container(
@@ -274,9 +266,7 @@ class SingleBonusCard extends StatelessWidget {
                 ),
               ],
             ),
-            
             const SizedBox(height: 20),
-
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -323,9 +313,7 @@ class SingleBonusCard extends StatelessWidget {
                 ),
               ],
             ),
-
             const Spacer(),
-
             Stack(
               children: [
                 Container(
@@ -354,9 +342,7 @@ class SingleBonusCard extends StatelessWidget {
                 ),
               ],
             ),
-
             const SizedBox(height: 16),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -377,8 +363,6 @@ class SingleBonusCard extends StatelessWidget {
       ),
     );
 
-    // --- 2. WRAP IN HERO (ONLY IF TOP) ---
-    // This allows the card to fly to the next screen smoothly
     Widget heroWrapper = isTopCard 
       ? Hero(
           tag: 'reward_${reward.restaurantName}',
@@ -389,19 +373,24 @@ class SingleBonusCard extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         if (isCompleted && isTopCard) {
+          // [UPDATED] Fetch Real User Data from Riverpod
+          final user = ref.read(userProfileProvider).value;
+          final fName = user?.firstName ?? "Student";
+          final lName = user?.lastName ?? "";
+          final realName = "$fName $lName".trim().toUpperCase();
+          final realId = user?.parchiId ?? "PENDING";
+
           Navigator.of(context).push(
             PageRouteBuilder(
-              opaque: false, // Transparent background for the "Floating" feel
-              transitionDuration: const Duration(milliseconds: 800), // Slow flight
+              opaque: false, 
+              transitionDuration: const Duration(milliseconds: 800),
               reverseTransitionDuration: const Duration(milliseconds: 600),
               pageBuilder: (_, __, ___) => GoldUnlockScreen(
                 reward: reward,
-                studentName: "AAWAIZ ALI", // Pass real name via provider here
-                studentId: "PK-GOLD-01",
+                studentName: realName.isEmpty ? "STUDENT" : realName, // Pass Real Name
+                studentId: realId, // Pass Real ID
               ),
               transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                // We only fade the black background in/out. 
-                // The Hero widget handles the card movement automatically.
                 return FadeTransition(opacity: animation, child: child);
               },
             ),

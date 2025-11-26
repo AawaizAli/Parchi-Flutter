@@ -38,7 +38,6 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
   void initState() {
     super.initState();
 
-    // 1. Entrance Animation
     _entranceController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -53,7 +52,6 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
       TweenSequenceItem(tween: Tween(begin: 0.8, end: 1.0), weight: 50), 
     ]).animate(CurvedAnimation(parent: _entranceController, curve: Curves.easeInOut));
 
-    // 2. Manual Flip Animation
     _manualFlipController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -63,7 +61,6 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
       CurvedAnimation(parent: _manualFlipController, curve: Curves.easeInOutBack),
     );
 
-    // 3. Hover Animation
     _hoverController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -73,7 +70,6 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
       CurvedAnimation(parent: _hoverController, curve: Curves.easeInOutSine),
     );
 
-    // Listeners
     _entranceController.addListener(() {
       if (_entranceController.value >= 0.5 && !_hasRevealed) {
         setState(() { _hasRevealed = true; });
@@ -89,9 +85,11 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
       }
     });
 
-    // Auto Start
-    Future.delayed(const Duration(milliseconds: 300), () {
-      _entranceController.forward();
+    // Wait for the Hero flight to finish before starting the flip
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (mounted) {
+        _entranceController.forward();
+      }
     });
   }
 
@@ -103,12 +101,10 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
     super.dispose();
   }
 
-  // [NEW] Close logic
   void _handleBackgroundTap() {
     Navigator.pop(context);
   }
 
-  // [NEW] Flip logic
   void _handleCardTap() {
     if (_entranceController.isCompleted) {
       if (_showRewardSide) {
@@ -124,14 +120,12 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
     return Scaffold(
       backgroundColor: Colors.black87, 
       body: GestureDetector(
-        // [UPDATED] Background tap closes the screen
         onTap: _handleBackgroundTap,
-        behavior: HitTestBehavior.opaque, // Catch taps everywhere
+        behavior: HitTestBehavior.opaque,
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Header
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 500),
                 child: Text(
@@ -148,7 +142,6 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
               
               const SizedBox(height: 40),
 
-              // THE ANIMATED CARD
               AnimatedBuilder(
                 animation: Listenable.merge([_entranceController, _manualFlipController, _hoverController]),
                 builder: (context, child) {
@@ -167,25 +160,31 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
 
                   bool showBackFace = angle >= (pi / 2) && angle < (3 * pi / 2); 
 
-                  return Transform.translate(
-                    offset: Offset(0, _hasRevealed ? _hoverAnimation.value : 0), 
-                    child: Transform.scale(
-                      scale: scale,
-                      child: GestureDetector(
-                        // [UPDATED] Card Tap triggers flip (and stops propagation to background)
-                        onTap: _handleCardTap,
-                        child: Transform(
-                          transform: transform,
-                          alignment: Alignment.center,
-                          child: showBackFace 
-                            ? Transform(
-                                alignment: Alignment.center,
-                                transform: Matrix4.identity()..rotateY(pi), 
-                                child: _buildGoldParchiCard(), 
-                              )
-                            : (_entranceController.isCompleted 
-                                ? _buildGoldRewardDetailCard() 
-                                : _buildInitialLockCard()), 
+                  // [FIXED] Wrap the entire transforming assembly in HERO
+                  return Hero(
+                    tag: 'reward_${widget.reward.restaurantName}', // The Tag must match source
+                    child: Material(
+                      color: Colors.transparent,
+                      child: Transform.translate(
+                        offset: Offset(0, _hasRevealed ? _hoverAnimation.value : 0), 
+                        child: Transform.scale(
+                          scale: scale,
+                          child: GestureDetector(
+                            onTap: _handleCardTap,
+                            child: Transform(
+                              transform: transform,
+                              alignment: Alignment.center,
+                              child: showBackFace 
+                                ? Transform(
+                                    alignment: Alignment.center,
+                                    transform: Matrix4.identity()..rotateY(pi), 
+                                    child: _buildGoldParchiCard(), 
+                                  )
+                                : (_entranceController.isCompleted 
+                                    ? _buildGoldRewardDetailCard() 
+                                    : _buildInitialLockCard()), // No Hero inside here anymore
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -195,13 +194,12 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
 
               const SizedBox(height: 60),
 
-              // Hint Text
               AnimatedOpacity(
                 duration: const Duration(milliseconds: 500),
                 opacity: _entranceController.isCompleted ? 1.0 : 0.0,
                 child: const Text(
                   "Tap card to flip • Tap background to close", 
-                  style: TextStyle(color: Colors.white38, fontSize: 12)
+                  style: TextStyle(color: Colors.white38, fontSize: 12, decoration: TextDecoration.none)
                 ),
               ),
             ],
@@ -211,7 +209,7 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
     );
   }
 
-  // --- CARD FACES ---
+  // --- CARD FACES (Removed Hero from here) ---
 
   Widget _buildInitialLockCard() {
     return Container(
@@ -224,7 +222,7 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24), 
         boxShadow: [
           BoxShadow(
             color: const Color(0xFFFFD700).withOpacity(0.8),
@@ -239,7 +237,16 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
           children: [
             Icon(Icons.lock_open_rounded, size: 60, color: Colors.white),
             SizedBox(height: 10),
-            Text("UNLOCKING...", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+            Text(
+              "UNLOCKING...", 
+              style: TextStyle(
+                color: Colors.white, 
+                fontWeight: FontWeight.bold, 
+                letterSpacing: 1.5, 
+                decoration: TextDecoration.none,
+                fontSize: 14,
+              )
+            ),
           ],
         ),
       ),
@@ -248,11 +255,7 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
 
   Widget _buildGoldParchiCard() {
     const goldGradient = LinearGradient(
-      colors: [
-        Color(0xFFDAA520), 
-        Color(0xFFFFD700), 
-        Color(0xFFB8860B), 
-      ],
+      colors: [Color(0xFFDAA520), Color(0xFFFFD700), Color(0xFFB8860B)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       stops: [0.1, 0.5, 0.9],
@@ -264,7 +267,7 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         gradient: goldGradient,
-        borderRadius: BorderRadius.circular(20), 
+        borderRadius: BorderRadius.circular(24), 
         boxShadow: [
           BoxShadow(
             color: Colors.amber.withOpacity(0.6),
@@ -284,11 +287,7 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
 
   Widget _buildGoldRewardDetailCard() {
     const goldGradient = LinearGradient(
-      colors: [
-        Color(0xFFDAA520), 
-        Color(0xFFFFD700), 
-        Color(0xFFB8860B), 
-      ],
+      colors: [Color(0xFFDAA520), Color(0xFFFFD700), Color(0xFFB8860B)],
       begin: Alignment.topRight, 
       end: Alignment.bottomLeft,
       stops: [0.1, 0.5, 0.9],
@@ -300,7 +299,7 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         gradient: goldGradient,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
             color: Colors.amber.withOpacity(0.6),
@@ -329,7 +328,7 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
                     SizedBox(width: 8),
                     Text(
                       "REWARD DETAILS",
-                      style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold, letterSpacing: 1),
+                      style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold, letterSpacing: 1, decoration: TextDecoration.none),
                     ),
                   ],
                 ),
@@ -341,7 +340,8 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
                       color: Colors.black87, 
                       fontSize: 28, 
                       fontWeight: FontWeight.w900,
-                      height: 1.1
+                      height: 1.1,
+                      decoration: TextDecoration.none,
                     ),
                   ),
                 ),
@@ -357,11 +357,11 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
                     children: [
                       Text(
                         "CODE: ",
-                        style: TextStyle(color: Colors.black54, fontSize: 12, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: Colors.black54, fontSize: 12, fontWeight: FontWeight.bold, decoration: TextDecoration.none),
                       ),
                       Text(
                         "GOLD-777",
-                        style: TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Courier'),
+                        style: TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Courier', decoration: TextDecoration.none),
                       ),
                     ],
                   ),

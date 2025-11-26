@@ -14,13 +14,18 @@ class _SignupScreenOneState extends State<SignupScreenOne> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _graduationYearController = TextEditingController();
   String? _selectedUniversity;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   
   String? _firstNameError;
   String? _lastNameError;
   String? _emailError;
+  String? _passwordError;
+  String? _confirmPasswordError;
   String? _universityError;
 
   final List<String> _universities = [
@@ -37,8 +42,9 @@ class _SignupScreenOneState extends State<SignupScreenOne> {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
     _phoneController.dispose();
-    _graduationYearController.dispose();
     super.dispose();
   }
 
@@ -50,6 +56,8 @@ class _SignupScreenOneState extends State<SignupScreenOne> {
       _firstNameError = null;
       _lastNameError = null;
       _emailError = null;
+      _passwordError = null;
+      _confirmPasswordError = null;
       _universityError = null;
     });
 
@@ -83,6 +91,34 @@ class _SignupScreenOneState extends State<SignupScreenOne> {
       isValid = false;
     }
 
+    // Validate Password
+    final password = _passwordController.text;
+    if (password.isEmpty) {
+      setState(() {
+        _passwordError = "Password is required";
+      });
+      isValid = false;
+    } else if (password.length < 8) {
+      setState(() {
+        _passwordError = "Password must be at least 8 characters";
+      });
+      isValid = false;
+    }
+
+    // Validate Confirm Password
+    final confirmPassword = _confirmPasswordController.text;
+    if (confirmPassword.isEmpty) {
+      setState(() {
+        _confirmPasswordError = "Please confirm your password";
+      });
+      isValid = false;
+    } else if (password != confirmPassword) {
+      setState(() {
+        _confirmPasswordError = "Passwords do not match";
+      });
+      isValid = false;
+    }
+
     // Validate University
     if (_selectedUniversity == null || _selectedUniversity!.isEmpty) {
       setState(() {
@@ -107,9 +143,9 @@ class _SignupScreenOneState extends State<SignupScreenOne> {
             firstName: _firstNameController.text.trim(),
             lastName: _lastNameController.text.trim(),
             email: _emailController.text.trim(),
+            password: _passwordController.text,
             phone: _phoneController.text.trim(),
             university: _selectedUniversity ?? "",
-            graduationYear: _graduationYearController.text.trim(),
           ),
         ),
       );
@@ -218,6 +254,32 @@ class _SignupScreenOneState extends State<SignupScreenOne> {
                   ],
                   const SizedBox(height: 20),
 
+                  _buildInputLabel("Password *"),
+                  _buildPasswordTextField(),
+                  if (_passwordError != null) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4.0, left: 4.0),
+                      child: Text(
+                        _passwordError!,
+                        style: const TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+
+                  _buildInputLabel("Confirm Password *"),
+                  _buildConfirmPasswordTextField(),
+                  if (_confirmPasswordError != null) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4.0, left: 4.0),
+                      child: Text(
+                        _confirmPasswordError!,
+                        style: const TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+
                   _buildInputLabel("Phone Number (Optional)"),
                   _buildAfluctaTextField(_phoneController, "+92 300 1234567", Icons.phone_outlined, isNumber: true),
                   const SizedBox(height: 24),
@@ -263,11 +325,6 @@ class _SignupScreenOneState extends State<SignupScreenOne> {
                       ),
                     ),
                   ],
-                  const SizedBox(height: 20),
-
-                  _buildInputLabel("Graduation Year (Optional)"),
-                  _buildAfluctaTextField(_graduationYearController, "2025", Icons.calendar_today, isNumber: true),
-                  
                   const SizedBox(height: 40),
 
                   // Neon Button
@@ -357,6 +414,10 @@ class _SignupScreenOneState extends State<SignupScreenOne> {
                 _lastNameError = null;
               } else if (controller == _emailController) {
                 _emailError = null;
+              } else if (controller == _passwordController) {
+                _passwordError = null;
+              } else if (controller == _confirmPasswordController) {
+                _confirmPasswordError = null;
               }
             });
           }
@@ -365,6 +426,126 @@ class _SignupScreenOneState extends State<SignupScreenOne> {
           hintText: hint,
           hintStyle: TextStyle(color: Colors.grey.shade400),
           prefixIcon: Icon(icon, color: errorText != null ? Colors.red : Colors.grey.shade500),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPasswordTextField() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _passwordError != null ? Colors.red : Colors.grey.shade300,
+          width: _passwordError != null ? 1.5 : 1,
+        ),
+      ),
+      child: TextField(
+        controller: _passwordController,
+        obscureText: _obscurePassword,
+        keyboardType: TextInputType.visiblePassword,
+        style: const TextStyle(color: AppColors.textPrimary),
+        onChanged: (value) {
+          // Clear error when user starts typing
+          if (_passwordError != null) {
+            setState(() {
+              _passwordError = null;
+            });
+          }
+          // Check if confirm password matches in real-time
+          if (_confirmPasswordController.text.isNotEmpty) {
+            if (value != _confirmPasswordController.text) {
+              setState(() {
+                _confirmPasswordError = "Passwords do not match";
+              });
+            } else {
+              setState(() {
+                _confirmPasswordError = null;
+              });
+            }
+          }
+        },
+        decoration: InputDecoration(
+          hintText: "Enter your password",
+          hintStyle: TextStyle(color: Colors.grey.shade400),
+          prefixIcon: Icon(
+            Icons.lock_outline,
+            color: _passwordError != null ? Colors.red : Colors.grey.shade500,
+          ),
+          suffixIcon: IconButton(
+            icon: Icon(
+              _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+              color: Colors.grey.shade500,
+            ),
+            onPressed: () {
+              setState(() {
+                _obscurePassword = !_obscurePassword;
+              });
+            },
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConfirmPasswordTextField() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _confirmPasswordError != null ? Colors.red : Colors.grey.shade300,
+          width: _confirmPasswordError != null ? 1.5 : 1,
+        ),
+      ),
+      child: TextField(
+        controller: _confirmPasswordController,
+        obscureText: _obscureConfirmPassword,
+        keyboardType: TextInputType.visiblePassword,
+        style: const TextStyle(color: AppColors.textPrimary),
+        onChanged: (value) {
+          // Clear error when user starts typing
+          if (_confirmPasswordError != null) {
+            setState(() {
+              _confirmPasswordError = null;
+            });
+          }
+          // Also check if passwords match in real-time
+          if (value.isNotEmpty && _passwordController.text.isNotEmpty) {
+            if (value != _passwordController.text) {
+              setState(() {
+                _confirmPasswordError = "Passwords do not match";
+              });
+            } else {
+              setState(() {
+                _confirmPasswordError = null;
+              });
+            }
+          }
+        },
+        decoration: InputDecoration(
+          hintText: "Confirm your password",
+          hintStyle: TextStyle(color: Colors.grey.shade400),
+          prefixIcon: Icon(
+            Icons.lock_outline,
+            color: _confirmPasswordError != null ? Colors.red : Colors.grey.shade500,
+          ),
+          suffixIcon: IconButton(
+            icon: Icon(
+              _obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+              color: Colors.grey.shade500,
+            ),
+            onPressed: () {
+              setState(() {
+                _obscureConfirmPassword = !_obscureConfirmPassword;
+              });
+            },
+          ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         ),

@@ -136,6 +136,93 @@ class AuthService {
     }
   }
 
+  // Student Signup with verification documents
+  /// 
+  /// Returns the signup response data on success
+  /// Throws custom exceptions on error (ValidationException, ConflictException, etc.)
+  Future<StudentSignupResponse> studentSignup({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String password,
+    String? phone,
+    required String university,
+    required String studentIdImageUrl,
+    required String selfieImageUrl,
+  }) async {
+    try {
+      // Prepare request body
+      final requestBody = {
+        'firstName': firstName,
+        'lastName': lastName,
+        'email': email,
+        'password': password,
+        if (phone != null && phone.isNotEmpty) 'phone': phone,
+        'university': university,
+        'studentIdImageUrl': studentIdImageUrl,
+        'selfieImageUrl': selfieImageUrl,
+      };
+
+      // Make POST request
+      final response = await http.post(
+        Uri.parse(ApiConfig.studentSignupEndpoint),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(requestBody),
+      );
+
+      // Parse response
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+
+      // Check for success
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return StudentSignupResponse.fromJson(responseData);
+      } else {
+        // Handle error response
+        throw _handleStudentSignupError(response.statusCode, responseData);
+      }
+    } on http.ClientException {
+      throw Exception('Network error. Please check your internet connection.');
+    } catch (e) {
+      if (e is ValidationException || 
+          e is ConflictException || 
+          e is UnprocessableEntityException || 
+          e is ServerException) {
+        rethrow;
+      }
+      throw Exception('Student signup failed: ${e.toString()}');
+    }
+  }
+
+  /// Handle API error responses for student signup
+  Exception _handleStudentSignupError(int statusCode, Map<String, dynamic> errorData) {
+    final message = errorData['message'];
+    String errorMessage;
+    
+    // Handle array of validation messages
+    if (message is List) {
+      errorMessage = message.join(', ');
+    } else if (message is String) {
+      errorMessage = message;
+    } else {
+      errorMessage = 'An error occurred';
+    }
+    
+    switch (statusCode) {
+      case 400:
+        return ValidationException(errorMessage);
+      case 409:
+        return ConflictException(errorMessage);
+      case 422:
+        return UnprocessableEntityException(errorMessage);
+      case 500:
+        return ServerException(errorMessage);
+      default:
+        return Exception(errorMessage);
+    }
+  }
+
   // Login
   Future<AuthResponse> login({
     required String email,

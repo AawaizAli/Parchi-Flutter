@@ -9,6 +9,7 @@ class ApiConfig {
 
   // Auth endpoints
   static String get signupEndpoint => '$baseUrl/auth/signup';
+  static String get studentSignupEndpoint => '$baseUrl/auth/student/signup';
   static String get loginEndpoint => '$baseUrl/auth/login';
   static String get logoutEndpoint => '$baseUrl/auth/logout';
   static String get profileEndpoint => '$baseUrl/auth/me';

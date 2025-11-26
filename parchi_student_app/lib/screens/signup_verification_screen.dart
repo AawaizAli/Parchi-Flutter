@@ -3,7 +3,14 @@ import '../utils/colours.dart';
 import 'login_screen.dart';
 
 class SignupVerificationScreen extends StatefulWidget {
-  const SignupVerificationScreen({super.key});
+  final String? parchiId;
+  final String? email;
+
+  const SignupVerificationScreen({
+    super.key,
+    this.parchiId,
+    this.email,
+  });
 
   @override
   State<SignupVerificationScreen> createState() => _SignupVerificationScreenState();
@@ -94,15 +101,53 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen> wit
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  "Your documents have been submitted.\nVerification takes 24-48 hours.",
+                Text(
+                  widget.parchiId != null
+                      ? "Your Parchi ID: ${widget.parchiId}\n\nYour documents have been submitted.\nVerification takes 24-48 hours."
+                      : "Your documents have been submitted.\nVerification takes 24-48 hours.",
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 16,
                     color: AppColors.textSecondary,
                     height: 1.5,
                   ),
                 ),
+                if (widget.parchiId != null) ...[
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.primary.withOpacity(0.3),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        const Text(
+                          "Your Parchi ID",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          widget.parchiId!,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 
                 const Spacer(),
                 

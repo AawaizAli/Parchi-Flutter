@@ -3,24 +3,26 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../utils/colours.dart';
 import '../services/supabase_storage_service.dart';
+import '../services/auth_service.dart';
+import '../models/auth_models.dart';
 import 'signup_verification_screen.dart';
 
 class SignupScreenTwo extends StatefulWidget {
   final String firstName;
   final String lastName;
   final String email;
+  final String password;
   final String phone;
   final String university;
-  final String graduationYear;
 
   const SignupScreenTwo({
     super.key,
     required this.firstName,
     required this.lastName,
     required this.email,
+    required this.password,
     required this.phone,
     required this.university,
-    required this.graduationYear,
   });
 
   @override
@@ -36,11 +38,7 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
   String? _validationError;
   bool _isUploading = false;
   
-  // Store uploaded image URLs (to be sent to backend API)
-  // ignore: unused_field
-  String? _studentIdImageUrl;
-  // ignore: unused_field
-  String? _selfieImageUrl;
+  final AuthService _authService = AuthService();
 
   void _showImageSourceDialog(bool isStudentId) {
     showModalBottomSheet(
@@ -125,6 +123,18 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
     );
   }
 
+  void _showError(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
+  }
+
   bool _validateForm() {
     if (_studentIdImage == null) {
       setState(() {
@@ -167,51 +177,52 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
     });
 
     try {
-      // Upload both images to Supabase Storage
+      // Step 1: Upload both images to Supabase Storage
       final imageUrls = await _storageService.uploadKycImages(
         studentIdImage: _studentIdImage!,
         selfieImage: _selfieImage!,
         userId: tempUserId,
       );
 
-      setState(() {
-        _studentIdImageUrl = imageUrls['studentIdUrl'];
-        _selfieImageUrl = imageUrls['selfieUrl'];
-        _isUploading = false;
-      });
+      // Step 2: Submit signup data to backend API with image URLs
+      final signupResponse = await _authService.studentSignup(
+        firstName: widget.firstName,
+        lastName: widget.lastName,
+        email: widget.email,
+        password: widget.password,
+        phone: widget.phone.isNotEmpty ? widget.phone : null,
+        university: widget.university,
+        studentIdImageUrl: imageUrls['studentIdUrl']!,
+        selfieImageUrl: imageUrls['selfieUrl']!,
+      );
 
-      // TODO: Send these URLs along with other signup data to your backend API
-      // Example:
-      // await apiService.submitStudentSignup({
-      //   'firstName': widget.firstName,
-      //   'lastName': widget.lastName,
-      //   'email': widget.email,
-      //   'phone': widget.phone,
-      //   'university': widget.university,
-      //   'graduationYear': widget.graduationYear,
-      //   'studentIdImageUrl': _studentIdImageUrl,
-      //   'selfieImageUrl': _selfieImageUrl,
-      // });
-
+      // Step 3: Navigate to verification screen with parchiId
       if (mounted) {
-        Navigator.push(
+        Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const SignupVerificationScreen()),
-        );
-      }
-    } catch (e) {
-      setState(() {
-        _isUploading = false;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Failed to upload images: ${e.toString()}"),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
+          MaterialPageRoute(
+            builder: (context) => SignupVerificationScreen(
+              parchiId: signupResponse.parchiId,
+              email: signupResponse.email,
+            ),
           ),
         );
+      }
+    } on ValidationException catch (e) {
+      _showError('Validation error: ${e.message}');
+    } on ConflictException catch (e) {
+      _showError('Email already registered: ${e.message}');
+    } on UnprocessableEntityException catch (e) {
+      _showError('Invalid image URLs: ${e.message}. Please re-upload your images.');
+    } on ServerException catch (e) {
+      _showError('Server error: ${e.message}');
+    } catch (e) {
+      _showError('Signup failed: ${e.toString()}');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
       }
     }
   }

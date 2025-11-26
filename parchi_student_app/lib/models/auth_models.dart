@@ -136,3 +136,79 @@ class ApiError {
   }
 }
 
+// Student Signup Response Model
+class StudentSignupResponse {
+  final String id;
+  final String email;
+  final String firstName;
+  final String lastName;
+  final String university;
+  final String parchiId;
+  final String verificationStatus;
+  final DateTime createdAt;
+  final int status;
+  final String message;
+
+  StudentSignupResponse({
+    required this.id,
+    required this.email,
+    required this.firstName,
+    required this.lastName,
+    required this.university,
+    required this.parchiId,
+    required this.verificationStatus,
+    required this.createdAt,
+    required this.status,
+    required this.message,
+  });
+
+  factory StudentSignupResponse.fromJson(Map<String, dynamic> json) {
+    final data = json['data'] as Map<String, dynamic>;
+    return StudentSignupResponse(
+      id: data['id'] as String,
+      email: data['email'] as String,
+      firstName: data['firstName'] as String,
+      lastName: data['lastName'] as String,
+      university: data['university'] as String,
+      parchiId: data['parchiId'] as String,
+      verificationStatus: data['verificationStatus'] as String,
+      createdAt: DateTime.parse(data['createdAt'] as String),
+      status: json['status'] as int? ?? 201,
+      message: json['message'] as String? ?? '',
+    );
+  }
+}
+
+// Custom Exception Classes for Student Signup
+class ValidationException implements Exception {
+  final String message;
+  ValidationException(this.message);
+  
+  @override
+  String toString() => message;
+}
+
+class ConflictException implements Exception {
+  final String message;
+  ConflictException(this.message);
+  
+  @override
+  String toString() => message;
+}
+
+class UnprocessableEntityException implements Exception {
+  final String message;
+  UnprocessableEntityException(this.message);
+  
+  @override
+  String toString() => message;
+}
+
+class ServerException implements Exception {
+  final String message;
+  ServerException(this.message);
+  
+  @override
+  String toString() => message;
+}
+

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // [NEW]
+import 'package:flutter_riverpod/flutter_riverpod.dart'; 
 import '../../utils/colours.dart';
-import '../../widgets/home_screen_parchicard_widgets/parchi_card.dart';
-import '../../widgets/home_screen_restraunts_widgets/home_sheet_content.dart';
-import '../../providers/user_provider.dart'; // [NEW]
+import '../../widgets/home_screen_parchicard_widgets/parchi_card.dart'; 
+import '../../widgets/home_screen_widgets/home_sheet_content.dart';
+import '../../providers/user_provider.dart'; 
+import 'notification_screen.dart'; // [NEW] Import the new screen
 
-// [CHANGED] Extend ConsumerStatefulWidget
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -13,7 +13,6 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-// [CHANGED] Use ConsumerState
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final DraggableScrollableController _sheetController = DraggableScrollableController();
   final ValueNotifier<double> _expandProgress = ValueNotifier(0.0);
@@ -40,6 +39,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.dispose();
   }
 
+  // [NEW] THE COOL TRANSITION LOGIC
+  void _openNotifications() {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 400),
+        reverseTransitionDuration: const Duration(milliseconds: 300),
+        pageBuilder: (context, animation, secondaryAnimation) => const NotificationScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          // Curved animation for smoothness
+          final curvedAnimation = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutQuart,
+          );
+
+          return ScaleTransition(
+            // Alignment matches the Bell Icon position (Top Right)
+            alignment: const Alignment(0.9, -0.95), 
+            scale: curvedAnimation,
+            child: FadeTransition(
+              opacity: curvedAnimation,
+              child: child,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final double screenHeight = MediaQuery.of(context).size.height;
@@ -58,8 +85,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (_maxSheetSize > 0.95) _maxSheetSize = 0.95;
     if (_minSheetSize > _maxSheetSize) _minSheetSize = _maxSheetSize - 0.05;
 
-    // [NEW] Watch the provider! 
-    // This 'userAsync' variable contains the Data, Loading state, OR Error.
     final userAsync = ref.watch(userProfileProvider);
 
     return Scaffold(
@@ -76,8 +101,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               builder: (context, progress, child) {
                 return Opacity(
                   opacity: (1.0 - (progress * 3)).clamp(0.0, 1.0), 
-                  
-                  // [NEW] Handle states cleanly
                   child: userAsync.when(
                     data: (user) {
                       final fname = user?.firstName ?? "Student";
@@ -90,14 +113,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         studentId: pId,
                       );
                     },
-                    loading: () => const ParchiCard(
-                      studentName: "LOADING...",
-                      studentId: "PK-....",
-                    ),
-                    error: (err, stack) => const ParchiCard(
-                      studentName: "OFFLINE",
-                      studentId: "ERROR",
-                    ),
+                    loading: () => const ParchiCard(studentName: "LOADING...", studentId: "PK-...."),
+                    error: (err, stack) => const ParchiCard(studentName: "OFFLINE", studentId: "ERROR"),
                   ),
                 );
               },
@@ -163,9 +180,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     color: Colors.white.withOpacity(0.2),
                                     shape: BoxShape.circle,
                                   ),
+                                  // [UPDATED] Replaced empty onPressed with _openNotifications
                                   child: IconButton(
                                     icon: const Icon(Icons.notifications_none, color: Colors.white),
-                                    onPressed: () {},
+                                    onPressed: _openNotifications, 
                                   ),
                                 ),
                               ],

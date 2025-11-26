@@ -2,16 +2,14 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/auth_models.dart';
 import '../services/auth_service.dart';
 
-// This line allows the generator to create the file 'user_provider.g.dart'
 part 'user_provider.g.dart';
 
-// keepAlive: true ensures the data isn't deleted when you switch tabs
 @Riverpod(keepAlive: true)
 class UserProfile extends _$UserProfile {
   @override
   FutureOr<User?> build() async {
-    // 1. Attempt to fetch fresh data from API
     try {
+      // 1. Try to get fresh profile from API
       final profile = await authService.getProfile();
       return profile.user;
     } catch (e) {
@@ -29,8 +27,13 @@ class UserProfile extends _$UserProfile {
     });
   }
 
-  // Use this after Login/Logout to update UI instantly
+  // Use this after Login to update UI instantly
   void setUser(User? user) {
     state = AsyncValue.data(user);
+  }
+
+  // [THIS WAS MISSING] Use this on Logout to clear the state
+  void clearUser() {
+    state = const AsyncValue.data(null);
   }
 }

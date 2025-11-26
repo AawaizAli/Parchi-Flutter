@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // [NEW]
+import 'package:parchi_student_app/screens/auth/sign_up_screens/signup_screen_one.dart';
 import '../../../utils/colours.dart';
 import '../../../main.dart';
 import '../../../services/auth_service.dart';
+import '../../../providers/user_provider.dart'; // [NEW]
 import '../sign_up_screens/signup_screen_one.dart';
 
-class LoginScreen extends StatefulWidget {
+// [CHANGED] Use ConsumerStatefulWidget
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin {
+class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderStateMixin {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -19,7 +23,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   bool _isLoading = false;
   String? _errorMessage;
 
-  // Logo Glow Animation
+  // Animation variables
   late AnimationController _glowController;
   late Animation<double> _glowAnimation;
    
@@ -27,7 +31,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   void initState() {
     super.initState();
     
-    // 1. Logo Pulse (Originating from Logo)
     _glowController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -57,68 +60,50 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     });
 
     try {
+      // 1. Perform Login API Call
       await authService.login(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
 
       if (mounted) {
-        // Check user role - only students can access the student app
-        final user = await authService.getUser();
+        // 2. [CRITICAL FIX] Force refresh the User Provider
+        // This fetches the full profile (Name, Uni, ID) from the backend /me endpoint
+        // and updates the state so HomeScreen shows data immediately.
+        await ref.read(userProfileProvider.notifier).refresh();
+
+        // 3. Validate Role & Active Status (Double check via provider or service)
+        final user = ref.read(userProfileProvider).value;
+        
         if (user == null) {
-          setState(() {
-            _errorMessage = 'Failed to retrieve user information. Please try again.';
-            _isLoading = false;
-          });
-          return;
+           throw Exception("Failed to load user profile.");
         }
 
-        // Validate that user is a student
         if (user.role.toLowerCase() != 'student') {
-          // Logout the user since they're not a student
           await authService.logout();
-          setState(() {
-            _errorMessage = 'Access denied. This app is only for students. Please use the merchant app.';
-            _isLoading = false;
-          });
-          
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Access denied. This app is only for students.'),
-                backgroundColor: AppColors.error,
-                duration: const Duration(seconds: 4),
-              ),
-            );
-          }
-          return;
+          ref.read(userProfileProvider.notifier).clearUser(); // Clear state
+          throw Exception("Access denied. Students only.");
         }
 
-        // Check if account is active
         if (!user.isActive) {
-          // Account pending approval
-          if (mounted) {
+           // Show pending message but let them in (or block them based on your requirement)
+           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text("Your account is pending approval. Please wait for admin approval."),
+                content: Text("Account pending approval. Functionality may be limited."),
                 backgroundColor: Colors.orange,
-                duration: Duration(seconds: 4),
               ),
             );
-            // Still navigate but user might have limited access
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const MainScreen()),
-            );
-          }
-        } else {
-          // Account is active and user is a student, proceed to main screen
-          if (mounted) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const MainScreen()),
-            );
-          }
+           }
+        }
+
+        // 4. Navigate to Main Screen
+        if (mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const MainScreen()),
+            (route) => false,
+          );
         }
       }
     } catch (e) {
@@ -128,13 +113,23 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_errorMessage ?? 'Login failed. Please try again.'),
-            backgroundColor: AppColors.error,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        // Check specifically for Pending Account error from backend
+        if (e.toString().toLowerCase().contains('pending')) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Your account is pending approval. Verification takes 24-48 hours."),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_errorMessage ?? 'Login failed. Please try again.'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
       }
     } finally {
       if (mounted) {
@@ -153,32 +148,31 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
-          // --- 1. STATIC BACKGROUND (No Breathing) ---
+          // --- 1. BACKGROUND ---
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0xFF0B1021), // Very Dark Blue/Black
-                  Color(0xFF1B2845), // Deep Space Blue
-                  Color(0xFF274060), // Lighter Blue near horizon
+                  Color(0xFF0B1021), 
+                  Color(0xFF1B2845), 
+                  Color(0xFF274060), 
                 ],
               ),
             ),
           ),
 
-          // --- 2. TOP SECTION: LOGO & TEXT ---
+          // --- 2. LOGO & TEXT ---
           Positioned(
             top: 0,
             left: 0,
             right: 0,
-            height: screenHeight * 0.45, // Slightly adjusted top space since bottom is smaller
+            height: screenHeight * 0.45, 
             child: SafeArea(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Animated Parchi Logo with STRONG RIPPLE PULSE
                   AnimatedBuilder(
                     animation: _glowAnimation,
                     builder: (context, child) {
@@ -189,19 +183,16 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                           color: AppColors.primary, 
                           borderRadius: BorderRadius.circular(20), 
                           boxShadow: [
-                            // Core Glow
                             BoxShadow(
                               color: AppColors.primary.withOpacity(0.8),
                               blurRadius: 15,
                               spreadRadius: 2,
                             ),
-                            // Ripple 1 (Expands with animation)
                             BoxShadow(
                               color: AppColors.primary.withOpacity(0.4),
                               blurRadius: _glowAnimation.value * 2,
                               spreadRadius: _glowAnimation.value,
                             ),
-                            // Ripple 2 (Expands wider)
                             BoxShadow(
                               color: AppColors.primary.withOpacity(0.1),
                               blurRadius: _glowAnimation.value * 4,
@@ -213,17 +204,14 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                       );
                     },
                   ),
-                  
                   const SizedBox(height: 30), 
-                  
-                  // CHANGED: Text from "Let's get you signed in!" to "Parchi"
                   const Text(
                     "Parchi",
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 36, // Increased size slightly for brand impact
-                      fontWeight: FontWeight.w900, // Extra bold
+                      fontSize: 36, 
+                      fontWeight: FontWeight.w900, 
                       height: 1.2,
                       shadows: [
                         Shadow(
@@ -239,7 +227,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             ),
           ),
 
-          // --- 3. BOTTOM SECTION: FLOATING WHITE SHEET ---
+          // --- 3. FORM SHEET ---
           Positioned(
             bottom: 0,
             left: 0,
@@ -247,27 +235,22 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
               child: SizedBox(
-                // CHANGED: Reduced height from 0.68 to 0.5 (50% of screen)
                 height: screenHeight * 0.5, 
                 child: Stack(
                   children: [
-                    // White Background Container
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(40), 
                       ),
                     ),
-                    
-                    // Form Content
                     Padding(
                       padding: const EdgeInsets.all(24.0),
                       child: Form(
                         key: _formKey,
                         child: Column(
-                          mainAxisSize: MainAxisSize.min, // Ensures content doesn't stretch weirdly
+                          mainAxisSize: MainAxisSize.min, 
                           children: [
-                            // Sign Up Link
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -306,19 +289,15 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                               ],
                             ),
                             
-                            const SizedBox(height: 25), // Adjusted spacing
+                            const SizedBox(height: 25), 
 
                             _buildAfluctaTextField(
                               controller: _emailController,
                               hint: "Enter your email",
                               icon: Icons.email_outlined,
                               validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your email';
-                                }
-                                if (!value.contains('@') || !value.contains('.')) {
-                                  return 'Please enter a valid email';
-                                }
+                                if (value == null || value.isEmpty) return 'Please enter your email';
+                                if (!value.contains('@') || !value.contains('.')) return 'Please enter a valid email';
                                 return null;
                               },
                             ),
@@ -337,12 +316,8 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                                 });
                               },
                               validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your password';
-                                }
-                                if (value.length < 6) {
-                                  return 'Password must be at least 6 characters';
-                                }
+                                if (value == null || value.isEmpty) return 'Please enter your password';
+                                if (value.length < 6) return 'Password must be at least 6 characters';
                                 return null;
                               },
                             ),
@@ -361,7 +336,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                               ),
                             ),
 
-                            // Error message display
                             if (_errorMessage != null) ...[
                               const SizedBox(height: 12),
                               Container(
@@ -378,10 +352,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                                     Expanded(
                                       child: Text(
                                         _errorMessage!,
-                                        style: TextStyle(
-                                          color: AppColors.error,
-                                          fontSize: 12,
-                                        ),
+                                        style: const TextStyle(color: AppColors.error, fontSize: 12),
                                       ),
                                     ),
                                   ],
@@ -391,7 +362,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
 
                             const Spacer(),
 
-                            // STANDARD PILL BUTTON
                             SizedBox(
                               width: double.infinity,
                               height: 56,
@@ -424,7 +394,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                                       ),
                               ),
                             ),
-                            const SizedBox(height: 10), // Small bottom padding
+                            const SizedBox(height: 10), 
                           ],
                         ),
                       ),
@@ -451,7 +421,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     return Container(
       height: validator != null ? null : 56,
       decoration: BoxDecoration(
-        // CHANGED: Made color darker (shade200) so it looks gray against white
         color: Colors.grey.shade200,
         borderRadius: BorderRadius.circular(16),
       ),

@@ -41,31 +41,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   // [NEW] THE COOL TRANSITION LOGIC
   void _openNotifications() {
-    Navigator.of(context).push(
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 400),
-        reverseTransitionDuration: const Duration(milliseconds: 300),
-        pageBuilder: (context, animation, secondaryAnimation) => const NotificationScreen(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          // Curved animation for smoothness
-          final curvedAnimation = CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOutQuart,
-          );
+      Navigator.of(context).push(
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 500), // Slightly slower for effect
+          reverseTransitionDuration: const Duration(milliseconds: 400),
+          pageBuilder: (context, animation, secondaryAnimation) => const NotificationScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            // 1. Use a curved animation for that "bouncy/smooth" feel
+            final curvedAnimation = CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutExpo, // Expo makes it pop fast then settle smoothly
+            );
 
-          return ScaleTransition(
-            // Alignment matches the Bell Icon position (Top Right)
-            alignment: const Alignment(0.9, -0.95), 
-            scale: curvedAnimation,
-            child: FadeTransition(
-              opacity: curvedAnimation,
-              child: child,
-            ),
-          );
-        },
-      ),
-    );
-  }
+            return ScaleTransition(
+              // This aligns the origin to the Bell Icon (Top Right)
+              alignment: const Alignment(0.85, -0.9), 
+              scale: curvedAnimation,
+              child: AnimatedBuilder(
+                animation: curvedAnimation,
+                builder: (context, child) {
+                  // 2. Animate the Radius
+                  // Start with 200 (Circle) -> End with 0 (Rectangle)
+                  // We use (1 - value) so it starts high and goes to zero
+                  final double currentRadius = 200 * (1.0 - curvedAnimation.value);
+
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(currentRadius),
+                    child: child,
+                  );
+                },
+                child: child,
+              ),
+            );
+          },
+        ),
+      );
+    }
 
   @override
   Widget build(BuildContext context) {

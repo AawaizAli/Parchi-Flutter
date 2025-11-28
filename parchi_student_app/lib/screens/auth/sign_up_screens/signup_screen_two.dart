@@ -4,7 +4,6 @@ import 'package:image_picker/image_picker.dart';
 import '../../../utils/colours.dart';
 import '../../../services/supabase_storage_service.dart';
 import '../../../services/auth_service.dart';
-import '../../../models/auth_models.dart';
 import 'signup_verification_screen.dart';
 
 class SignupScreenTwo extends StatefulWidget {

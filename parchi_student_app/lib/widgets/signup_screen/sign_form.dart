@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../utils/colours.dart';
-import '../../sign_up_screens/signup_screen_two.dart'; // We still navigate to upload screen
+import '../../utils/colours.dart';
+import '../../screens/auth/sign_up_screens/signup_screen_two.dart'; // We still navigate to upload screen
 
 class SignupForm extends StatefulWidget {
   final VoidCallback onLoginTap;

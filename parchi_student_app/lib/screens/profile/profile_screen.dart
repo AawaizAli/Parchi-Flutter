@@ -1,101 +1,291 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // [NEW] Import Riverpod
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../utils/colours.dart';
 import '../../services/auth_service.dart';
-import '../../providers/user_provider.dart'; // [NEW] Import User Provider
+import '../../providers/user_provider.dart';
 import '../auth/login_screens/login_screen.dart';
 
-// [CHANGED] Convert to ConsumerWidget to listen to providers
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // [NEW] Watch the user provider
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  final DraggableScrollableController _sheetController = DraggableScrollableController();
+  final ValueNotifier<double> _expandProgress = ValueNotifier(0.0);
+
+  double _minSheetSize = 0.6; 
+  double _maxSheetSize = 0.95; 
+
+  @override
+  void initState() {
+    super.initState();
+    _sheetController.addListener(_onSheetChanged);
+  }
+
+  void _onSheetChanged() {
+    double currentSize = _sheetController.size;
+    double progress = (currentSize - _minSheetSize) / (_maxSheetSize - _minSheetSize);
+    _expandProgress.value = progress.clamp(0.0, 1.0);
+  }
+
+  @override
+  void dispose() {
+    _sheetController.removeListener(_onSheetChanged);
+    _sheetController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final userAsync = ref.watch(userProfileProvider);
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final double topPadding = MediaQuery.of(context).padding.top;
+
+    final double headerContentHeight = 340.0; 
+    _minSheetSize = (screenHeight - (topPadding + headerContentHeight)) / screenHeight;
+    
+    if (_minSheetSize < 0.4) _minSheetSize = 0.4;
+    if (_minSheetSize > 0.75) _minSheetSize = 0.75;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("My Profile"),
-        actions: [
-           IconButton(
-             onPressed: (){}, 
-             icon: const Icon(Icons.settings, color: AppColors.textPrimary)
-           )
-        ],
-      ),
+      backgroundColor: AppColors.secondary, 
       body: userAsync.when(
-        // 1. DATA READY
         data: (user) {
-          final fullName = "${user?.firstName ?? 'Student'} ${user?.lastName ?? ''}".trim();
-          final university = user?.university ?? "No University";
-          final parchiId = user?.parchiId ?? "PENDING";
+          final fName = user?.firstName ?? "Student";
+          final lName = user?.lastName ?? "";
+          final fullName = "$fName $lName".trim();
+          final email = user?.email ?? "No Email";
+          final parchiId = user?.parchiId ?? "PK-????";
+          final university = user?.university ?? "University";
+          final phone = user?.phone ?? "No Phone";
 
-          return Column(
+          return Stack(
             children: [
-              const SizedBox(height: 20),
-              // Profile Pic
-              const Center(
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundColor: AppColors.backgroundLight,
-                  child: Icon(Icons.person, size: 50, color: AppColors.textSecondary),
+              // --- 1. HEADER ---
+              Positioned(
+                top: topPadding, left: 0, right: 0, height: headerContentHeight,
+                child: ValueListenableBuilder<double>(
+                  valueListenable: _expandProgress,
+                  builder: (context, progress, child) {
+                    return Opacity(
+                      opacity: (1.0 - (progress * 3)).clamp(0.0, 1.0), 
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 10),
+                          const Text("Profile", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 30),
+                          Stack(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                                child: const CircleAvatar(radius: 60, backgroundColor: AppColors.backgroundLight, child: Icon(Icons.person, size: 60, color: AppColors.textSecondary)),
+                              ),
+                              Positioned(
+                                bottom: 0, right: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(color: Colors.black87, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
+                                  child: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          Text(fullName, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ),
-              const SizedBox(height: 10),
-              
-              // [NEW] Dynamic Name
-              Text(
-                fullName.isEmpty ? "User" : fullName, 
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textPrimary)
-              ),
-              
-              // [NEW] Dynamic University
-              Text(
-                university, 
-                style: const TextStyle(color: AppColors.textSecondary)
-              ),
-              
-              const SizedBox(height: 30),
-              
-              ListTile(
-                leading: const Icon(Icons.history, color: AppColors.textSecondary),
-                title: const Text("Redemption History", style: TextStyle(color: AppColors.textPrimary)),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textSecondary),
-                onTap: () {},
-              ),
-              
-              // [NEW] Dynamic Parchi ID in list tile
-              ListTile(
-                leading: const Icon(Icons.qr_code, color: AppColors.textSecondary),
-                title: const Text("My Parchi ID", style: TextStyle(color: AppColors.textPrimary)),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(parchiId, style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textSecondary),
-                  ],
-                ),
-                onTap: () {},
-              ),
-              
-              const Divider(),
-              
-              ListTile(
-                leading: const Icon(Icons.logout, color: Colors.red),
-                title: const Text("Logout", style: TextStyle(color: Colors.red)),
-                onTap: () async {
-                  _handleLogout(context, ref);
+
+              // --- 2. DRAGGABLE WHITE SHEET ---
+              DraggableScrollableSheet(
+                controller: _sheetController,
+                initialChildSize: _minSheetSize,
+                minChildSize: _minSheetSize,
+                maxChildSize: _maxSheetSize,
+                snap: true,
+                builder: (BuildContext context, ScrollController scrollController) {
+                  return Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                      boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, -5))],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                      child: ListView(
+                        controller: scrollController,
+                        padding: const EdgeInsets.all(24),
+                        children: [
+                          Center(
+                            child: Container(
+                              width: 40, height: 4, margin: const EdgeInsets.only(bottom: 24),
+                              decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                            ),
+                          ),
+
+                          // --- INFO SECTION ---
+                          _buildDetailRow("Email", email),
+                          _buildDivider(),
+                          _buildDetailRow("University", university),
+                          _buildDivider(),
+                          _buildDetailRow("Phone", phone), 
+                          _buildDivider(),
+                          _buildDetailRow("Parchi ID", parchiId),
+                          
+                          const SizedBox(height: 40),
+
+                          // --- SETTINGS SECTION ---
+                          const Text("Account Settings", style: TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 10),
+
+                          // [NEW] Modern List Tiles
+                          _buildMenuTile(
+                            icon: Icons.lock_outline, 
+                            label: "Change Password",
+                            color: const Color(0xFFFFF0F0), 
+                            iconColor: const Color(0xFFFF3B30),
+                            onTap: () {},
+                          ),
+                          _buildMenuTile(
+                            icon: Icons.history, 
+                            label: "Redemption History",
+                            color: const Color(0xFFF0FDF4), 
+                            iconColor: const Color(0xFF34C759),
+                            onTap: () {},
+                          ),
+
+                          const SizedBox(height: 24),
+                          const Text("Support", style: TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 10),
+
+                          _buildMenuTile(
+                            icon: Icons.help_outline, 
+                            label: "Help Center",
+                            color: const Color(0xFFF0F8FF), 
+                            iconColor: const Color(0xFF007AFF),
+                            onTap: () {},
+                          ),
+
+                          const SizedBox(height: 40),
+
+                          // --- LOGOUT (Clean & Minimal) ---
+                          InkWell(
+                            onTap: () => _handleLogout(context, ref),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF0F0), // Very light red bg
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.logout, color: AppColors.error, size: 20),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    "Log Out",
+                                    style: TextStyle(color: AppColors.error, fontSize: 16, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 40),
+                        ],
+                      ),
+                    ),
+                  );
                 },
               ),
             ],
           );
         },
-        // 2. LOADING STATE (Show skeletons or simple loading)
-        loading: () => const Center(child: CircularProgressIndicator()),
-        // 3. ERROR STATE
-        error: (err, stack) => Center(child: Text("Error: $err")),
+        loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
+        error: (err, stack) => Center(child: Text("Error: $err", style: const TextStyle(color: Colors.white))),
+      ),
+    );
+  }
+
+  // --- HELPER WIDGETS ---
+
+  Widget _buildDivider() {
+    return const Divider(height: 32, color: AppColors.backgroundLight, thickness: 1);
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
+          Text(value, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+        ],
+      ),
+    );
+  }
+
+  // [NEW] Clean, Modern Tile Widget
+  Widget _buildMenuTile({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required Color iconColor,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white, // Plain white background
+            // No border, just clean layout
+            borderRadius: BorderRadius.circular(16),
+            // Optional: Very subtle shadow if you want depth, otherwise remove
+            // border: Border.all(color: AppColors.backgroundLight), 
+          ),
+          child: Row(
+            children: [
+              // Colorful Icon Container
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: iconColor, size: 22),
+              ),
+              const SizedBox(width: 16),
+              
+              // Text
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              
+              // Arrow
+              const Icon(Icons.arrow_forward_ios, size: 16, color: Color(0xFFC7C7CC)),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -107,49 +297,25 @@ class ProfileScreen extends ConsumerWidget {
         title: const Text('Logout'),
         content: const Text('Are you sure you want to logout?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Logout', style: TextStyle(color: Colors.red)),
-          ),
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Logout', style: TextStyle(color: Colors.red))),
         ],
       ),
     );
 
-    if (shouldLogout == true) {
-      if (context.mounted) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => const Center(child: CircularProgressIndicator()),
-        );
-      }
-
+    if (shouldLogout == true && context.mounted) {
+      showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
       try {
         await authService.logout();
-        
-        // [NEW] Clear Riverpod State so data doesn't persist
         ref.read(userProfileProvider.notifier).clearUser();
-
         if (context.mounted) {
-          Navigator.of(context).pop(); // Close loading
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
+          Navigator.of(context).pop(); 
+          Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false);
         }
       } catch (e) {
         if (context.mounted) {
-          Navigator.of(context).pop(); // Close loading
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Logout failed: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Logout failed: $e'), backgroundColor: Colors.red));
         }
       }
     }

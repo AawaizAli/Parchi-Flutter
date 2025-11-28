@@ -6,7 +6,10 @@ class User {
   final String role;
   final bool isActive;
   
-  // [NEW] Added student specific fields as nullable
+  // [NEW] Added phone field
+  final String? phone;
+  
+  // Student specific fields
   final String? firstName;
   final String? lastName;
   final String? parchiId;
@@ -17,6 +20,7 @@ class User {
     required this.email,
     required this.role,
     required this.isActive,
+    this.phone, // [NEW]
     this.firstName,
     this.lastName,
     this.parchiId,
@@ -24,7 +28,6 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
-    // [LOGIC ADDED] Check for nested student object from backend
     final studentData = json['student'];
 
     return User(
@@ -33,7 +36,9 @@ class User {
       role: json['role'] as String,
       isActive: json['is_active'] as bool? ?? false,
       
-      // [LOGIC ADDED] Extract details from student object or fallback
+      // [NEW] Map the phone number from the root user object
+      phone: json['phone'] as String?, 
+      
       firstName: studentData != null 
           ? studentData['first_name'] 
           : json['firstName'],
@@ -58,6 +63,7 @@ class User {
       'email': email,
       'role': role,
       'is_active': isActive,
+      'phone': phone, // [NEW]
       'firstName': firstName,
       'lastName': lastName,
       'parchiId': parchiId,

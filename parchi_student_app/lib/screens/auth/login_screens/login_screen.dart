@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../utils/colours.dart';
 import 'widgets/login_form.dart';
-import 'widgets/signup_form.dart';
+import 'widgets/sign_form.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});

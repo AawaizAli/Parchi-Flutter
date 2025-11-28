@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // [NEW]
 import '../../utils/colours.dart';
-import '../../screens/home/gold_unlock_screen.dart'; 
+import '../../screens/home/notfication/gold_unlock_screen.dart'; 
 import '../../providers/user_provider.dart'; // [NEW]
 
 // =========================================================

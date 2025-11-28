@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../utils/colours.dart';
-import '../../widgets/home_screen_widgets/bonus_reward_card.dart';
+import '../../../utils/colours.dart';
+import '../../../widgets/home_screen_widgets/bonus_reward_card.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});

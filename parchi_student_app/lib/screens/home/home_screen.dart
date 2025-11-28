@@ -4,7 +4,7 @@ import '../../utils/colours.dart';
 import '../../widgets/home_screen_parchicard_widgets/parchi_card.dart'; 
 import '../../widgets/home_screen_widgets/home_sheet_content.dart';
 import '../../providers/user_provider.dart'; 
-import 'notification_screen.dart'; // [NEW] Import the new screen
+import 'notfication/notification_screen.dart'; // [NEW] Import the new screen
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});

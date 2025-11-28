@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
-import '../../utils/colours.dart';
-import '../../widgets/home_screen_parchicard_widgets/parchi_card.dart'; 
-import '../../widgets/home_screen_widgets/bonus_reward_card.dart'; 
+import '../../../utils/colours.dart';
+import '../../../widgets/home_screen_parchicard_widgets/parchi_card.dart'; 
+import '../../../widgets/home_screen_widgets/bonus_reward_card.dart'; 
 
 class GoldUnlockScreen extends StatefulWidget {
   final RewardModel reward;

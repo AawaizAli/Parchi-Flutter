@@ -4,6 +4,7 @@ import '../../utils/colours.dart';
 import '../../services/auth_service.dart';
 import '../../providers/user_provider.dart';
 import '../auth/login_screens/login_screen.dart';
+import 'change_password_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -152,7 +153,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             label: "Change Password",
                             color: const Color(0xFFFFF0F0), 
                             iconColor: const Color(0xFFFF3B30),
-                            onTap: () {},
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const ChangePasswordScreen(),
+                                ),
+                              );
+                            },
                           ),
                           _buildMenuTile(
                             icon: Icons.history, 

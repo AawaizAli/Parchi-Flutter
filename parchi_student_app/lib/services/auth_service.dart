@@ -313,6 +313,58 @@ class AuthService {
     }
   }
 
+  // Change Password
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final token = await getToken();
+    if (token == null) {
+      throw Exception('No token found. Please login again.');
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConfig.changePasswordEndpoint),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+        }),
+      );
+
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode == 200) {
+        // Password changed successfully
+        // Note: The existing token remains valid, no need to update it
+        return;
+      } else {
+        // Handle error responses
+        String errorMessage = 'Failed to change password';
+        
+        if (responseData.containsKey('message')) {
+          final message = responseData['message'];
+          if (message is List) {
+            errorMessage = message.join(', ');
+          } else if (message is String) {
+            errorMessage = message;
+          }
+        }
+        
+        throw Exception(errorMessage);
+      }
+    } catch (e) {
+      if (e is Exception) {
+        rethrow;
+      }
+      throw Exception('Change password failed: ${e.toString()}');
+    }
+  }
+
   // Logout
   Future<void> logout() async {
     final token = await getToken();

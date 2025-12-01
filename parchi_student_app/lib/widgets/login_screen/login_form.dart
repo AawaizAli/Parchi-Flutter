@@ -7,8 +7,13 @@ import '../../providers/user_provider.dart';
 
 class LoginForm extends ConsumerStatefulWidget {
   final VoidCallback onSignupTap;
+  final VoidCallback onForgotTap; // Added callback
 
-  const LoginForm({super.key, required this.onSignupTap});
+  const LoginForm({
+    super.key, 
+    required this.onSignupTap,
+    required this.onForgotTap, // Required now
+  });
 
   @override
   ConsumerState<LoginForm> createState() => _LoginFormState();
@@ -67,7 +72,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
               children: [
                 Text("Don't have an account? ", style: TextStyle(color: Colors.grey.shade600)),
                 GestureDetector(
-                  onTap: widget.onSignupTap, // Trigger expansion
+                  onTap: widget.onSignupTap,
                   child: const Text("Sign Up", style: TextStyle(color: AppColors.textLink, fontWeight: FontWeight.bold)),
                 ),
               ],
@@ -82,6 +87,24 @@ class _LoginFormState extends ConsumerState<LoginForm> {
               const SizedBox(height: 10),
               Text(_errorMessage!, style: const TextStyle(color: Colors.red, fontSize: 12)),
             ],
+
+            const SizedBox(height: 16), // Spacing for forgot password
+
+            // Forgot Password Link
+            Align(
+              alignment: Alignment.center,
+              child: GestureDetector(
+                onTap: widget.onForgotTap, // Triggers the transition
+                child: const Text(
+                  "Forgot password?",
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
 
             const Spacer(),
             

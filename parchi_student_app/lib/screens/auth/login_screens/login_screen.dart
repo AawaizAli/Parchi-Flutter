@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../utils/colours.dart';
 import '../../../widgets/login_screen/login_form.dart';
 import '../../../widgets/signup_screen/sign_form.dart';
+import '../login_screens/forgot_password_form.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -12,10 +13,12 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderStateMixin {
-  final PageController _pageController = PageController();
+  // Initialize PageController to start at index 1 (Login)
+  // This places ForgotPassword at 0 (Left) and Signup at 2 (Right)
+  final PageController _pageController = PageController(initialPage: 1);
   
-  // 0 = Login (Short Box), 1 = Signup (Tall Box)
-  int _currentPage = 0; 
+  // 0 = Forgot Password, 1 = Login, 2 = Signup
+  int _currentPage = 1; 
 
   late AnimationController _glowController;
   late Animation<double> _glowAnimation;
@@ -34,17 +37,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
     super.dispose();
   }
 
-  // Logic to switch views and animate height
-  void _toggleAuthMode() {
-    if (_currentPage == 0) {
-      // Go to Signup
-      _pageController.animateToPage(1, duration: const Duration(milliseconds: 600), curve: Curves.easeInOutQuart);
-      setState(() => _currentPage = 1);
-    } else {
-      // Go back to Login
-      _pageController.animateToPage(0, duration: const Duration(milliseconds: 600), curve: Curves.easeInOutQuart);
-      setState(() => _currentPage = 0);
-    }
+  // Switch to Signup (Index 2)
+  void _goToSignup() {
+    _pageController.animateToPage(2, duration: const Duration(milliseconds: 600), curve: Curves.easeInOutQuart);
+    setState(() => _currentPage = 2);
+  }
+
+  // Switch to Login (Index 1)
+  void _goToLogin() {
+    _pageController.animateToPage(1, duration: const Duration(milliseconds: 600), curve: Curves.easeInOutQuart);
+    setState(() => _currentPage = 1);
+  }
+
+  // Switch to Forgot Password (Index 0)
+  void _goToForgotPassword() {
+    _pageController.animateToPage(0, duration: const Duration(milliseconds: 600), curve: Curves.easeInOutQuart);
+    setState(() => _currentPage = 0);
   }
 
   @override
@@ -52,8 +60,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
     final screenHeight = MediaQuery.of(context).size.height;
     
     // Dynamic Height Calculation
-    // Login: ~55% of screen. Signup: ~85% of screen (Extends up).
-    final double containerHeight = _currentPage == 0 ? screenHeight * 0.55 : screenHeight * 0.85;
+    // Login (1): 55%
+    // Signup (2): 85% (Needs more space)
+    // Forgot Password (0): 55% (Similar to login)
+    double containerHeight;
+    if (_currentPage == 2) {
+      containerHeight = screenHeight * 0.85;
+    } else {
+      containerHeight = screenHeight * 0.55;
+    }
 
     return Scaffold(
       resizeToAvoidBottomInset: true, 
@@ -70,17 +85,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
           ),
 
           // 2. LOGO & TEXT 
-          // (Moves up and fades out when box expands to make room)
+          // Moves up and fades out ONLY when signing up (index 2). 
+          // Stays visible for Login (1) and Forgot Password (0).
           AnimatedPositioned(
             duration: const Duration(milliseconds: 600),
             curve: Curves.easeInOutQuart,
-            top: _currentPage == 0 ? 0 : -150, // Move off screen when signing up
+            top: _currentPage == 2 ? -150 : 0, // Move off screen only for Signup
             left: 0, right: 0,
             height: screenHeight * 0.45,
             child: SafeArea(
               child: AnimatedOpacity(
                 duration: const Duration(milliseconds: 400),
-                opacity: _currentPage == 0 ? 1.0 : 0.0,
+                opacity: _currentPage == 2 ? 0.0 : 1.0, // Fade out only for Signup
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -123,13 +139,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
                 borderRadius: BorderRadius.circular(40),
                 child: PageView(
                   controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(), // Disable swipe, force button usage
+                  physics: const NeverScrollableScrollPhysics(), // Disable swipe
                   children: [
-                    // PAGE 0: LOGIN
-                    LoginForm(onSignupTap: _toggleAuthMode),
+                    // PAGE 0: FORGOT PASSWORD
+                    ForgotPasswordForm(onBackTap: _goToLogin),
+
+                    // PAGE 1: LOGIN
+                    LoginForm(
+                      onSignupTap: _goToSignup, 
+                      onForgotTap: _goToForgotPassword,
+                    ),
                     
-                    // PAGE 1: SIGNUP
-                    SignupForm(onLoginTap: _toggleAuthMode),
+                    // PAGE 2: SIGNUP
+                    SignupForm(onLoginTap: _goToLogin),
                   ],
                 ),
               ),

@@ -5,6 +5,7 @@ import '../../providers/offers_provider.dart';
 import 'package:parchi_student_app/widgets/home_screen_restraunts_widgets/brand_card.dart';
 import '../home_screen_restraunts_widgets/restaurant_big_card.dart';
 import '../home_screen_restraunts_widgets/restaurant_medium_card.dart';
+import '../../screens/home/offer_details_screen.dart';
 
 class HomeSheetContent extends ConsumerStatefulWidget {
   final ScrollController scrollController;
@@ -19,14 +20,14 @@ class HomeSheetContent extends ConsumerStatefulWidget {
 }
 
 class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
-  // Dummy Data for Brands
+  // --- DUMMY DATA FOR BRANDS ---
   final List<Map<String, String>> brands = List.generate(10, (index) => {
     "name": "Brand ${index + 1}",
     "time": "${15 + index}-25 min",
     "image": "https://placehold.co/100x100/png?text=Logo${index+1}"
   });
 
-  // Dummy Data for All Restaurants
+  // --- DUMMY DATA FOR ALL RESTAURANTS ---
   final List<Map<String, String>> allRestaurants = List.generate(8, (index) => {
     "name": "Restaurant ${index + 1}",
     "image": "https://placehold.co/600x300/png?text=Food${index+1}",
@@ -35,7 +36,17 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
     "discount": "${10 + (index * 5)}% OFF",
   });
 
-  // Function to show the Filter Modal
+  // --- NAVIGATION LOGIC ---
+  void _onOfferTap(BuildContext context, String offerId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OfferDetailsScreen(offerId: offerId),
+      ),
+    );
+  }
+
+  // --- FILTER MODAL LOGIC ---
   void _showOffersModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -128,7 +139,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
 
   @override
   Widget build(BuildContext context) {
-    // [RIVERPOD] Watch the provider to get cached data
+    // Watch the Riverpod provider for cached data
     final offersAsync = ref.watch(activeOffersProvider);
 
     return Container(
@@ -186,7 +197,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
               ),
             ),
 
-            // --- SECTION 2: ACTIVE OFFERS (CONNECTED TO API VIA RIVERPOD) ---
+            // --- SECTION 2: ACTIVE OFFERS (CONNECTED TO API) ---
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
@@ -210,7 +221,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 180, 
-                // [RIVERPOD] Use .when to handle states
+                // Use .when to handle loading/error/data states elegantly
                 child: offersAsync.when(
                   loading: () => const Center(
                     child: CircularProgressIndicator(color: AppColors.primary),
@@ -238,18 +249,22 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                       itemBuilder: (context, index) {
                         final offer = offers[index];
                         
-                        // Fallback logic for image: Offer Image -> Merchant Logo -> Placeholder
+                        // Fallback Image Logic: Offer Image -> Merchant Logo -> Placeholder
                         final String displayImage = offer.imageUrl ?? 
                                                     offer.merchant?.logoPath ?? 
                                                     "https://placehold.co/600x300/png?text=No+Image";
 
-                        return RestaurantMediumCard(
-                          // Use Merchant Business Name if available, else Offer Title
-                          name: offer.merchant?.businessName ?? offer.title,
-                          image: displayImage,
-                          rating: "4.5", // API does not return rating yet
-                          meta: "Valid until ${offer.validUntil.day}/${offer.validUntil.month}",
-                          discount: offer.formattedDiscount,
+                        // Wrap in GestureDetector for click functionality
+                        return GestureDetector(
+                          onTap: () => _onOfferTap(context, offer.id),
+                          child: RestaurantMediumCard(
+                            // Prefer merchant name, fall back to offer title
+                            name: offer.merchant?.businessName ?? offer.title,
+                            image: displayImage,
+                            rating: "4.5", // API doesn't provide rating yet
+                            meta: "Valid until ${offer.validUntil.day}/${offer.validUntil.month}",
+                            discount: offer.formattedDiscount,
+                          ),
                         );
                       },
                     );
@@ -259,6 +274,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
             ),
 
             // --- SECTION 3: ALL RESTAURANTS HEADER ---
+            // This header scrolls away normally
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
@@ -274,6 +290,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
             ),
 
             // --- STICKY FILTER HEADER ---
+            // This stays pinned to the top as you scroll the restaurant list
             SliverPersistentHeader(
               pinned: true,
               delegate: _FilterHeaderDelegate(

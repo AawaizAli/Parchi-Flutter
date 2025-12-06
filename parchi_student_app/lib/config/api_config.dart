@@ -14,5 +14,6 @@ class ApiConfig {
   static String get logoutEndpoint => '$baseUrl/auth/logout';
   static String get profileEndpoint => '$baseUrl/auth/me';
   static String get changePasswordEndpoint => '$baseUrl/auth/change-password';
+  static String get forgotPasswordEndpoint => '$baseUrl/auth/forgot-password';
 }
 

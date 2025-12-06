@@ -313,6 +313,48 @@ class AuthService {
     }
   }
 
+  // Forgot Password
+  Future<void> forgotPassword(String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConfig.forgotPasswordEndpoint),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'email': email,
+        }),
+      );
+
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode == 200) {
+        // Success - password reset email sent
+        // The API returns success even if email doesn't exist (for security)
+        return;
+      } else {
+        // Handle error response
+        String errorMessage = 'Failed to send password reset email';
+        
+        if (responseData.containsKey('message')) {
+          final message = responseData['message'];
+          if (message is List) {
+            errorMessage = message.join(', ');
+          } else if (message is String) {
+            errorMessage = message;
+          }
+        }
+        
+        throw Exception(errorMessage);
+      }
+    } catch (e) {
+      if (e is Exception) {
+        rethrow;
+      }
+      throw Exception('Network error: ${e.toString()}');
+    }
+  }
+
   // Change Password
   Future<void> changePassword({
     required String currentPassword,

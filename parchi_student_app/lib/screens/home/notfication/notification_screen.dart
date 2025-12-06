@@ -12,18 +12,17 @@ class NotificationScreen extends StatefulWidget {
 class _NotificationScreenState extends State<NotificationScreen> {
   final bool _isEmpty = false;
 
-  // [NEW] Controllers for the Sheet Animation (Same as Home Screen)
   final DraggableScrollableController _sheetController = DraggableScrollableController();
   final ValueNotifier<double> _expandProgress = ValueNotifier(0.0);
 
   double _minSheetSize = 0.5;
-  double _maxSheetSize = 0.95; // Go almost to the top
+  double _maxSheetSize = 0.95;
 
   // DUMMY DATA
   final List<RewardModel> _rewards = [
     RewardModel(
       restaurantName: "Gold Burger",
-      currentCount: 5,
+      currentCount: 4, // [CHANGED] Set to 4 to trigger "Almost There" state
       targetCount: 5,
       discountText: "Free Premium Meal",
       gradientColors: [const Color(0xFFFFD700), const Color(0xFFFFA500)],
@@ -53,7 +52,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
     _sheetController.addListener(_onSheetChanged);
   }
 
-  // [NEW] Calculate drag progress (0.0 to 1.0)
   void _onSheetChanged() {
     double currentSize = _sheetController.size;
     double progress = (currentSize - _minSheetSize) / (_maxSheetSize - _minSheetSize);
@@ -69,22 +67,15 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Calculate Layout Math
     final double screenHeight = MediaQuery.of(context).size.height;
     final double topPadding = MediaQuery.of(context).padding.top;
     
-    // Height of Header (Back Button area)
     final double headerHeight = topPadding + 20.0 + 45.0 + 20.0; 
-    // Height of the Card Stack
     const double cardHeight = 240.0; 
-    // Spacing
     const double gap = 20.0;
 
-    // 2. Calculate Min Sheet Size (Start exactly below the cards)
-    // Formula: (Screen - (Header + Card + Gap)) / Screen
     _minSheetSize = (screenHeight - (headerHeight + cardHeight + gap)) / screenHeight;
 
-    // Safety clamps
     if (_minSheetSize < 0.3) _minSheetSize = 0.3;
     if (_minSheetSize > 0.8) _minSheetSize = 0.8;
 
@@ -92,8 +83,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       backgroundColor: Colors.grey[200],
       body: Stack(
         children: [
-          
-          // [LAYER 1] The Fading Bonus Cards (Positioned below header)
+          // [LAYER 1] Bonus Cards
           Positioned(
             top: headerHeight,
             left: 0,
@@ -101,8 +91,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
             child: ValueListenableBuilder<double>(
               valueListenable: _expandProgress,
               builder: (context, progress, child) {
-                // [ANIMATION] Fade out logic: (1.0 - (progress * 3))
-                // This makes it fade out quickly as you start dragging up
                 return Opacity(
                   opacity: (1.0 - (progress * 3)).clamp(0.0, 1.0),
                   child: BonusRewardStack(rewards: _rewards),
@@ -111,13 +99,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
             ),
           ),
 
-          // [LAYER 2] The Draggable White Sheet
+          // [LAYER 2] Draggable Sheet
           DraggableScrollableSheet(
             controller: _sheetController,
             initialChildSize: _minSheetSize,
             minChildSize: _minSheetSize,
             maxChildSize: _maxSheetSize,
-            snap: true, // Snaps to top or bottom
+            snap: true,
             builder: (BuildContext context, ScrollController scrollController) {
               return Container(
                 decoration: const BoxDecoration(
@@ -133,7 +121,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 ),
                 child: ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-                  // Pass the scrollController to the ListView so dragging the list drags the sheet
                   child: _isEmpty 
                       ? _buildEmptyState() 
                       : _buildNotificationList(scrollController), 
@@ -142,8 +129,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             },
           ),
 
-          // [LAYER 3] The Header (Back Button)
-          // We keep this fixed on top so it never fades out
+          // [LAYER 3] Header
           Positioned(
             top: 0,
             left: 0,
@@ -212,14 +198,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
     );
   }
 
-  // [UPDATED] Now accepts ScrollController
   Widget _buildNotificationList(ScrollController scrollController) {
     return ListView(
-      controller: scrollController, // [CRITICAL] Connects list scrolling to sheet dragging
+      controller: scrollController,
       padding: const EdgeInsets.all(24),
       children: [
-        
-        // Little handle bar visual
         Center(
           child: Container(
             width: 40,
@@ -258,17 +241,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
           imageUrl: "https://placehold.co/100x100/png?text=OUT",
           isUnread: false,
         ),
-        _buildNotificationItem(
-          brandName: "Gloria Jeans",
-          message: "Buy 1 Get 1 Free on all coffees.",
-          time: "1d ago",
-          imageUrl: "https://placehold.co/100x100/png?text=GJ",
-          isUnread: false,
-        ),
-        
-        // Added extra dummy items so you can test scrolling behavior
-        _buildNotificationItem(brandName: "Nike", message: "Just Do It. 10% Off.", time: "2d ago", imageUrl: "https://placehold.co/100x100/png?text=NK", isUnread: false),
-        _buildNotificationItem(brandName: "Subway", message: "Eat Fresh. 15% Off.", time: "3d ago", imageUrl: "https://placehold.co/100x100/png?text=SB", isUnread: false),
       ],
     );
   }
@@ -300,7 +272,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Square Rounded Image
           Container(
             height: 56,
             width: 56,
@@ -311,18 +282,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 image: NetworkImage(imageUrl),
                 fit: BoxFit.cover,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                )
-              ],
             ),
           ),
           const SizedBox(width: 16),
-          
-          // Content
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -351,8 +313,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
               ],
             ),
           ),
-          
-          // Unread Dot
           if (isUnread)
             Container(
               margin: const EdgeInsets.only(top: 8, left: 8),

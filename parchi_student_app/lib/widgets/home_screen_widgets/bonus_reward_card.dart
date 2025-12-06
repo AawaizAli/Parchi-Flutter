@@ -1,13 +1,10 @@
 import 'dart:ui'; 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // [NEW]
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../utils/colours.dart';
 import '../../screens/home/notfication/gold_unlock_screen.dart'; 
-import '../../providers/user_provider.dart'; // [NEW]
+import '../../providers/user_provider.dart';
 
-// =========================================================
-// 1. DATA MODEL
-// =========================================================
 class RewardModel {
   final String restaurantName;
   final int currentCount;
@@ -26,12 +23,8 @@ class RewardModel {
   });
 }
 
-// =========================================================
-// 2. STACK LOGIC
-// =========================================================
 class BonusRewardStack extends StatefulWidget {
   final List<RewardModel> rewards;
-
   const BonusRewardStack({super.key, required this.rewards});
 
   @override
@@ -169,7 +162,6 @@ class _BonusRewardStackState extends State<BonusRewardStack> with SingleTickerPr
             child: SingleBonusCard(
               reward: reward,
               isTopCard: stackPos == 0,
-              animationValue: stackPos == 1 ? absProgress : 0.0, 
             ),
           ),
         ),
@@ -178,39 +170,35 @@ class _BonusRewardStackState extends State<BonusRewardStack> with SingleTickerPr
   }
 }
 
-// =========================================================
-// 3. SINGLE CARD UI + HERO LOGIC + USER DATA FETCH
-// =========================================================
-class SingleBonusCard extends ConsumerWidget { // [UPDATED] Changed to ConsumerWidget
+class SingleBonusCard extends ConsumerWidget {
   final RewardModel reward;
   final bool isTopCard;
-  final double animationValue;
 
   const SingleBonusCard({
     super.key,
     required this.reward,
     required this.isTopCard,
-    this.animationValue = 0.0,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) { // [UPDATED] Added WidgetRef
+  Widget build(BuildContext context, WidgetRef ref) {
     final double progress = (reward.currentCount / reward.targetCount).clamp(0.0, 1.0);
     final bool isCompleted = reward.currentCount >= reward.targetCount;
+    final bool isAlmostThere = reward.currentCount == (reward.targetCount - 1);
+    
     final width = MediaQuery.of(context).size.width - 48;
 
-    final bool isGoldTier = isCompleted; 
+    // Use special colors if it's in "Hype Mode" (4/5 or 5/5)
+    final bool isSpecialState = isCompleted || isAlmostThere;
 
-    final List<Color> bgColors = isGoldTier 
+    final List<Color> bgColors = isSpecialState 
         ? [const Color(0xFFDAA520), const Color(0xFFFFD700)] 
         : reward.gradientColors;
     
-    final Color glowColor = isGoldTier 
+    final Color glowColor = isSpecialState 
         ? const Color(0xFFFFD700)
         : reward.shadowColor;
 
-    double shadowOpacity = isTopCard ? 0.65 : (0.65 * animationValue);
-    
     Widget cardContent = Container(
       height: 180,
       width: width,
@@ -223,9 +211,9 @@ class SingleBonusCard extends ConsumerWidget { // [UPDATED] Changed to ConsumerW
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: glowColor.withOpacity(shadowOpacity),
-            blurRadius: isGoldTier ? 40 : 35,
-            spreadRadius: isGoldTier ? 5 : -2, 
+            color: glowColor.withOpacity(0.6),
+            blurRadius: isSpecialState ? 40 : 35,
+            spreadRadius: isSpecialState ? 5 : -2, 
             offset: const Offset(0, 15),
           ),
         ],
@@ -239,12 +227,12 @@ class SingleBonusCard extends ConsumerWidget { // [UPDATED] Changed to ConsumerW
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  isGoldTier ? "GOLD REWARD READY" : "Loyalty Reward",
+                  isCompleted ? "GOLD REWARD READY" : (isAlmostThere ? "ALMOST THERE!" : "Loyalty Reward"),
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.9),
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    letterSpacing: isGoldTier ? 1.0 : 0,
+                    letterSpacing: isSpecialState ? 1.0 : 0,
                     decoration: TextDecoration.none,
                   ),
                 ),
@@ -278,7 +266,7 @@ class SingleBonusCard extends ConsumerWidget { // [UPDATED] Changed to ConsumerW
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    isGoldTier ? Icons.emoji_events : Icons.card_giftcard, 
+                    isCompleted ? Icons.emoji_events : Icons.card_giftcard, 
                     color: Colors.white, 
                     size: 20
                   ),
@@ -300,11 +288,12 @@ class SingleBonusCard extends ConsumerWidget { // [UPDATED] Changed to ConsumerW
                       const SizedBox(height: 4),
                       Text(
                         isCompleted 
-                          ? "Tap card to reveal Gold Status" 
-                          : "${reward.currentCount} out of ${reward.targetCount} orders completed",
+                          ? "Tap to view details" 
+                          : (isAlmostThere ? "Avail 1 more time to unlock a free meal" : "${reward.currentCount} out of ${reward.targetCount} orders completed"),
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
+                          color: Colors.white.withOpacity(0.9),
                           fontSize: 11,
+                          fontWeight: isAlmostThere ? FontWeight.bold : FontWeight.normal,
                           decoration: TextDecoration.none,
                         ),
                       ),
@@ -347,7 +336,7 @@ class SingleBonusCard extends ConsumerWidget { // [UPDATED] Changed to ConsumerW
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  isCompleted ? "Redeem Now" : "View History",
+                  (isCompleted || isAlmostThere) ? "Tap to View" : "View History",
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 14,
@@ -371,9 +360,9 @@ class SingleBonusCard extends ConsumerWidget { // [UPDATED] Changed to ConsumerW
       : cardContent;
 
     return GestureDetector(
+      // [UPDATED] Allow tap if completed OR almost there (4/5)
       onTap: () {
-        if (isCompleted && isTopCard) {
-          // [UPDATED] Fetch Real User Data from Riverpod
+        if ((isCompleted || isAlmostThere) && isTopCard) {
           final user = ref.read(userProfileProvider).value;
           final fName = user?.firstName ?? "Student";
           final lName = user?.lastName ?? "";
@@ -387,8 +376,8 @@ class SingleBonusCard extends ConsumerWidget { // [UPDATED] Changed to ConsumerW
               reverseTransitionDuration: const Duration(milliseconds: 600),
               pageBuilder: (_, __, ___) => GoldUnlockScreen(
                 reward: reward,
-                studentName: realName.isEmpty ? "STUDENT" : realName, // Pass Real Name
-                studentId: realId, // Pass Real ID
+                studentName: realName.isEmpty ? "STUDENT" : realName, 
+                studentId: realId,
               ),
               transitionsBuilder: (context, animation, secondaryAnimation, child) {
                 return FadeTransition(opacity: animation, child: child);

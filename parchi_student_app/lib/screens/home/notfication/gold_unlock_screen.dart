@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import '../../../utils/colours.dart';
-import '../../../widgets/home_screen_parchicard_widgets/parchi_card.dart'; 
 import '../../../widgets/home_screen_widgets/bonus_reward_card.dart'; 
 
 class GoldUnlockScreen extends StatefulWidget {
@@ -21,231 +20,133 @@ class GoldUnlockScreen extends StatefulWidget {
 }
 
 class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProviderStateMixin {
+  // Controller for the card "expanding" entrance (Pop effect)
   late AnimationController _entranceController;
-  late Animation<double> _entranceFlip;
-  late Animation<double> _entranceScale;
+  late Animation<double> _expandAnimation;
+  
+  // Controller for the "Running Border" effect
+  late AnimationController _borderController;
 
-  late AnimationController _manualFlipController;
-  late Animation<double> _manualFlipAnimation;
-
-  late AnimationController _hoverController;
-  late Animation<double> _hoverAnimation;
-
-  bool _hasRevealed = false; 
-  bool _showRewardSide = false; 
+  // Controller for background radiation pulse
+  late AnimationController _pulseController;
 
   @override
   void initState() {
     super.initState();
 
+    // 1. Entrance Animation (Smooth Pop with Overshoot)
     _entranceController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    );
-
-    _entranceFlip = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _entranceController, curve: Curves.easeInOutBack),
-    );
-
-    _entranceScale = TweenSequence([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.8), weight: 50), 
-      TweenSequenceItem(tween: Tween(begin: 0.8, end: 1.0), weight: 50), 
-    ]).animate(CurvedAnimation(parent: _entranceController, curve: Curves.easeInOut));
-
-    _manualFlipController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
 
-    _manualFlipAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _manualFlipController, curve: Curves.easeInOutBack),
+    // easeOutBack gives a professional "pop" expansion
+    _expandAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _entranceController, curve: Curves.easeOutBack),
     );
 
-    _hoverController = AnimationController(
+    _entranceController.forward();
+
+    // 2. Running "Sprint" Border Animation
+    _borderController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
+    )..repeat();
+
+    // 3. Background Radiation Pulse
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
     )..repeat(reverse: true);
-
-    _hoverAnimation = Tween<double>(begin: -10, end: 10).animate(
-      CurvedAnimation(parent: _hoverController, curve: Curves.easeInOutSine),
-    );
-
-    _entranceController.addListener(() {
-      if (_entranceController.value >= 0.5 && !_hasRevealed) {
-        setState(() { _hasRevealed = true; });
-      }
-    });
-
-    _manualFlipController.addListener(() {
-      final val = _manualFlipController.value;
-      if (val >= 0.5 && !_showRewardSide) {
-        setState(() => _showRewardSide = true);
-      } else if (val < 0.5 && _showRewardSide) {
-        setState(() => _showRewardSide = false);
-      }
-    });
-
-    // Wait for the Hero flight to finish before starting the flip
-    Future.delayed(const Duration(milliseconds: 800), () {
-      if (mounted) {
-        _entranceController.forward();
-      }
-    });
   }
 
   @override
   void dispose() {
     _entranceController.dispose();
-    _manualFlipController.dispose();
-    _hoverController.dispose();
+    _borderController.dispose();
+    _pulseController.dispose();
     super.dispose();
-  }
-
-  void _handleBackgroundTap() {
-    Navigator.pop(context);
-  }
-
-  void _handleCardTap() {
-    if (_entranceController.isCompleted) {
-      if (_showRewardSide) {
-        _manualFlipController.reverse(); 
-      } else {
-        _manualFlipController.forward(); 
-      }
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black87, 
+      backgroundColor: Colors.black.withOpacity(0.85), 
       body: GestureDetector(
-        onTap: _handleBackgroundTap,
+        onTap: () => Navigator.pop(context),
         behavior: HitTestBehavior.opaque,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 500),
-                child: Text(
-                  _showRewardSide ? "YOUR REWARD" : "GOLD STATUS UNLOCKED!",
-                  key: ValueKey(_showRewardSide),
-                  style: const TextStyle(
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // [LAYER 1] Background Golden Radiation (Breathing Glow)
+            AnimatedBuilder(
+              animation: _pulseController,
+              builder: (context, child) {
+                return Container(
+                  width: MediaQuery.of(context).size.width * 1.2,
+                  height: MediaQuery.of(context).size.width * 1.2,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        const Color(0xFFFFD700).withOpacity(0.3 + (_pulseController.value * 0.1)), // Pulse opacity
+                        Colors.transparent
+                      ],
+                      stops: const [0.0, 0.7],
+                    ),
+                  ),
+                );
+              },
+            ),
+
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  "ALMOST THERE!",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
                     color: Color(0xFFFFD700), 
                     fontSize: 24, 
-                    fontWeight: FontWeight.bold, 
-                    letterSpacing: 2
+                    fontWeight: FontWeight.w900, 
+                    letterSpacing: 4,
+                    shadows: [
+                      Shadow(color: Colors.orangeAccent, blurRadius: 20)
+                    ],
+                    decoration: TextDecoration.none,
                   ),
                 ),
-              ),
-              
-              const SizedBox(height: 40),
+                
+                const SizedBox(height: 50),
 
-              AnimatedBuilder(
-                animation: Listenable.merge([_entranceController, _manualFlipController, _hoverController]),
-                builder: (context, child) {
-                  double angle;
-                  double scale = _entranceScale.value;
-
-                  if (!_entranceController.isCompleted) {
-                    angle = _entranceFlip.value * pi; 
-                  } else {
-                    angle = pi + (_manualFlipAnimation.value * pi);
-                  }
-                  
-                  final transform = Matrix4.identity()
-                    ..setEntry(3, 2, 0.001) 
-                    ..rotateY(angle);
-
-                  bool showBackFace = angle >= (pi / 2) && angle < (3 * pi / 2); 
-
-                  // [FIXED] Wrap the entire transforming assembly in HERO
-                  return Hero(
-                    tag: 'reward_${widget.reward.restaurantName}', // The Tag must match source
-                    child: Material(
-                      color: Colors.transparent,
-                      child: Transform.translate(
-                        offset: Offset(0, _hasRevealed ? _hoverAnimation.value : 0), 
-                        child: Transform.scale(
-                          scale: scale,
-                          child: GestureDetector(
-                            onTap: _handleCardTap,
-                            child: Transform(
-                              transform: transform,
-                              alignment: Alignment.center,
-                              child: showBackFace 
-                                ? Transform(
-                                    alignment: Alignment.center,
-                                    transform: Matrix4.identity()..rotateY(pi), 
-                                    child: _buildGoldParchiCard(), 
-                                  )
-                                : (_entranceController.isCompleted 
-                                    ? _buildGoldRewardDetailCard() 
-                                    : _buildInitialLockCard()), // No Hero inside here anymore
-                            ),
-                          ),
-                        ),
-                      ),
+                // [LAYER 2] The Golden Card with Expanding Entrance
+                Hero(
+                  tag: 'reward_${widget.reward.restaurantName}', 
+                  child: Material(
+                    color: Colors.transparent,
+                    child: ScaleTransition(
+                      scale: _expandAnimation,
+                      child: _buildGoldParchiCard(),
                     ),
-                  );
-                },
-              ),
-
-              const SizedBox(height: 60),
-
-              AnimatedOpacity(
-                duration: const Duration(milliseconds: 500),
-                opacity: _entranceController.isCompleted ? 1.0 : 0.0,
-                child: const Text(
-                  "Tap card to flip • Tap background to close", 
-                  style: TextStyle(color: Colors.white38, fontSize: 12, decoration: TextDecoration.none)
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
-  // --- CARD FACES (Removed Hero from here) ---
+                const SizedBox(height: 50),
 
-  Widget _buildInitialLockCard() {
-    return Container(
-      height: 180,
-      width: MediaQuery.of(context).size.width - 32, 
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFDAA520), Color(0xFFFFD700)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24), 
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFFFD700).withOpacity(0.8),
-            blurRadius: 30,
-            spreadRadius: 5,
-          )
-        ],
-      ),
-      child: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.lock_open_rounded, size: 60, color: Colors.white),
-            SizedBox(height: 10),
-            Text(
-              "UNLOCKING...", 
-              style: TextStyle(
-                color: Colors.white, 
-                fontWeight: FontWeight.bold, 
-                letterSpacing: 1.5, 
-                decoration: TextDecoration.none,
-                fontSize: 14,
-              )
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                  child: Text(
+                    "Tap anywhere to close", 
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.5), 
+                      fontSize: 12, 
+                      letterSpacing: 1.0,
+                      decoration: TextDecoration.none
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -254,114 +155,120 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
   }
 
   Widget _buildGoldParchiCard() {
-    const goldGradient = LinearGradient(
-      colors: [Color(0xFFDAA520), Color(0xFFFFD700), Color(0xFFB8860B)],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      stops: [0.1, 0.5, 0.9],
-    );
-
-    return Container(
-      height: 180,
-      width: MediaQuery.of(context).size.width - 32, 
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        gradient: goldGradient,
-        borderRadius: BorderRadius.circular(24), 
-        boxShadow: [
-          BoxShadow(
-            color: Colors.amber.withOpacity(0.6),
-            blurRadius: 40, 
-            spreadRadius: 5,
-            offset: const Offset(0, 10),
+    return AnimatedBuilder(
+      animation: _borderController,
+      builder: (context, child) {
+        return Container(
+          height: 240, // Expanded height
+          width: MediaQuery.of(context).size.width - 60,
+          
+          // [SPRINT BORDER]
+          padding: const EdgeInsets.all(4), // Thicker border for emphasis
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(30),
+            gradient: SweepGradient(
+              center: Alignment.center,
+              colors: [
+                const Color(0xFFB8860B), // Dark Gold
+                const Color(0xFFFFD700), // Gold Sprint Head
+                Colors.white,            // Brightest Point
+                const Color(0xFFFFD700), // Gold Trail
+                const Color(0xFFB8860B), // Dark Gold
+              ],
+              stops: const [0.0, 0.2, 0.5, 0.8, 1.0],
+              transform: GradientRotation(_borderController.value * 2 * pi),
+            ),
+            boxShadow: [
+              // Deep shadow
+              BoxShadow(
+                color: Colors.black.withOpacity(0.5),
+                blurRadius: 30, 
+                offset: const Offset(0, 15),
+              ),
+              // Gold Radiation
+              BoxShadow(
+                color: const Color(0xFFFFD700).withOpacity(0.3),
+                blurRadius: 40, 
+                spreadRadius: 5,
+              ),
+            ],
           ),
-        ],
-      ),
-      child: CardFrontContent(
-        studentName: widget.studentName,
-        studentId: widget.studentId,
-        isGolden: true, 
-      ),
-    );
-  }
-
-  Widget _buildGoldRewardDetailCard() {
-    const goldGradient = LinearGradient(
-      colors: [Color(0xFFDAA520), Color(0xFFFFD700), Color(0xFFB8860B)],
-      begin: Alignment.topRight, 
-      end: Alignment.bottomLeft,
-      stops: [0.1, 0.5, 0.9],
-    );
-
-    return Container(
-      height: 180,
-      width: MediaQuery.of(context).size.width - 32,
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        gradient: goldGradient,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.amber.withOpacity(0.6),
-            blurRadius: 40, 
-            spreadRadius: 5,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -30,
-            bottom: -30,
-            child: Icon(Icons.fastfood, size: 180, color: Colors.white.withOpacity(0.15)),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Container(
+            // [CARD FACE] Golden Gradient Background (Requested)
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(26),
+              gradient: const LinearGradient(
+                colors: [
+                  Color(0xFFDAA520), // Goldenrod
+                  Color(0xFFFFD700), // Gold
+                  Color(0xFFFDB931), // Light Gold
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Stack(
               children: [
-                const Row(
-                  children: [
-                    Icon(Icons.star, color: Colors.black54, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      "REWARD DETAILS",
-                      style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold, letterSpacing: 1, decoration: TextDecoration.none),
-                    ),
-                  ],
+                // Decorative Pattern (Subtle overlay)
+                Positioned(
+                  right: -30,
+                  bottom: -30,
+                  child: Icon(Icons.star, size: 180, color: Colors.white.withOpacity(0.2)),
                 ),
+                
                 Center(
-                  child: Text(
-                    widget.reward.discountText.toUpperCase(), 
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.black87, 
-                      fontSize: 28, 
-                      fontWeight: FontWeight.w900,
-                      height: 1.1,
-                      decoration: TextDecoration.none,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.black12,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.black26),
-                  ),
-                  child: const Row(
+                  child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        "CODE: ",
-                        style: TextStyle(color: Colors.black54, fontSize: 12, fontWeight: FontWeight.bold, decoration: TextDecoration.none),
+                      // Icon Container (White/Gold contrast)
+                      Container(
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(Icons.lock_open_rounded, size: 40, color: Color(0xFFDAA520)),
                       ),
-                      Text(
-                        "GOLD-777",
-                        style: TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Courier', decoration: TextDecoration.none),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Main Text (White/Dark for readability on Gold)
+                      const Text(
+                        "Avail 1 more",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900, 
+                          height: 1.1,
+                          shadows: [
+                            Shadow(color: Colors.black26, blurRadius: 2, offset: Offset(1, 1))
+                          ],
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        "to get this meal",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white, 
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700, 
+                          letterSpacing: 0.5,
+                          height: 1.1,
+                          shadows: [
+                            Shadow(color: Colors.black26, blurRadius: 2, offset: Offset(1, 1))
+                          ],
+                          decoration: TextDecoration.none,
+                        ),
                       ),
                     ],
                   ),
@@ -369,8 +276,8 @@ class _GoldUnlockScreenState extends State<GoldUnlockScreen> with TickerProvider
               ],
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

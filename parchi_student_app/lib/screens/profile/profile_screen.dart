@@ -4,7 +4,7 @@ import '../../utils/colours.dart';
 import '../../services/auth_service.dart';
 import '../../providers/user_provider.dart';
 import '../auth/login_screens/login_screen.dart';
-import 'change_password_screen.dart';
+import 'Change_password/change_password_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});

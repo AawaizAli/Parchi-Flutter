@@ -154,11 +154,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             color: const Color(0xFFFFF0F0), 
                             iconColor: const Color(0xFFFF3B30),
                             onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => const ChangePasswordScreen(),
-                                ),
-                              );
+                              // [UPDATED] Use the static show method to trigger the popup
+                              ChangePasswordSheet.show(context);
                             },
                           ),
                           _buildMenuTile(

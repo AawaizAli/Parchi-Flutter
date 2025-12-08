@@ -1,4 +1,4 @@
-import 'dart:ui'; // Required for BackdropFilter
+import 'dart:ui'; // Required for the Blur effect
 import 'package:flutter/material.dart';
 import '../../../utils/colours.dart';
 import '../../../services/auth_service.dart';
@@ -6,16 +6,16 @@ import '../../../services/auth_service.dart';
 class ChangePasswordSheet extends StatefulWidget {
   const ChangePasswordSheet({super.key});
 
-  // Static helper to show the sheet easily from anywhere
+  // --- STATIC HELPER TO SHOW THE SHEET ---
   static void show(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // Allows sheet to grow with keyboard
-      backgroundColor: Colors.transparent, // Important for the blur effect
-      barrierColor: Colors.black.withOpacity(0.2), // Slight dimming
+      isScrollControlled: true, // Allows sheet to go full height if needed
+      backgroundColor: Colors.transparent, // Transparent so we can see the blur
+      barrierColor: Colors.black.withOpacity(0.2), // Slight dimming behind
       transitionAnimationController: AnimationController(
         vsync: Navigator.of(context),
-        duration: const Duration(milliseconds: 500), // Smooth animation
+        duration: const Duration(milliseconds: 600), // Slower, smoother animation like Login
       ),
       builder: (context) => const ChangePasswordSheet(),
     );
@@ -61,6 +61,7 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
           const SnackBar(
             content: Text('Password changed successfully!'),
             backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -70,6 +71,7 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
           SnackBar(
             content: Text(e.toString().replaceFirst('Exception: ', '')),
             backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -80,27 +82,28 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
 
   @override
   Widget build(BuildContext context) {
-    // This allows the sheet to resize when keyboard opens
+    // This padding ensures the sheet content moves up when the keyboard opens
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5), // THE BLUR EFFECT
+      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // --- THE BLUR EFFECT ---
       child: Container(
-        height: MediaQuery.of(context).size.height * 0.85, // Take up 85% of screen
-        decoration: const BoxDecoration(
+        height: screenHeight * 0.85, // Takes up 85% of the screen like Signup
+        decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(40)), // Rounded Top
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(40)), // Rounded top like Login
           boxShadow: [
             BoxShadow(
-              color: Colors.black26,
+              color: Colors.black.withOpacity(0.2),
               blurRadius: 20,
-              offset: Offset(0, -5),
+              offset: const Offset(0, -5),
             ),
           ],
         ),
         child: Column(
           children: [
-            // --- HEADER ---
+            // --- HEADER WITH CLOSE BUTTON ---
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 10),
               child: Row(
@@ -129,7 +132,7 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
               ),
             ),
             
-            const Divider(height: 1),
+            const Divider(height: 1, color: Color(0xFFEEEEEE)),
 
             // --- FORM CONTENT ---
             Expanded(
@@ -140,21 +143,38 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        "Security Check",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "Please enter your current password to verify it's you, then create a new one.",
-                        style: TextStyle(color: Colors.grey.shade600),
+                      const SizedBox(height: 10),
+                      // Info Text
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.security, color: AppColors.primary, size: 24),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                "To secure your account, please verify your current password.",
+                                style: TextStyle(
+                                  color: AppColors.textPrimary.withOpacity(0.8),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 30),
 
                       // Current Password
+                      _buildLabel("Current Password"),
                       _buildTextField(
                         controller: _currentPasswordController,
-                        hint: "Current Password",
+                        hint: "Enter current password",
                         isPassword: true,
                         isVisible: !_obscureCurrent,
                         onVisibilityToggle: () => setState(() => _obscureCurrent = !_obscureCurrent),
@@ -162,9 +182,10 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
                       const SizedBox(height: 20),
 
                       // New Password
+                      _buildLabel("New Password"),
                       _buildTextField(
                         controller: _newPasswordController,
-                        hint: "New Password",
+                        hint: "Enter new password",
                         isPassword: true,
                         isVisible: !_obscureNew,
                         onVisibilityToggle: () => setState(() => _obscureNew = !_obscureNew),
@@ -176,9 +197,10 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
                       const SizedBox(height: 20),
 
                       // Confirm Password
+                      _buildLabel("Confirm New Password"),
                       _buildTextField(
                         controller: _confirmPasswordController,
-                        hint: "Confirm New Password",
+                        hint: "Re-enter new password",
                         isPassword: true,
                         isVisible: !_obscureConfirm,
                         onVisibilityToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
@@ -190,14 +212,14 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
 
                       const SizedBox(height: 40),
 
-                      // Submit Button
+                      // Submit Button (Black, Rounded - Matches Login)
                       SizedBox(
                         width: double.infinity,
                         height: 56,
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _handleChangePassword,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black, // Matches Login Theme
+                            backgroundColor: Colors.black,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
@@ -226,7 +248,21 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
     );
   }
 
-  // Helper widget to match Login Screen input style
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0, left: 4.0),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: AppColors.textPrimary,
+          fontWeight: FontWeight.w600,
+          fontSize: 14,
+        ),
+      ),
+    );
+  }
+
+  // --- TEXT FIELD STYLE MATCHING LOGIN FORM ---
   Widget _buildTextField({
     required TextEditingController controller,
     required String hint,
@@ -237,15 +273,17 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade200,
+        color: Colors.grey.shade100, // Light grey background like Login
         borderRadius: BorderRadius.circular(16),
       ),
       child: TextFormField(
         controller: controller,
         obscureText: isPassword && !isVisible,
         validator: validator ?? (val) => val!.isEmpty ? "Required" : null,
+        style: const TextStyle(fontWeight: FontWeight.w500),
         decoration: InputDecoration(
           hintText: hint,
+          hintStyle: TextStyle(color: Colors.grey.shade500),
           prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
           suffixIcon: isPassword
               ? IconButton(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../utils/colours.dart';
-import '../../../services/auth_service.dart';
+import '../../../../utils/colours.dart';
+import '../../../../services/auth_service.dart';
 
 class ForgotPasswordForm extends StatefulWidget {
   final VoidCallback onBackTap;

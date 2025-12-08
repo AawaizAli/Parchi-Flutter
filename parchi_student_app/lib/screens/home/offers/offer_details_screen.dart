@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../utils/colours.dart';
-import '../../models/offer_model.dart';
-import '../../services/offers_service.dart';
+import '../../../utils/colours.dart';
+import '../../../models/offer_model.dart';
+import '../../../services/offers_service.dart';
 
 class OfferDetailsScreen extends StatefulWidget {
   final String offerId;

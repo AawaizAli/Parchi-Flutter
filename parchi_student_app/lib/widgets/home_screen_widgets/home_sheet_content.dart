@@ -5,7 +5,7 @@ import '../../providers/offers_provider.dart';
 import 'package:parchi_student_app/widgets/home_screen_restraunts_widgets/brand_card.dart';
 import '../home_screen_restraunts_widgets/restaurant_big_card.dart';
 import '../home_screen_restraunts_widgets/restaurant_medium_card.dart';
-import '../../screens/home/offer_details_screen.dart';
+import '../../screens/home/offers/offer_details_screen.dart';
 
 class HomeSheetContent extends ConsumerStatefulWidget {
   final ScrollController scrollController;

@@ -23,6 +23,9 @@ class SupabaseConfig {
     return dotenv.env['STUDENT_KYC_BUCKET'] ?? 'student-kyc';
   }
 
+// [NEW] Storage bucket for Profile Pictures (Avatars)
+  static String get avatarsBucket => 'avatars';
+  
   // Storage paths
   static String getStudentIdPath(String userId) =>
       'student-id/$userId/${DateTime.now().millisecondsSinceEpoch}.jpg';

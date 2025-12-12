@@ -14,17 +14,18 @@ class User {
   final String? lastName;
   final String? parchiId;
   final String? university;
-
+  final String? profilePicture;
   User({
     required this.id,
     required this.email,
     required this.role,
     required this.isActive,
-    this.phone, // [NEW]
+    this.phone, 
     this.firstName,
     this.lastName,
     this.parchiId,
     this.university,
+    this.profilePicture, 
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -54,6 +55,11 @@ class User {
       university: studentData != null 
           ? studentData['university'] 
           : json['university'],
+    
+    // [FIX] Add this block to read the profile picture from backend response
+      profilePicture: studentData != null 
+          ? studentData['profile_picture'] 
+          : json['profilePicture'],
     );
   }
 
@@ -63,11 +69,12 @@ class User {
       'email': email,
       'role': role,
       'is_active': isActive,
-      'phone': phone, // [NEW]
+      'phone': phone, 
       'firstName': firstName,
       'lastName': lastName,
       'parchiId': parchiId,
       'university': university,
+      'profilePicture': profilePicture, 
     };
   }
 }

@@ -355,6 +355,39 @@ class AuthService {
     }
   }
 
+  // [NEW] Update Profile Picture Endpoint
+  Future<void> updateProfilePicture(String imageUrl) async {
+    final token = await getToken();
+    if (token == null) {
+      throw Exception('No token found. Please login again.');
+    }
+
+    try {
+      final response = await http.patch(
+        // Ensure this matches your backend route
+        Uri.parse('${ApiConfig.baseUrl}/auth/student/profile-picture'), 
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'imageUrl': imageUrl}),
+      );
+
+      if (response.statusCode != 200) {
+        final responseData = jsonDecode(response.body);
+        throw Exception(responseData['message'] ?? 'Failed to update profile picture');
+      }
+      
+      // Optionally force a profile refresh here
+      await getProfile();
+      
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
+
+
   // Change Password
   Future<void> changePassword({
     required String currentPassword,

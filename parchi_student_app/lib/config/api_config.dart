@@ -15,6 +15,7 @@ class ApiConfig {
   static String get profileEndpoint => '$baseUrl/auth/me';
   static String get changePasswordEndpoint => '$baseUrl/auth/change-password';
   static String get forgotPasswordEndpoint => '$baseUrl/auth/forgot-password';
+  static String get updateProfilePictureEndpoint => '$baseUrl/auth/student/profile-picture';
   // Offers Endpoints
   static String get activeOffersEndpoint => '$baseUrl/offers/active';
   static String offerDetailsEndpoint(String id) => '$baseUrl/offers/$id/details';

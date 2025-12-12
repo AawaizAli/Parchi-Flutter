@@ -5,6 +5,7 @@ import '../../services/auth_service.dart';
 import '../../providers/user_provider.dart';
 import '../auth/login_screens/login_screen.dart';
 import 'Change_password/change_password_screen.dart';
+import 'profile_picture_upload_screen.dart'; // [NEW] Import the new screen
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -80,17 +81,44 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           const SizedBox(height: 30),
                           Stack(
                             children: [
+                              // Avatar
                               Container(
                                 padding: const EdgeInsets.all(4),
                                 decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                                child: const CircleAvatar(radius: 60, backgroundColor: AppColors.backgroundLight, child: Icon(Icons.person, size: 60, color: AppColors.textSecondary)),
+                                child: CircleAvatar(
+                                  radius: 60,
+                                  backgroundColor: AppColors.backgroundLight,
+                                  // [UPDATED] Show profile picture if available
+                                  backgroundImage: (user?.profilePicture != null) 
+                                      ? NetworkImage(user!.profilePicture!) 
+                                      : null,
+                                  child: (user?.profilePicture == null)
+                                      ? const Icon(Icons.person, size: 60, color: AppColors.textSecondary)
+                                      : null,
+                                ),
                               ),
+                              
+                              // Camera Icon Button
                               Positioned(
-                                bottom: 0, right: 0,
-                                child: Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(color: Colors.black87, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
-                                  child: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
+                                bottom: 0, 
+                                right: 0,
+                                // [UPDATED] Added GestureDetector to handle tap
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => const ProfilePictureUploadScreen()),
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black87, 
+                                      shape: BoxShape.circle, 
+                                      border: Border.all(color: Colors.white, width: 2)
+                                    ),
+                                    child: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
+                                  ),
                                 ),
                               ),
                             ],

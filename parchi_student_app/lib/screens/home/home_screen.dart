@@ -83,10 +83,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final double screenHeight = MediaQuery.of(context).size.height;
     final double topPadding = MediaQuery.of(context).padding.top;
     
-    final double headerHeight = topPadding + 32.0 + 45.0; 
+    final double headerHeight = topPadding + 32.0 + 60.0; 
     final double cardHeight = 180.0;
     
-    const double initialGap = 50.0;
+    const double initialGap = 66.0;
     const double expandedGap = 20.0;
 
     _maxSheetSize = (screenHeight - (headerHeight + expandedGap)) / screenHeight;

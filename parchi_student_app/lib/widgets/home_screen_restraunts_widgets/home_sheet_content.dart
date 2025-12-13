@@ -112,7 +112,7 @@ class HomeSheetContent extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            height: 24,
+            height: 29,
             width: 24,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(6),
@@ -136,7 +136,8 @@ class HomeSheetContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: AppColors.backgroundLight,
+        // [UPDATED] Using AppColors.surface (White) to match Profile Screen
+        color: AppColors.surface, 
         borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
         boxShadow: [
           BoxShadow(
@@ -298,7 +299,8 @@ class _FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
-      color: AppColors.backgroundLight, // Matches sheet bg so list scrolls "under" it visually
+      // [UPDATED] Use AppColors.surface here too so the header matches the sheet
+      color: AppColors.surface, 
       alignment: Alignment.centerLeft,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(

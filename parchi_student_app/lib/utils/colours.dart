@@ -16,7 +16,7 @@ class AppColors {
 
   // --- Background/Surface Colors ---
   // Used for: The rounded white sheet background (the container holding the content)
-  static const Color backgroundLight = Color(0xFFF2F2F7); // Light grey background
+  static const Color backgroundLight = Colors.white; // Light grey background
 
   // Used for: The Parchi Card Gradient (Start color) to give it depth
   static const Color backgroundDark = Color(0xFF1C1C1E); // Dark charcoal background

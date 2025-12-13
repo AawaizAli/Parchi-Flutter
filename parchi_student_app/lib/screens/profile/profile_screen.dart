@@ -5,6 +5,7 @@ import '../../utils/colours.dart';
 import '../../services/auth_service.dart';
 import '../../providers/user_provider.dart';
 import '../auth/login_screens/login_screen.dart';
+// Ensure these imports point to your updated "Widget" versions of the sheets
 import 'Change_password/change_password_screen.dart';
 import 'pfp_change/profile_picture_upload_screen.dart';
 
@@ -16,25 +17,30 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProviderStateMixin {
-  // 1. Controller for the main Profile List DraggableSheet
+  // 1. Controller for the main Profile List DraggableSheet (The white background list)
   final DraggableScrollableController _mainSheetController = DraggableScrollableController();
   final ValueNotifier<double> _mainSheetProgress = ValueNotifier(0.0);
 
-  // 2. Controller for the PFP Upload Sheet (Animation + Drag)
-  late AnimationController _pfpController;
+  // 2. GENERIC MODAL CONTROLLER (Handles BOTH PFP and Password sheets)
+  late AnimationController _modalController;
   
-  // Dimensions
+  // State to track WHICH sheet is open
+  Widget? _activeSheetContent; 
+  // State to track if we should show the "Floating Avatar" effect
+  bool _showFocusedAvatar = false; 
+
+  // Layout Dimensions
   double _minMainSheetSize = 0.6;
   double _maxMainSheetSize = 0.95;
 
   @override
   void initState() {
     super.initState();
-    // Listen to main sheet scrolling for the header fade effect
+    // Listener for the main list header fade effect
     _mainSheetController.addListener(_onMainSheetChanged);
     
-    // Initialize PFP controller (0.0 = closed, 1.0 = fully open)
-    _pfpController = AnimationController(
+    // Initialize the shared modal animation controller
+    _modalController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
       reverseDuration: const Duration(milliseconds: 300),
@@ -51,33 +57,57 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
   void dispose() {
     _mainSheetController.removeListener(_onMainSheetChanged);
     _mainSheetController.dispose();
-    _pfpController.dispose();
+    _modalController.dispose();
     super.dispose();
   }
 
-  // --- LOGIC: Open/Close PFP Sheet ---
-  void _togglePfpSheet(bool open) {
-    if (open) {
-      _pfpController.forward(from: 0.0);
-    } else {
-      _pfpController.reverse();
-    }
+  // ---------------------------------------------------------
+  // LOGIC: OPENING SHEETS
+  // ---------------------------------------------------------
+
+  // 1. Open Profile Picture Sheet (With Focused Avatar)
+  void _openPfpSheet() {
+    setState(() {
+      _activeSheetContent = ProfilePictureUploadSheet(onClose: _closeModal);
+      _showFocusedAvatar = true; // <--- TRUE: Avatar stays bright on top
+    });
+    _modalController.forward(from: 0.0);
   }
 
-  // --- LOGIC: Handle Dragging the PFP Sheet ---
-  void _handlePfpDragUpdate(DragUpdateDetails details) {
-    // Convert drag pixels to controller value (0 to 1)
-    // We assume the sheet is roughly 400px high. 
-    double delta = details.primaryDelta! / 400; 
-    _pfpController.value -= delta; // Dragging UP (negative delta) increases value
+  // 2. Open Password Sheet (Standard Blur)
+  void _openPasswordSheet() {
+    setState(() {
+      _activeSheetContent = ChangePasswordSheet(onClose: _closeModal);
+      _showFocusedAvatar = false; // <--- FALSE: Avatar gets blurred with background
+    });
+    _modalController.forward(from: 0.0);
   }
 
-  void _handlePfpDragEnd(DragEndDetails details) {
-    // Snap to open or close based on velocity or position
-    if (_pfpController.value > 0.5 || details.primaryVelocity! < -500) {
-      _pfpController.forward();
+  // 3. Close Any Active Modal
+  void _closeModal() {
+    // Reverse animation, then clear content
+    _modalController.reverse().whenComplete(() {
+      if (mounted) {
+        setState(() => _activeSheetContent = null);
+      }
+    });
+  }
+
+  // ---------------------------------------------------------
+  // LOGIC: DRAGGING INTERACTION
+  // ---------------------------------------------------------
+  void _handleModalDragUpdate(DragUpdateDetails details) {
+    // Normalize drag distance against screen height (~60% of screen)
+    double delta = details.primaryDelta! / (MediaQuery.of(context).size.height * 0.6); 
+    _modalController.value -= delta; // Drag down reduces value
+  }
+
+  void _handleModalDragEnd(DragEndDetails details) {
+    // Snap open or closed based on position or velocity
+    if (_modalController.value > 0.5 || details.primaryVelocity! < -500) {
+      _modalController.forward();
     } else {
-      _pfpController.reverse();
+      _closeModal();
     }
   }
 
@@ -92,19 +122,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
     if (_minMainSheetSize < 0.4) _minMainSheetSize = 0.4;
     if (_minMainSheetSize > 0.75) _minMainSheetSize = 0.75;
 
+    // PopScope intercepts the Back Button
     return PopScope(
       canPop: false,
       onPopInvoked: (didPop) {
         if (didPop) return;
-        // If PFP sheet is open, close it first
-        if (_pfpController.value > 0.1) {
-          _togglePfpSheet(false);
+        // If our custom modal is open, close it first. Otherwise pop screen.
+        if (_modalController.value > 0.1) {
+          _closeModal();
         } else {
           Navigator.of(context).pop();
         }
       },
       child: Scaffold(
         backgroundColor: AppColors.secondary,
+        resizeToAvoidBottomInset: false, // Handle keyboard manually in the stack
         body: userAsync.when(
           data: (user) {
             final fName = user?.firstName ?? "Student";
@@ -115,7 +147,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
             final university = user?.university ?? "University";
             final phone = user?.phone ?? "No Phone";
 
-            // --- Widget: The Avatar Logic ---
+            // --- Reusable Avatar Builder ---
             Widget buildAvatar({required bool isInteractive}) {
               return Stack(
                 children: [
@@ -134,15 +166,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
                   Positioned(
                     bottom: 0, right: 0,
                     child: GestureDetector(
-                      onTap: isInteractive ? () => _togglePfpSheet(true) : null,
+                      onTap: isInteractive ? _openPfpSheet : null,
                       child: Container(
                         padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                            color: Colors.black87,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2)),
-                        child: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
-                      ),
+                        decoration: BoxDecoration(color: Colors.black87, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
+                        child: const Icon(Icons.edit, size: 18, color: Colors.white),                      
+                        ),
                     ),
                   ),
                 ],
@@ -152,7 +181,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
             return Stack(
               children: [
                 // -------------------------------------------
-                // LAYER 1: Main Header (Background)
+                // LAYER 1: Header (Background)
                 // -------------------------------------------
                 Positioned(
                   top: topPadding, left: 0, right: 0, height: headerContentHeight,
@@ -177,7 +206,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
                 ),
 
                 // -------------------------------------------
-                // LAYER 2: Draggable White List Sheet
+                // LAYER 2: Main List Sheet
                 // -------------------------------------------
                 DraggableScrollableSheet(
                   controller: _mainSheetController,
@@ -185,7 +214,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
                   minChildSize: _minMainSheetSize,
                   maxChildSize: _maxMainSheetSize,
                   snap: true,
-                  builder: (BuildContext context, ScrollController scrollController) {
+                  builder: (context, scrollController) {
                     return Container(
                       decoration: const BoxDecoration(
                         color: Colors.white,
@@ -198,13 +227,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
                           controller: scrollController,
                           padding: const EdgeInsets.all(24),
                           children: [
-                             // ... Content of your list ...
-                            Center(
-                              child: Container(
-                                width: 40, height: 4, margin: const EdgeInsets.only(bottom: 24),
-                                decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
-                              ),
-                            ),
+                            Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 24), decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)))),
                             _buildDetailRow("Email", email),
                             _buildDivider(),
                             _buildDetailRow("University", university),
@@ -215,11 +238,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
                             const SizedBox(height: 40),
                             const Text("Account Settings", style: TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.bold)),
                             const SizedBox(height: 10),
+                            
+                            // CHANGE PASSWORD TILE
                             _buildMenuTile(
-                              icon: Icons.lock_outline, label: "Change Password",
-                              color: const Color(0xFFFFF0F0), iconColor: const Color(0xFFFF3B30),
-                              onTap: () => ChangePasswordSheet.show(context),
+                              icon: Icons.lock_outline, 
+                              label: "Change Password",
+                              color: const Color(0xFFFFF0F0), 
+                              iconColor: const Color(0xFFFF3B30),
+                              onTap: _openPasswordSheet, // <--- Triggers generic modal
                             ),
+
                             _buildMenuTile(
                               icon: Icons.history, label: "Redemption History",
                               color: const Color(0xFFF0FDF4), iconColor: const Color(0xFF34C759),
@@ -239,21 +267,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
                               borderRadius: BorderRadius.circular(12),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(vertical: 16),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFFF0F0),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.logout, color: AppColors.error, size: 20),
-                                    SizedBox(width: 8),
-                                    Text("Log Out", style: TextStyle(color: AppColors.error, fontSize: 16, fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
+                                decoration: BoxDecoration(color: const Color(0xFFFFF0F0), borderRadius: BorderRadius.circular(12)),
+                                child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.logout, color: AppColors.error), SizedBox(width: 8), Text("Log Out", style: TextStyle(color: AppColors.error, fontSize: 16, fontWeight: FontWeight.bold))]),
                               ),
                             ),
-                            const SizedBox(height: 60), // Extra space for PFP sheet
+                            const SizedBox(height: 100), // Space for bottom sheets
                           ],
                         ),
                       ),
@@ -262,63 +280,67 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
                 ),
 
                 // -------------------------------------------
-                // LAYER 3: INTERACTIVE BLUR & SHEET
+                // LAYER 3: INTERACTIVE MODAL OVERLAY
                 // -------------------------------------------
                 AnimatedBuilder(
-                  animation: _pfpController,
+                  animation: _modalController,
                   builder: (context, child) {
-                    // Don't render if closed to save resources
-                    if (_pfpController.value == 0) return const SizedBox.shrink();
+                    // Performance optimization: Don't render if closed
+                    if (_modalController.value == 0 || _activeSheetContent == null) return const SizedBox.shrink();
 
                     return Stack(
                       children: [
-                        // A. The Blur Effect (Tied to Controller Value)
+                        // A. BLURRED BACKGROUND
                         Positioned.fill(
                           child: GestureDetector(
-                            onTap: () => _togglePfpSheet(false), // Tap background to close
+                            onTap: _closeModal, // Tap outside to close
                             child: BackdropFilter(
-                              // FLOWS WITH DRAG: 0.0 -> 10.0
+                              // Blur flows with the drag (0.0 -> 10.0)
                               filter: ImageFilter.blur(
-                                sigmaX: 10 * _pfpController.value, 
-                                sigmaY: 10 * _pfpController.value
+                                sigmaX: 10 * _modalController.value, 
+                                sigmaY: 10 * _modalController.value
                               ),
                               child: Container(
-                                // FLOWS WITH DRAG: 0.0 -> 0.2
-                                color: Colors.black.withOpacity(0.2 * _pfpController.value),
+                                // Dim opacity flows with drag (0.0 -> 0.2)
+                                color: Colors.black.withOpacity(0.2 * _modalController.value),
                               ),
                             ),
                           ),
                         ),
 
-                        // B. The Focused Avatar (Tied to Controller Value)
-                        Positioned(
-                          top: topPadding, left: 0, right: 0, height: headerContentHeight,
-                          child: Opacity(
-                            // FLOWS WITH DRAG: 0.0 -> 1.0
-                            opacity: _pfpController.value,
-                            child: Column(
-                              children: [
-                                const SizedBox(height: 10),
-                                const Text("Profile", style: TextStyle(color: Colors.transparent, fontSize: 20, fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 30),
-                                buildAvatar(isInteractive: false),
-                              ],
+                        // B. FOCUSED AVATAR (Conditional)
+                        // Only render this if it's the PFP sheet (_showFocusedAvatar == true)
+                        if (_showFocusedAvatar)
+                          Positioned(
+                            top: topPadding, left: 0, right: 0, height: headerContentHeight,
+                            child: Opacity(
+                              opacity: _modalController.value, // Fade in with drag
+                              child: Column(
+                                children: [
+                                  const SizedBox(height: 10),
+                                  // Invisible text to maintain exact layout alignment
+                                  const Text("Profile", style: TextStyle(color: Colors.transparent, fontSize: 20, fontWeight: FontWeight.bold)),
+                                  const SizedBox(height: 30),
+                                  // The Bright, Sharp Avatar
+                                  buildAvatar(isInteractive: false),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
 
-                        // C. The Custom Draggable Sheet
+                        // C. THE SHEET CONTENT
                         Positioned(
                           left: 0, right: 0, bottom: 0,
-                          // Use transform to slide it in from bottom
+                          // Slide up from bottom based on controller value
                           child: FractionalTranslation(
-                            translation: Offset(0, 1.0 - _pfpController.value),
+                            translation: Offset(0, 1.0 - _modalController.value),
                             child: GestureDetector(
-                              // THIS MAKES IT INTERACTIVE
-                              onVerticalDragUpdate: _handlePfpDragUpdate,
-                              onVerticalDragEnd: _handlePfpDragEnd,
-                              child: ProfilePictureUploadSheet(
-                                onClose: () => _togglePfpSheet(false),
+                              onVerticalDragUpdate: _handleModalDragUpdate,
+                              onVerticalDragEnd: _handleModalDragEnd,
+                              child: Padding(
+                                // Push content up when keyboard opens (Critical for Password field)
+                                padding: MediaQuery.of(context).viewInsets,
+                                child: _activeSheetContent,
                               ),
                             ),
                           ),
@@ -337,7 +359,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
     );
   }
 
-  // --- Helper Widgets (Same as before) ---
+  // --- Helper Widgets ---
+
   Widget _buildDivider() => const Divider(height: 32, color: AppColors.backgroundLight, thickness: 1);
 
   Widget _buildDetailRow(String label, String value) {

@@ -32,8 +32,10 @@ dev_dependencies:
   # Code Generation (Required for Riverpod)
   build_runner: ^2.4.9
   riverpod_generator: ^2.4.0
+  custom_refresh_indicator: ^3.0.0
 
 flutter:
   uses-material-design: true
   assets:
     - .env
+    - assets/parchi-icon.png

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
 import 'dart:math' as math;
-
+import 'dart:ui' as ui;
 import '../../utils/colours.dart';
 import '../../providers/offers_provider.dart';
 import 'package:parchi_student_app/widgets/home_screen_restraunts_widgets/brand_card.dart';
@@ -422,7 +422,7 @@ class _FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
 // --- CUSTOM LOADER WIDGET ---
 class ParchiLoader extends StatefulWidget {
   final bool isLoading;
-  final double progress; // 0.0 to 1.0 (or higher on overscroll)
+  final double progress; 
 
   const ParchiLoader({
     super.key, 
@@ -441,7 +441,7 @@ class _ParchiLoaderState extends State<ParchiLoader> with SingleTickerProviderSt
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(seconds: 1),
+      duration: const Duration(seconds: 1), // Adjust speed here if needed
       vsync: this,
     );
   }
@@ -449,7 +449,6 @@ class _ParchiLoaderState extends State<ParchiLoader> with SingleTickerProviderSt
   @override
   void didUpdateWidget(ParchiLoader oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Start spinning if loading starts
     if (widget.isLoading && !_controller.isAnimating) {
       _controller.repeat();
     } else if (!widget.isLoading && _controller.isAnimating) {
@@ -469,33 +468,21 @@ class _ParchiLoaderState extends State<ParchiLoader> with SingleTickerProviderSt
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
-        // ROTATION: 
-        // If loading -> Rotate continuously
-        // If dragging -> Rotate based on how much user pulled
+        // Rotation Logic: 
+        // Spin continuously if loading, or rotate based on pull distance
         final double rotationValue = widget.isLoading 
             ? _controller.value * 2 * math.pi 
             : widget.progress * 2 * math.pi;
 
-        // SCALE:
-        // If loading -> Pulse effect
-        // If dragging -> Grow from 0.5 to 1.0 size
-        final double scaleValue = widget.isLoading
-            ? 0.8 + (0.2 * math.sin(_controller.value * 2 * math.pi))
-            : (0.5 + (0.5 * widget.progress)).clamp(0.0, 1.0);
-
         return Transform.rotate(
           angle: rotationValue,
-          child: Transform.scale(
-            scale: scaleValue,
-            child: child,
+          child: Image.asset(
+            'assets/parchi-icon.png',
+            width: 120, 
+            height: 120,
           ),
         );
       },
-      child: Image.asset(
-        'assets/parchi-icon.png', // MAKE SURE THIS ASSET EXISTS
-        width: 120, 
-        height: 120, 
-      ),
     );
   }
 }

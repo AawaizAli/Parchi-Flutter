@@ -159,7 +159,8 @@ class AuthService {
     required String password,
     String? phone,
     required String university,
-    required String studentIdImageUrl,
+    required String studentIdCardFrontUrl,
+    required String studentIdCardBackUrl,
     required String selfieImageUrl,
   }) async {
     try {
@@ -171,7 +172,8 @@ class AuthService {
         'password': password,
         if (phone != null && phone.isNotEmpty) 'phone': phone,
         'university': university,
-        'studentIdImageUrl': studentIdImageUrl,
+        'studentIdCardFrontUrl': studentIdCardFrontUrl,
+        'studentIdCardBackUrl': studentIdCardBackUrl,
         'selfieImageUrl': selfieImageUrl,
       };
 

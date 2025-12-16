@@ -31,6 +31,31 @@ class SupabaseStorageService {
     }
   }
 
+  /// Upload student ID back image to Supabase Storage
+  /// Returns the public URL of the uploaded image
+  Future<String> uploadStudentIdBackImage(File imageFile, String userId) async {
+    try {
+      final String filePath = SupabaseConfig.getStudentIdBackPath(userId);
+      
+      // Upload file to Supabase Storage
+      await _supabase.storage
+          .from(SupabaseConfig.studentKycBucket)
+          .upload(filePath, imageFile, fileOptions: const FileOptions(
+            cacheControl: '3600',
+            upsert: false,
+          ));
+
+      // Get public URL
+      final String publicUrl = _supabase.storage
+          .from(SupabaseConfig.studentKycBucket)
+          .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (e) {
+      throw Exception('Failed to upload student ID back image: $e');
+    }
+  }
+
   /// Upload selfie image to Supabase Storage
   /// Returns the public URL of the uploaded image
   Future<String> uploadSelfieImage(File imageFile, String userId) async {
@@ -56,23 +81,26 @@ class SupabaseStorageService {
     }
   }
 
-  /// Upload both images and return their URLs
-  /// Returns a map with 'studentIdUrl' and 'selfieUrl' keys
+  /// Upload all KYC images and return their URLs
+  /// Returns a map with 'studentIdUrl', 'studentIdBackUrl', and 'selfieUrl' keys
   Future<Map<String, String>> uploadKycImages({
     required File studentIdImage,
+    required File studentIdBackImage,
     required File selfieImage,
     required String userId,
   }) async {
     try {
-      // Upload both images concurrently
+      // Upload all images concurrently
       final results = await Future.wait([
         uploadStudentIdImage(studentIdImage, userId),
+        uploadStudentIdBackImage(studentIdBackImage, userId),
         uploadSelfieImage(selfieImage, userId),
       ]);
 
       return {
         'studentIdUrl': results[0],
-        'selfieUrl': results[1],
+        'studentIdBackUrl': results[1],
+        'selfieUrl': results[2],
       };
     } catch (e) {
       throw Exception('Failed to upload KYC images: $e');

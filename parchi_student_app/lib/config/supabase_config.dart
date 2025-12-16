@@ -29,6 +29,8 @@ class SupabaseConfig {
   // Storage paths
   static String getStudentIdPath(String userId) =>
       'student-id/$userId/${DateTime.now().millisecondsSinceEpoch}.jpg';
+  static String getStudentIdBackPath(String userId) =>
+      'student-id-back/$userId/${DateTime.now().millisecondsSinceEpoch}.jpg';
   static String getSelfiePath(String userId) =>
       'selfie/$userId/${DateTime.now().millisecondsSinceEpoch}.jpg';
 }

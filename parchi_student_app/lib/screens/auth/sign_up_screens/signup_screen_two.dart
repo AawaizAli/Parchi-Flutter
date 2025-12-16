@@ -32,29 +32,37 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
   final ImagePicker _imagePicker = ImagePicker();
   final SupabaseStorageService _storageService = SupabaseStorageService();
   File? _studentIdImage;
+  File? _studentIdBackImage;
   File? _selfieImage;
   String? _validationError;
   bool _isUploading = false;
   final AuthService _authService = AuthService();
 
   // ... (Keep existing _showImageSourceDialog logic) ...
-  void _showImageSourceDialog(bool isStudentId) {
+  void _showImageSourceDialog(int imageType) {
+    // imageType: 0 = studentId, 1 = studentIdBack, 2 = selfie
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => SafeArea(child: Wrap(children: [
-        ListTile(leading: const Icon(Icons.photo_library), title: const Text('Gallery'), onTap: () async { Navigator.pop(ctx); _pickImage(ImageSource.gallery, isStudentId); }),
-        ListTile(leading: const Icon(Icons.camera_alt), title: const Text('Camera'), onTap: () async { Navigator.pop(ctx); _pickImage(ImageSource.camera, isStudentId); }),
+        ListTile(leading: const Icon(Icons.photo_library), title: const Text('Gallery'), onTap: () async { Navigator.pop(ctx); _pickImage(ImageSource.gallery, imageType); }),
+        ListTile(leading: const Icon(Icons.camera_alt), title: const Text('Camera'), onTap: () async { Navigator.pop(ctx); _pickImage(ImageSource.camera, imageType); }),
       ])),
     );
   }
 
-  Future<void> _pickImage(ImageSource source, bool isStudentId) async {
+  Future<void> _pickImage(ImageSource source, int imageType) async {
     try {
       final XFile? image = await _imagePicker.pickImage(source: source, imageQuality: 85);
       if (image != null) {
         setState(() {
-          if (isStudentId) _studentIdImage = File(image.path); else _selfieImage = File(image.path);
+          if (imageType == 0) {
+            _studentIdImage = File(image.path);
+          } else if (imageType == 1) {
+            _studentIdBackImage = File(image.path);
+          } else {
+            _selfieImage = File(image.path);
+          }
           _validationError = null;
         });
       }
@@ -65,7 +73,8 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
   void _showError(String message) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.red)); }
   
   bool _validateForm() {
-    if (_studentIdImage == null) { setState(() => _validationError = "Upload Student ID"); return false; }
+    if (_studentIdImage == null) { setState(() => _validationError = "Upload Student ID Front"); return false; }
+    if (_studentIdBackImage == null) { setState(() => _validationError = "Upload Student ID Back"); return false; }
     if (_selfieImage == null) { setState(() => _validationError = "Upload Selfie"); return false; }
     setState(() => _validationError = null); return true;
   }
@@ -79,13 +88,20 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
 
     try {
       // 1. Upload Images
-      final imageUrls = await _storageService.uploadKycImages(studentIdImage: _studentIdImage!, selfieImage: _selfieImage!, userId: tempUserId);
+      final imageUrls = await _storageService.uploadKycImages(
+        studentIdImage: _studentIdImage!,
+        studentIdBackImage: _studentIdBackImage!,
+        selfieImage: _selfieImage!,
+        userId: tempUserId,
+      );
 
       // 2. Submit Signup Data
       final signupResponse = await _authService.studentSignup(
         firstName: widget.firstName, lastName: widget.lastName, email: widget.email, password: widget.password,
         phone: widget.phone.isNotEmpty ? widget.phone : null, university: widget.university,
-        studentIdImageUrl: imageUrls['studentIdUrl']!, selfieImageUrl: imageUrls['selfieUrl']!,
+        studentIdCardFrontUrl: imageUrls['studentIdUrl']!,
+        studentIdCardBackUrl: imageUrls['studentIdBackUrl']!,
+        selfieImageUrl: imageUrls['selfieUrl']!,
       );
 
       // 3. Navigate
@@ -155,15 +171,19 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text("Upload your student ID and a selfie.", style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
+                              const Text("Upload your student ID (front & back) and a selfie.", style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
                               const SizedBox(height: 40),
 
-                              _buildInputLabel("Student ID Image *"),
-                              _buildUploadBox("Upload ID", _studentIdImage != null, () => _showImageSourceDialog(true), image: _studentIdImage),
+                              _buildInputLabel("Student ID Front *"),
+                              _buildUploadBox("Upload ID Front", _studentIdImage != null, () => _showImageSourceDialog(0), image: _studentIdImage),
+                              const SizedBox(height: 24),
+
+                              _buildInputLabel("Student ID Back *"),
+                              _buildUploadBox("Upload ID Back", _studentIdBackImage != null, () => _showImageSourceDialog(1), image: _studentIdBackImage),
                               const SizedBox(height: 24),
 
                               _buildInputLabel("Selfie Image *"),
-                              _buildUploadBox("Upload Selfie", _selfieImage != null, () => _showImageSourceDialog(false), image: _selfieImage),
+                              _buildUploadBox("Upload Selfie", _selfieImage != null, () => _showImageSourceDialog(2), image: _selfieImage),
 
                               if (_validationError != null) ...[
                                 const SizedBox(height: 16),

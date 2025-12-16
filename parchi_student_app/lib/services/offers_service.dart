@@ -39,8 +39,8 @@ class OffersService {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         // NestJS response structure: { data: { data: [...], pagination: {...} }, ... }
-        if (responseData['data'] != null && responseData['data']['data'] != null) {
-          final List<dynamic> offersJson = responseData['data']['data'];
+        if (responseData['data'] != null && responseData['data']['items'] != null) {
+          final List<dynamic> offersJson = responseData['data']['items'];
           return offersJson.map((json) => OfferModel.fromJson(json)).toList();
         }
         return [];

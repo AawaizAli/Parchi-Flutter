@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 import '../../utils/colours.dart';
 import '../../providers/offers_provider.dart';
+import '../../providers/brands_provider.dart';
 import 'package:parchi_student_app/widgets/home_screen_restraunts_widgets/brand_card.dart';
 import '../home_screen_restraunts_widgets/restaurant_big_card.dart';
 import '../home_screen_restraunts_widgets/restaurant_medium_card.dart';
@@ -24,11 +25,8 @@ class HomeSheetContent extends ConsumerStatefulWidget {
 
 class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
   // --- DUMMY DATA FOR BRANDS ---
-  final List<Map<String, String>> brands = List.generate(10, (index) => {
-    "name": "Brand ${index + 1}",
-    "time": "${15 + index}-25 min",
-    "image": "https://placehold.co/100x100/png?text=Logo${index+1}"
-  });
+  // --- DUMMY DATA FOR BRANDS REMOVED ---
+
 
   // --- DUMMY DATA FOR ALL RESTAURANTS ---
   final List<Map<String, String>> allRestaurants = List.generate(8, (index) => {
@@ -44,6 +42,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
     try {
       // Load fresh data
       await ref.refresh(activeOffersProvider.future);
+      await ref.refresh(brandsProvider.future);
       // await ref.refresh(allRestaurantsProvider.future); 
       // await Future.delayed(const Duration(seconds: 2)); // Uncomment to test the loader duration
     } catch (e) {
@@ -228,16 +227,25 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
               SliverToBoxAdapter(
                 child: SizedBox(
                   height: 160,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    scrollDirection: Axis.horizontal,
-                    itemCount: brands.length,
-                    itemBuilder: (context, index) {
-                      final brand = brands[index];
-                      return BrandCard(
-                        name: brand["name"]!,
-                        time: brand["time"]!,
-                        image: brand["image"]!,
+                  child: ref.watch(brandsProvider).when(
+                    loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+                    error: (err, stack) => Center(child: Text('Error: $err')),
+                    data: (brands) {
+                      if (brands.isEmpty) {
+                        return const Center(child: Text("No brands available"));
+                      }
+                      return ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: brands.length,
+                        itemBuilder: (context, index) {
+                          final brand = brands[index];
+                          return BrandCard(
+                            name: brand.businessName,
+                            time: "30-45 min", // Placeholder
+                            image: brand.logoPath ?? "https://placehold.co/100x100/png?text=No+Image",
+                          );
+                        },
                       );
                     },
                   ),

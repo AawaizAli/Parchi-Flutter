@@ -35,7 +35,7 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
 
     try {
       await authService.forgotPassword(_emailController.text.trim());
-      
+
       if (mounted) {
         // Show success dialog
         showDialog(
@@ -95,7 +95,7 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
               "Enter your email address and we'll send you a link to reset your password.",
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey.shade600,
+                color: AppColors.textSecondary,
                 height: 1.5,
               ),
             ),
@@ -105,7 +105,7 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
             Container(
               height: 56,
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: AppColors.textSecondary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: TextFormField(
@@ -115,15 +115,17 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your email';
                   }
-                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                      .hasMatch(value)) {
                     return 'Please enter a valid email';
                   }
                   return null;
                 },
                 decoration: const InputDecoration(
                   hintText: "Enter your email",
-                  hintStyle: TextStyle(color: Colors.grey),
-                  prefixIcon: Icon(Icons.email_outlined, color: Colors.grey),
+                  hintStyle: TextStyle(color: AppColors.textSecondary),
+                  prefixIcon: Icon(Icons.email_outlined,
+                      color: AppColors.textSecondary),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 16),
                 ),
@@ -141,7 +143,8 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+                    Icon(Icons.error_outline,
+                        color: Colors.red.shade700, size: 20),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -166,7 +169,7 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _handleForgotPassword,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: AppColors.textPrimary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
@@ -178,22 +181,23 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.textOnPrimary),
                         ),
                       )
                     : const Text(
                         "Send Reset Link",
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.textOnPrimary,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Back Button
             Center(
               child: TextButton(

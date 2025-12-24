@@ -24,40 +24,52 @@ class _OfferDetailsScreenState extends State<OfferDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.backgroundLight,
       body: SafeArea(
         child: FutureBuilder<OfferModel>(
           future: _detailsFuture,
           builder: (context, snapshot) {
             // 1. Loading
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator(color: AppColors.primary));
-            } 
+              return const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary));
+            }
             // 2. Error
             else if (snapshot.hasError) {
               return Center(child: Text("Failed to load: ${snapshot.error}"));
-            } 
+            }
             // 3. Data Loaded
             else if (snapshot.hasData) {
               final offer = snapshot.data!;
-              
+
               return Column(
                 children: [
                   // --- TOP NAVIGATION ---
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                          icon: const Icon(Icons.arrow_back,
+                              color: AppColors.textPrimary),
                           onPressed: () => Navigator.pop(context),
                         ),
                         Row(
                           children: [
-                            IconButton(icon: const Icon(Icons.info_outline, color: AppColors.textPrimary), onPressed: () {}),
-                            IconButton(icon: const Icon(Icons.favorite_border, color: AppColors.textPrimary), onPressed: () {}),
-                            IconButton(icon: const Icon(Icons.share, color: AppColors.textPrimary), onPressed: () {}),
+                            IconButton(
+                                icon: const Icon(Icons.info_outline,
+                                    color: AppColors.textPrimary),
+                                onPressed: () {}),
+                            IconButton(
+                                icon: const Icon(Icons.favorite_border,
+                                    color: AppColors.textPrimary),
+                                onPressed: () {}),
+                            IconButton(
+                                icon: const Icon(Icons.share,
+                                    color: AppColors.textPrimary),
+                                onPressed: () {}),
                           ],
                         )
                       ],
@@ -77,7 +89,8 @@ class _OfferDetailsScreenState extends State<OfferDetailsScreen> {
                                   offer.merchant?.businessName ?? "Merchant",
                                   style: const TextStyle(
                                     fontSize: 24,
-                                    fontWeight: FontWeight.w900, // Extra bold like the screenshot
+                                    fontWeight: FontWeight
+                                        .w900, // Extra bold like the screenshot
                                     color: AppColors.textPrimary,
                                   ),
                                 ),
@@ -85,15 +98,21 @@ class _OfferDetailsScreenState extends State<OfferDetailsScreen> {
                                 const Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.star, color: Colors.orange, size: 18),
+                                    Icon(Icons.star,
+                                        color: AppColors.warning, size: 18),
                                     SizedBox(width: 4),
                                     Text(
-                                      "4.2", 
-                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                      "4.2",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14),
                                     ),
                                     Text(
-                                      " (1000+ ratings)", 
-                                      style: TextStyle(color: AppColors.textSecondary, fontSize: 14, decoration: TextDecoration.underline),
+                                      " (1000+ ratings)",
+                                      style: TextStyle(
+                                          color: AppColors.textSecondary,
+                                          fontSize: 14,
+                                          decoration: TextDecoration.underline),
                                     ),
                                   ],
                                 ),
@@ -113,18 +132,23 @@ class _OfferDetailsScreenState extends State<OfferDetailsScreen> {
                               children: [
                                 const Row(
                                   children: [
-                                    Icon(Icons.local_offer, color: Colors.pink, size: 20),
+                                    Icon(Icons.local_offer,
+                                        color: AppColors.secondary, size: 20),
                                     SizedBox(width: 8),
                                     Text(
                                       "Special offers for you",
-                                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                                      style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   offer.formattedDiscount, // e.g. "30% OFF"
-                                  style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                                  style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 14),
                                 ),
                               ],
                             ),
@@ -141,10 +165,12 @@ class _OfferDetailsScreenState extends State<OfferDetailsScreen> {
                             child: Row(
                               children: [
                                 _buildOfferProductCard(offer),
-                                // Mocking a second card just to show the layout effect, 
+                                // Mocking a second card just to show the layout effect,
                                 // referencing the same offer but you can remove this
                                 const SizedBox(width: 16),
-                                Opacity(opacity: 0.5, child: _buildOfferProductCard(offer)),
+                                Opacity(
+                                    opacity: 0.5,
+                                    child: _buildOfferProductCard(offer)),
                               ],
                             ),
                           ),
@@ -167,9 +193,9 @@ class _OfferDetailsScreenState extends State<OfferDetailsScreen> {
   // --- HELPER WIDGET: THE PRODUCT CARD ---
   Widget _buildOfferProductCard(OfferModel offer) {
     // Logic to get image
-    final displayImage = offer.imageUrl ?? 
-                         offer.merchant?.logoPath ?? 
-                         "https://placehold.co/600x600/png?text=Offer";
+    final displayImage = offer.imageUrl ??
+        offer.merchant?.logoPath ??
+        "https://placehold.co/600x600/png?text=Offer";
 
     return Container(
       width: 160, // Fixed width like the "Half Dozen Box" card
@@ -197,21 +223,24 @@ class _OfferDetailsScreenState extends State<OfferDetailsScreen> {
                 child: Container(
                   height: 32,
                   width: 32,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))
-                    ]
-                  ),
-                  child: const Icon(Icons.add, color: AppColors.primary, size: 20),
+                  decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                            color: AppColors.textPrimary.withOpacity(0.12),
+                            blurRadius: 4,
+                            offset: Offset(0, 2))
+                      ]),
+                  child:
+                      const Icon(Icons.add, color: AppColors.primary, size: 20),
                 ),
               )
             ],
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Title
           Text(
             offer.title, // e.g., "Half Dozen Box"
@@ -223,19 +252,19 @@ class _OfferDetailsScreenState extends State<OfferDetailsScreen> {
               color: AppColors.textPrimary,
             ),
           ),
-          
+
           const SizedBox(height: 4),
-          
+
           // Price / Discount Row
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-               Text(
+              Text(
                 "Redeem Now",
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Colors.pink, // Pink color like the screenshot
+                  color: AppColors.secondary, // Pink color like the screenshot
                 ),
               ),
               const SizedBox(height: 2),
@@ -244,7 +273,8 @@ class _OfferDetailsScreenState extends State<OfferDetailsScreen> {
                   "Valid until ${offer.validUntil.day}/${offer.validUntil.month}",
                   style: const TextStyle(
                     fontSize: 12,
-                    decoration: TextDecoration.none, // Removed strikethrough as we don't have old price
+                    decoration: TextDecoration
+                        .none, // Removed strikethrough as we don't have old price
                     color: AppColors.textSecondary,
                   ),
                 ),

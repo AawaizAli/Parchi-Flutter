@@ -27,7 +27,7 @@ class RestaurantBigCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: AppColors.textPrimary.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -40,16 +40,19 @@ class RestaurantBigCard extends StatelessWidget {
           Stack(
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
                 child: Image.network(
-                  image, 
+                  image,
                   height: 180,
                   width: double.infinity,
                   fit: BoxFit.cover,
                   errorBuilder: (ctx, err, stack) => Container(
-                    height: 180, 
-                    color: Colors.grey[300],
-                    child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                    height: 180,
+                    color: AppColors.textSecondary.withOpacity(0.3),
+                    child: const Center(
+                        child: Icon(Icons.broken_image,
+                            color: AppColors.textSecondary)),
                   ),
                 ),
               ),
@@ -59,17 +62,19 @@ class RestaurantBigCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: const BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.favorite_border, size: 20, color: AppColors.textPrimary),
+                  child: const Icon(Icons.favorite_border,
+                      size: 20, color: AppColors.textPrimary),
                 ),
               ),
               Positioned(
                 bottom: 12,
                 left: 12,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppColors.primary,
                     borderRadius: BorderRadius.circular(4),
@@ -77,7 +82,7 @@ class RestaurantBigCard extends StatelessWidget {
                   child: Text(
                     discount,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.textOnPrimary,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
@@ -106,15 +111,20 @@ class RestaurantBigCard extends StatelessWidget {
                     ),
                     Row(
                       children: [
-                        const Icon(Icons.star, size: 16, color: AppColors.secondary),
+                        const Icon(Icons.star,
+                            size: 16, color: AppColors.secondary),
                         const SizedBox(width: 4),
                         Text(
                           rating,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.textPrimary),
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: AppColors.textPrimary),
                         ),
                         const Text(
                           " (5000+)",
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                          style: TextStyle(
+                              color: AppColors.textSecondary, fontSize: 12),
                         ),
                       ],
                     ),
@@ -131,7 +141,8 @@ class RestaurantBigCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 const Row(
                   children: [
-                    Icon(Icons.delivery_dining, size: 16, color: AppColors.textSecondary),
+                    Icon(Icons.delivery_dining,
+                        size: 16, color: AppColors.textSecondary),
                     SizedBox(width: 4),
                     Text(
                       "Rs. 129",

@@ -13,10 +13,12 @@ class SignupVerificationScreen extends StatefulWidget {
   });
 
   @override
-  State<SignupVerificationScreen> createState() => _SignupVerificationScreenState();
+  State<SignupVerificationScreen> createState() =>
+      _SignupVerificationScreenState();
 }
 
-class _SignupVerificationScreenState extends State<SignupVerificationScreen> with SingleTickerProviderStateMixin {
+class _SignupVerificationScreenState extends State<SignupVerificationScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
@@ -51,7 +53,10 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen> wit
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFFE8F5E9), Color(0xFFF5F7FA)],
+                colors: [
+                  AppColors.verificationGradientStart,
+                  AppColors.verificationGradientEnd
+                ],
               ),
             ),
           ),
@@ -61,7 +66,7 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen> wit
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Spacer(),
-                
+
                 // Animated Tick (Green Circle)
                 ScaleTransition(
                   scale: _scaleAnimation,
@@ -70,7 +75,7 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen> wit
                     width: 160,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white,
+                      color: AppColors.backgroundLight,
                       boxShadow: [
                         BoxShadow(
                           color: AppColors.primary.withOpacity(0.2),
@@ -88,9 +93,9 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen> wit
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 48),
-                
+
                 const Text(
                   "You're all set!",
                   style: TextStyle(
@@ -115,7 +120,8 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen> wit
                 if (widget.parchiId != null) ...[
                   const SizedBox(height: 24),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 16),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(16),
@@ -148,9 +154,9 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen> wit
                     ),
                   ),
                 ],
-                
+
                 const Spacer(),
-                
+
                 // Back to Login (Outlined in Black/Grey for sleekness)
                 SizedBox(
                   width: double.infinity,
@@ -159,12 +165,15 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen> wit
                     onPressed: () {
                       Navigator.pushAndRemoveUntil(
                         context,
-                        MaterialPageRoute(builder: (context) => const LoginScreen()),
+                        MaterialPageRoute(
+                            builder: (context) => const LoginScreen()),
                         (route) => false,
                       );
                     },
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.grey.shade300, width: 1.5),
+                      side: BorderSide(
+                          color: AppColors.textSecondary.withOpacity(0.3),
+                          width: 1.5),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),

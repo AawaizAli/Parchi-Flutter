@@ -12,7 +12,8 @@ class NotificationScreen extends StatefulWidget {
 class _NotificationScreenState extends State<NotificationScreen> {
   final bool _isEmpty = false;
 
-  final DraggableScrollableController _sheetController = DraggableScrollableController();
+  final DraggableScrollableController _sheetController =
+      DraggableScrollableController();
   final ValueNotifier<double> _expandProgress = ValueNotifier(0.0);
 
   double _minSheetSize = 0.5;
@@ -54,7 +55,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   void _onSheetChanged() {
     double currentSize = _sheetController.size;
-    double progress = (currentSize - _minSheetSize) / (_maxSheetSize - _minSheetSize);
+    double progress =
+        (currentSize - _minSheetSize) / (_maxSheetSize - _minSheetSize);
     _expandProgress.value = progress.clamp(0.0, 1.0);
   }
 
@@ -69,18 +71,19 @@ class _NotificationScreenState extends State<NotificationScreen> {
   Widget build(BuildContext context) {
     final double screenHeight = MediaQuery.of(context).size.height;
     final double topPadding = MediaQuery.of(context).padding.top;
-    
-    final double headerHeight = topPadding + 20.0 + 45.0 + 20.0; 
-    const double cardHeight = 240.0; 
+
+    final double headerHeight = topPadding + 20.0 + 45.0 + 20.0;
+    const double cardHeight = 240.0;
     const double gap = 20.0;
 
-    _minSheetSize = (screenHeight - (headerHeight + cardHeight + gap)) / screenHeight;
+    _minSheetSize =
+        (screenHeight - (headerHeight + cardHeight + gap)) / screenHeight;
 
     if (_minSheetSize < 0.3) _minSheetSize = 0.3;
     if (_minSheetSize > 0.8) _minSheetSize = 0.8;
 
     return Scaffold(
-      backgroundColor: Colors.grey[200],
+      backgroundColor: AppColors.backgroundLight,
       body: Stack(
         children: [
           // [LAYER 1] Bonus Cards
@@ -108,22 +111,23 @@ class _NotificationScreenState extends State<NotificationScreen> {
             snap: true,
             builder: (BuildContext context, ScrollController scrollController) {
               return Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black12,
+                      color: AppColors.textPrimary.withOpacity(0.12),
                       blurRadius: 10,
                       offset: Offset(0, -5),
                     )
                   ],
                 ),
                 child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-                  child: _isEmpty 
-                      ? _buildEmptyState() 
-                      : _buildNotificationList(scrollController), 
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(30)),
+                  child: _isEmpty
+                      ? _buildEmptyState()
+                      : _buildNotificationList(scrollController),
                 ),
               );
             },
@@ -150,13 +154,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
+                              color: AppColors.textPrimary.withOpacity(0.05),
                               blurRadius: 10,
                               offset: const Offset(0, 2),
                             ),
                           ],
                         ),
-                        child: const Icon(Icons.arrow_back_ios_new, size: 20, color: AppColors.textPrimary),
+                        child: const Icon(Icons.arrow_back_ios_new,
+                            size: 20, color: AppColors.textPrimary),
                       ),
                     ),
                   ],
@@ -180,12 +185,16 @@ class _NotificationScreenState extends State<NotificationScreen> {
               color: AppColors.backgroundLight,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.notifications_off_outlined, size: 64, color: AppColors.textSecondary),
+            child: const Icon(Icons.notifications_off_outlined,
+                size: 64, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 24),
           const Text(
             "No Notifications Yet",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+            style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -209,12 +218,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
             height: 4,
             margin: const EdgeInsets.only(bottom: 20),
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: AppColors.textSecondary.withOpacity(0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
         ),
-
         _buildSectionHeader("New Updates"),
         _buildNotificationItem(
           brandName: "KFC",
@@ -230,9 +238,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           imageUrl: "https://placehold.co/100x100/png?text=P",
           isUnread: true,
         ),
-        
         const SizedBox(height: 20),
-        
         _buildSectionHeader("Yesterday"),
         _buildNotificationItem(
           brandName: "Outfitters",
@@ -276,7 +282,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             height: 56,
             width: 56,
             decoration: BoxDecoration(
-              color: Colors.grey[200],
+              color: AppColors.textSecondary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
               image: DecorationImage(
                 image: NetworkImage(imageUrl),
@@ -291,7 +297,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
               children: [
                 RichText(
                   text: TextSpan(
-                    style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, height: 1.4),
+                    style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                        height: 1.4),
                     children: [
                       TextSpan(
                         text: "$brandName ",
@@ -305,7 +314,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 Text(
                   time,
                   style: TextStyle(
-                    color: isUnread ? AppColors.primary : AppColors.textSecondary,
+                    color:
+                        isUnread ? AppColors.primary : AppColors.textSecondary,
                     fontSize: 12,
                     fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
                   ),
@@ -318,7 +328,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
               margin: const EdgeInsets.only(top: 8, left: 8),
               height: 8,
               width: 8,
-              decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+              decoration: const BoxDecoration(
+                  color: AppColors.primary, shape: BoxShape.circle),
             ),
         ],
       ),

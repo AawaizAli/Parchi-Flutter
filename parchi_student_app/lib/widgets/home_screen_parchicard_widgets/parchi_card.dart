@@ -10,10 +10,10 @@ class ParchiCard extends StatelessWidget {
   final String studentName;
   final String studentId;
   final bool isGolden; // [NEW] Gold Mode Flag
-  
+
   const ParchiCard({
     super.key,
-    this.studentName = "AAWAIZ ALI", 
+    this.studentName = "AAWAIZ ALI",
     this.studentId = "PK-12345",
     this.isGolden = false, // Default is standard
   });
@@ -29,9 +29,9 @@ class ParchiCard extends StatelessWidget {
 
     final goldGradient = const LinearGradient(
       colors: [
-        Color(0xFFDAA520), // Goldenrod
-        Color(0xFFFFD700), // Gold
-        Color(0xFFB8860B), // Dark Goldenrod
+        AppColors.goldStart, // Goldenrod
+        AppColors.goldMid, // Gold
+        AppColors.goldEnd, // Dark Goldenrod
       ],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
@@ -45,7 +45,7 @@ class ParchiCard extends StatelessWidget {
           Navigator.of(context).push(PageRouteBuilder(
             opaque: false,
             barrierDismissible: true,
-            barrierColor: Colors.black87, 
+            barrierColor: AppColors.textPrimary.withOpacity(0.87),
             transitionDuration: const Duration(milliseconds: 600),
             reverseTransitionDuration: const Duration(milliseconds: 500),
             pageBuilder: (context, animation, secondaryAnimation) {
@@ -72,8 +72,8 @@ class ParchiCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: isGolden 
-                        ? Colors.amber.withOpacity(0.6) 
+                    color: isGolden
+                        ? AppColors.goldShadow.withOpacity(0.6)
                         : AppColors.primary.withOpacity(0.3),
                     blurRadius: isGolden ? 20 : 10,
                     spreadRadius: isGolden ? 2 : 0,
@@ -85,7 +85,7 @@ class ParchiCard extends StatelessWidget {
                 studentName: studentName,
                 studentId: studentId,
                 isGolden: isGolden,
-              ), 
+              ),
             ),
           ),
         ),
@@ -115,7 +115,8 @@ class ParchiCardDetail extends StatefulWidget {
 
 enum BackFaceView { currentMonth, yearlyStats, monthDetail }
 
-class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProviderStateMixin {
+class _ParchiCardDetailState extends State<ParchiCardDetail>
+    with TickerProviderStateMixin {
   late AnimationController _flipController;
   late Animation<double> _flipAnimation;
 
@@ -141,12 +142,13 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
 
     _hoverController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2), 
+      duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
 
-    _hoverAnimation = Tween<double>(begin: -10, end: 10).animate(CurvedAnimation(
+    _hoverAnimation =
+        Tween<double>(begin: -10, end: 10).animate(CurvedAnimation(
       parent: _hoverController,
-      curve: Curves.easeInOutSine, 
+      curve: Curves.easeInOutSine,
     ));
   }
 
@@ -218,16 +220,18 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
               builder: (context, child) {
                 final angle = _flipAnimation.value * pi;
                 final flipTransform = Matrix4.identity()
-                  ..setEntry(3, 2, 0.001) 
+                  ..setEntry(3, 2, 0.001)
                   ..rotateY(angle);
 
                 return Transform.translate(
-                  offset: Offset(0, _hoverAnimation.value), 
+                  offset: Offset(0, _hoverAnimation.value),
                   child: Transform(
                     transform: flipTransform,
                     alignment: Alignment.center,
                     child: Hero(
-                      tag: widget.isGolden ? 'gold-parchi-card' : 'parchi-card-hero',
+                      tag: widget.isGolden
+                          ? 'gold-parchi-card'
+                          : 'parchi-card-hero',
                       child: Material(
                         color: Colors.transparent,
                         child: angle < pi / 2
@@ -257,7 +261,7 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
     );
 
     final goldGradient = const LinearGradient(
-      colors: [Color(0xFFDAA520), Color(0xFFFFD700), Color(0xFFB8860B)],
+      colors: [AppColors.goldStart, AppColors.goldMid, AppColors.goldEnd],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     );
@@ -270,7 +274,9 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: widget.isGolden ? Colors.amber.withOpacity(0.6) : AppColors.primary.withOpacity(0.6),
+            color: widget.isGolden
+                ? AppColors.goldShadow.withOpacity(0.6)
+                : AppColors.primary.withOpacity(0.6),
             blurRadius: 40,
             spreadRadius: 10,
             offset: const Offset(0, 10),
@@ -292,18 +298,21 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
       width: MediaQuery.of(context).size.width * 0.9,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.backgroundDark, Colors.black],
+          colors: [AppColors.backgroundDark, AppColors.textPrimary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(25),
         border: Border.all(
-          color: widget.isGolden ? Colors.amber : AppColors.primary.withOpacity(0.5), 
-          width: 1
-        ),
+            color: widget.isGolden
+                ? AppColors.goldShadow
+                : AppColors.primary.withOpacity(0.5),
+            width: 1),
         boxShadow: [
           BoxShadow(
-            color: widget.isGolden ? Colors.amber.withOpacity(0.3) : AppColors.primary.withOpacity(0.3),
+            color: widget.isGolden
+                ? AppColors.goldShadow.withOpacity(0.3)
+                : AppColors.primary.withOpacity(0.3),
             blurRadius: 40,
             spreadRadius: 5,
           ),
@@ -368,11 +377,17 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
                       strokeWidth: 8,
                     ),
                   ),
-                   Column(
+                  Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text("$usedCount", style: const TextStyle(color: AppColors.surface, fontSize: 24, fontWeight: FontWeight.bold)),
-                      const Text("Used", style: TextStyle(color: AppColors.textSecondary, fontSize: 10)),
+                      Text("$usedCount",
+                          style: const TextStyle(
+                              color: AppColors.surface,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold)),
+                      const Text("Used",
+                          style: TextStyle(
+                              color: AppColors.textSecondary, fontSize: 10)),
                     ],
                   ),
                 ],
@@ -385,13 +400,24 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text("THIS MONTH", style: TextStyle(color: AppColors.textSecondary, fontSize: 10, letterSpacing: 1)),
+                  Text("THIS MONTH",
+                      style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 10,
+                          letterSpacing: 1)),
                   Divider(color: Colors.white24),
                   SizedBox(height: 5),
-                  Text("Discounts: $usedCount/$totalCount", style: TextStyle(color: AppColors.surface, fontSize: 16)),
+                  Text("Discounts: $usedCount/$totalCount",
+                      style: TextStyle(color: AppColors.surface, fontSize: 16)),
                   SizedBox(height: 5),
-                  Text("Total Saved:", style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                  Text(totalSaved, style: TextStyle(color: AppColors.success, fontSize: 20, fontWeight: FontWeight.bold)),
+                  Text("Total Saved:",
+                      style: TextStyle(
+                          color: AppColors.textSecondary, fontSize: 12)),
+                  Text(totalSaved,
+                      style: TextStyle(
+                          color: AppColors.success,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -400,7 +426,8 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
         const Spacer(),
         const Text(
           "Swipe left for yearly stats →",
-          style: TextStyle(color: Colors.white30, fontSize: 10, fontStyle: FontStyle.italic),
+          style: TextStyle(
+              color: Colors.white30, fontSize: 10, fontStyle: FontStyle.italic),
         ),
       ],
     );
@@ -408,7 +435,7 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
 
   Widget _buildYearlyStats() {
     final months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
-    final values = [0.3, 0.5, 0.8, 0.4, 0.9, 0.6]; 
+    final values = [0.3, 0.5, 0.8, 0.4, 0.9, 0.6];
 
     return Column(
       key: const ValueKey("YearlyStats"),
@@ -416,7 +443,8 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
       children: [
         const Text(
           "YEARLY OVERVIEW",
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 10, letterSpacing: 1.2),
+          style: TextStyle(
+              color: AppColors.textSecondary, fontSize: 10, letterSpacing: 1.2),
         ),
         const SizedBox(height: 15),
         Expanded(
@@ -438,14 +466,17 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
                       width: 12,
                       height: 100 * values[index],
                       decoration: BoxDecoration(
-                        color: values[index] > 0.7 ? AppColors.secondary : AppColors.primary,
+                        color: values[index] > 0.7
+                            ? AppColors.secondary
+                            : AppColors.primary,
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       months[index],
-                      style: const TextStyle(color: Colors.white70, fontSize: 10),
+                      style:
+                          const TextStyle(color: Colors.white70, fontSize: 10),
                     ),
                   ],
                 ),
@@ -457,7 +488,10 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
         const Center(
           child: Text(
             "← Swipe right for month | Tap bar for details",
-            style: TextStyle(color: Colors.white24, fontSize: 10, fontStyle: FontStyle.italic),
+            style: TextStyle(
+                color: Colors.white24,
+                fontSize: 10,
+                fontStyle: FontStyle.italic),
           ),
         )
       ],
@@ -474,10 +508,15 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
           children: [
             Text(
               "$_selectedMonth RECAP",
-              style: const TextStyle(color: AppColors.secondary, fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1),
+              style: const TextStyle(
+                  color: AppColors.secondary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1),
             ),
             IconButton(
-              icon: const Icon(Icons.close, color: Colors.white, size: 18),
+              icon: const Icon(Icons.close,
+                  color: AppColors.textOnPrimary, size: 18),
               onPressed: () {
                 setState(() {
                   _backView = BackFaceView.yearlyStats;
@@ -511,10 +550,16 @@ class _ParchiCardDetailState extends State<ParchiCardDetail> with TickerProvider
             children: [
               const Icon(Icons.restaurant, color: Colors.white54, size: 14),
               const SizedBox(width: 8),
-              Text(name, style: const TextStyle(color: Colors.white, fontSize: 12)),
+              Text(name,
+                  style: const TextStyle(
+                      color: AppColors.textOnPrimary, fontSize: 12)),
             ],
           ),
-          Text(saved, style: const TextStyle(color: AppColors.success, fontSize: 12, fontWeight: FontWeight.bold)),
+          Text(saved,
+              style: const TextStyle(
+                  color: AppColors.success,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -539,9 +584,15 @@ class CardFrontContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Adjust colors for Gold Background readability
-    final textColor = isGolden ? Colors.black87 : AppColors.textOnPrimary;
-    final secondaryTextColor = isGolden ? Colors.black54 : AppColors.textOnPrimary.withOpacity(0.7);
-    final iconColor = isGolden ? Colors.white.withOpacity(0.3) : AppColors.surface.withOpacity(0.05);
+    final textColor = isGolden
+        ? AppColors.textPrimary.withOpacity(0.87)
+        : AppColors.textOnPrimary;
+    final secondaryTextColor = isGolden
+        ? AppColors.textPrimary.withOpacity(0.54)
+        : AppColors.textOnPrimary.withOpacity(0.7);
+    final iconColor = isGolden
+        ? AppColors.textOnPrimary.withOpacity(0.3)
+        : AppColors.surface.withOpacity(0.05);
 
     return Stack(
       children: [
@@ -549,10 +600,9 @@ class CardFrontContent extends StatelessWidget {
           right: -20,
           top: -20,
           child: Icon(
-            isGolden ? Icons.emoji_events : Icons.school, // Trophy for gold
-            size: 150, 
-            color: iconColor
-          ),
+              isGolden ? Icons.emoji_events : Icons.school, // Trophy for gold
+              size: 150,
+              color: iconColor),
         ),
         Padding(
           padding: const EdgeInsets.all(20.0),
@@ -566,7 +616,8 @@ class CardFrontContent extends StatelessWidget {
                   Icon(Icons.nfc, color: textColor, size: 30),
                   Text(
                     isGolden ? "GOLD MEMBER" : "PARCHI STUDENT",
-                    style: TextStyle(color: secondaryTextColor, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        color: secondaryTextColor, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -575,7 +626,11 @@ class CardFrontContent extends StatelessWidget {
                 children: [
                   Text(
                     studentName,
-                    style: TextStyle(color: textColor, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+                    style: TextStyle(
+                        color: textColor,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5),
                   ),
                   const SizedBox(height: 4),
                   GestureDetector(
@@ -590,18 +645,29 @@ class CardFrontContent extends StatelessWidget {
                       );
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: isGolden ? Colors.black12 : AppColors.surface.withOpacity(0.2),
+                        color: isGolden
+                            ? AppColors.textPrimary.withOpacity(0.12)
+                            : AppColors.surface.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: isGolden ? Colors.black12 : Colors.white24, width: 0.5),
+                        border: Border.all(
+                            color: isGolden
+                                ? AppColors.textPrimary.withOpacity(0.12)
+                                : Colors.white24,
+                            width: 0.5),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             "ID: $studentId",
-                            style: TextStyle(color: textColor, fontSize: 12, fontFamily: 'Courier', fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                color: textColor,
+                                fontSize: 12,
+                                fontFamily: 'Courier',
+                                fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(width: 6),
                           Icon(Icons.copy, size: 12, color: secondaryTextColor),

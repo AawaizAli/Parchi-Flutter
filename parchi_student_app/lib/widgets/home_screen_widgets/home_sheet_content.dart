@@ -27,15 +27,16 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
   // --- DUMMY DATA FOR BRANDS ---
   // --- DUMMY DATA FOR BRANDS REMOVED ---
 
-
   // --- DUMMY DATA FOR ALL RESTAURANTS ---
-  final List<Map<String, String>> allRestaurants = List.generate(8, (index) => {
-    "name": "Restaurant ${index + 1}",
-    "image": "https://placehold.co/600x300/png?text=Food${index+1}",
-    "rating": "${4.0 + (index % 10) / 10}",
-    "meta": "${20 + index} min • \$\$ • Cuisine",
-    "discount": "${10 + (index * 5)}% OFF",
-  });
+  final List<Map<String, String>> allRestaurants = List.generate(
+      8,
+      (index) => {
+            "name": "Restaurant ${index + 1}",
+            "image": "https://placehold.co/600x300/png?text=Food${index + 1}",
+            "rating": "${4.0 + (index % 10) / 10}",
+            "meta": "${20 + index} min • \$\$ • Cuisine",
+            "discount": "${10 + (index * 5)}% OFF",
+          });
 
   // --- REFRESH LOGIC ---
   Future<void> _refreshData() async {
@@ -43,7 +44,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
       // Load fresh data
       await ref.refresh(activeOffersProvider.future);
       await ref.refresh(brandsProvider.future);
-      // await ref.refresh(allRestaurantsProvider.future); 
+      // await ref.refresh(allRestaurantsProvider.future);
       // await Future.delayed(const Duration(seconds: 2)); // Uncomment to test the loader duration
     } catch (e) {
       debugPrint("Refresh failed: $e");
@@ -87,7 +88,8 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: AppColors.textSecondary),
+                    icon:
+                        const Icon(Icons.close, color: AppColors.textSecondary),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
@@ -111,7 +113,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                   child: const Text(
                     "Apply",
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppColors.textOnPrimary,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -157,12 +159,12 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
     const double indicatorSize = 100.0; // Total height area for the loader
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.backgroundLight,
         borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black12,
+            color: AppColors.textPrimary.withOpacity(0.12),
             blurRadius: 10,
             offset: Offset(0, -5),
           )
@@ -173,7 +175,8 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
         child: CustomRefreshIndicator(
           onRefresh: _refreshData,
           offsetToArmed: indicatorSize,
-          builder: (BuildContext context, Widget child, IndicatorController controller) {
+          builder: (BuildContext context, Widget child,
+              IndicatorController controller) {
             return Stack(
               children: <Widget>[
                 // 1. The Animated Custom Loader (Stays at the top)
@@ -203,7 +206,8 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
           },
           child: CustomScrollView(
             controller: widget.scrollController,
-            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+            physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics()),
             slivers: [
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
@@ -214,41 +218,45 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                   child: Text(
                     "Top Brands",
                     style: TextStyle(
-                      fontSize: 18, 
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary
-                    ),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary),
                   ),
                 ),
               ),
-              
+
               const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
               SliverToBoxAdapter(
                 child: SizedBox(
                   height: 160,
                   child: ref.watch(brandsProvider).when(
-                    loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
-                    error: (err, stack) => Center(child: Text('Error: $err')),
-                    data: (brands) {
-                      if (brands.isEmpty) {
-                        return const Center(child: Text("No brands available"));
-                      }
-                      return ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        scrollDirection: Axis.horizontal,
-                        itemCount: brands.length,
-                        itemBuilder: (context, index) {
-                          final brand = brands[index];
-                          return BrandCard(
-                            name: brand.businessName,
-                            time: "30-45 min", // Placeholder
-                            image: brand.logoPath ?? "https://placehold.co/100x100/png?text=No+Image",
+                        loading: () => const Center(
+                            child: CircularProgressIndicator(
+                                color: AppColors.primary)),
+                        error: (err, stack) =>
+                            Center(child: Text('Error: $err')),
+                        data: (brands) {
+                          if (brands.isEmpty) {
+                            return const Center(
+                                child: Text("No brands available"));
+                          }
+                          return ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            scrollDirection: Axis.horizontal,
+                            itemCount: brands.length,
+                            itemBuilder: (context, index) {
+                              final brand = brands[index];
+                              return BrandCard(
+                                name: brand.businessName,
+                                time: "30-45 min", // Placeholder
+                                image: brand.logoPath ??
+                                    "https://placehold.co/100x100/png?text=No+Image",
+                              );
+                            },
                           );
                         },
-                      );
-                    },
-                  ),
+                      ),
                 ),
               ),
 
@@ -262,12 +270,12 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                       Text(
                         "Active Offers",
                         style: TextStyle(
-                          fontSize: 18, 
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary
-                        ),
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary),
                       ),
-                      Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.primary)
+                      Icon(Icons.arrow_forward_ios,
+                          size: 16, color: AppColors.primary)
                     ],
                   ),
                 ),
@@ -275,15 +283,16 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
 
               SliverToBoxAdapter(
                 child: SizedBox(
-                  height: 180, 
+                  height: 180,
                   child: offersAsync.when(
                     loading: () => const Center(
-                      child: CircularProgressIndicator(color: AppColors.primary),
+                      child:
+                          CircularProgressIndicator(color: AppColors.primary),
                     ),
                     error: (err, stack) => Center(
                       child: Text(
-                        "Error loading offers", 
-                        style: TextStyle(color: Colors.grey[600]),
+                        "Error loading offers",
+                        style: TextStyle(color: AppColors.textSecondary),
                       ),
                     ),
                     data: (offers) {
@@ -291,7 +300,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                         return Center(
                           child: Text(
                             "No active offers right now.",
-                            style: TextStyle(color: Colors.grey[600]),
+                            style: TextStyle(color: AppColors.textSecondary),
                           ),
                         );
                       }
@@ -302,17 +311,18 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                         itemCount: offers.length,
                         itemBuilder: (context, index) {
                           final offer = offers[index];
-                          final String displayImage = offer.imageUrl ?? 
-                                                      offer.merchant?.logoPath ?? 
-                                                      "https://placehold.co/600x300/png?text=No+Image";
+                          final String displayImage = offer.imageUrl ??
+                              offer.merchant?.logoPath ??
+                              "https://placehold.co/600x300/png?text=No+Image";
 
                           return GestureDetector(
                             onTap: () => _onOfferTap(context, offer.id),
                             child: RestaurantMediumCard(
                               name: offer.merchant?.businessName ?? offer.title,
                               image: displayImage,
-                              rating: "4.5", 
-                              meta: "Valid until ${offer.validUntil.day}/${offer.validUntil.month}",
+                              rating: "4.5",
+                              meta:
+                                  "Valid until ${offer.validUntil.day}/${offer.validUntil.month}",
                               discount: offer.formattedDiscount,
                             ),
                           );
@@ -330,10 +340,9 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                   child: Text(
                     "All Restaurants",
                     style: TextStyle(
-                      fontSize: 18, 
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary
-                    ),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary),
                   ),
                 ),
               ),
@@ -365,7 +374,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                   ),
                 ),
               ),
-              
+
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
             ],
           ),
@@ -386,7 +395,8 @@ class _FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => 50.0;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
       color: AppColors.backgroundLight,
       alignment: Alignment.centerLeft,
@@ -400,10 +410,11 @@ class _FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.textSecondary.withOpacity(0.3)),
+                border:
+                    Border.all(color: AppColors.textSecondary.withOpacity(0.3)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: AppColors.textPrimary.withOpacity(0.05),
                     blurRadius: 2,
                     offset: const Offset(0, 1),
                   )
@@ -411,9 +422,13 @@ class _FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
               ),
               child: const Row(
                 children: [
-                  Text("Offers", style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                  Text("Offers",
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary)),
                   SizedBox(width: 4),
-                  Icon(Icons.keyboard_arrow_down, size: 18, color: AppColors.textPrimary)
+                  Icon(Icons.keyboard_arrow_down,
+                      size: 18, color: AppColors.textPrimary)
                 ],
               ),
             ),
@@ -430,19 +445,17 @@ class _FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
 // --- CUSTOM LOADER WIDGET ---
 class ParchiLoader extends StatefulWidget {
   final bool isLoading;
-  final double progress; 
+  final double progress;
 
-  const ParchiLoader({
-    super.key, 
-    required this.isLoading, 
-    required this.progress
-  });
+  const ParchiLoader(
+      {super.key, required this.isLoading, required this.progress});
 
   @override
   State<ParchiLoader> createState() => _ParchiLoaderState();
 }
 
-class _ParchiLoaderState extends State<ParchiLoader> with SingleTickerProviderStateMixin {
+class _ParchiLoaderState extends State<ParchiLoader>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
   @override
@@ -476,17 +489,17 @@ class _ParchiLoaderState extends State<ParchiLoader> with SingleTickerProviderSt
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
-        // Rotation Logic: 
+        // Rotation Logic:
         // Spin continuously if loading, or rotate based on pull distance
-        final double rotationValue = widget.isLoading 
-            ? _controller.value * 2 * math.pi 
+        final double rotationValue = widget.isLoading
+            ? _controller.value * 2 * math.pi
             : widget.progress * 2 * math.pi;
 
         return Transform.rotate(
           angle: rotationValue,
           child: Image.asset(
             'assets/parchi-icon.png',
-            width: 120, 
+            width: 120,
             height: 120,
           ),
         );

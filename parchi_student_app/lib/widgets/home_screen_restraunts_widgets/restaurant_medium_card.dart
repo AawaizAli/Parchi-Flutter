@@ -27,7 +27,7 @@ class RestaurantMediumCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: AppColors.textPrimary.withOpacity(0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -40,7 +40,8 @@ class RestaurantMediumCard extends StatelessWidget {
           Stack(
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(12)),
                 child: Image.network(
                   image,
                   height: 100,
@@ -48,8 +49,10 @@ class RestaurantMediumCard extends StatelessWidget {
                   fit: BoxFit.cover,
                   errorBuilder: (ctx, err, stack) => Container(
                     height: 100,
-                    color: Colors.grey[300],
-                    child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                    color: AppColors.textSecondary.withOpacity(0.3),
+                    child: const Center(
+                        child: Icon(Icons.broken_image,
+                            color: AppColors.textSecondary)),
                   ),
                 ),
               ),
@@ -58,7 +61,8 @@ class RestaurantMediumCard extends StatelessWidget {
                 bottom: 8,
                 left: 8,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppColors.primary,
                     borderRadius: BorderRadius.circular(4),
@@ -66,7 +70,7 @@ class RestaurantMediumCard extends StatelessWidget {
                   child: Text(
                     discount,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.textOnPrimary,
                       fontSize: 8,
                       fontWeight: FontWeight.bold,
                     ),
@@ -75,7 +79,7 @@ class RestaurantMediumCard extends StatelessWidget {
               ),
             ],
           ),
-          
+
           // Details Section
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -95,7 +99,8 @@ class RestaurantMediumCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.star, size: 12, color: AppColors.secondary),
+                    const Icon(Icons.star,
+                        size: 12, color: AppColors.secondary),
                     const SizedBox(width: 2),
                     Text(
                       rating,

@@ -4,7 +4,7 @@ import '../../../services/auth_service.dart';
 
 class ChangePasswordSheet extends StatefulWidget {
   // Callback to let the parent ProfileScreen handle the closing animation
-  final VoidCallback onClose; 
+  final VoidCallback onClose;
 
   const ChangePasswordSheet({super.key, required this.onClose});
 
@@ -44,13 +44,16 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
       if (mounted) {
         widget.onClose(); // Trigger parent close animation
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password changed!'), backgroundColor: Colors.green),
+          const SnackBar(
+              content: Text('Password changed!'),
+              backgroundColor: AppColors.success),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text(e.toString()), backgroundColor: AppColors.error),
         );
       }
     } finally {
@@ -61,13 +64,13 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
-    
+
     // We wrap in Material to give it the white sheet look
     return Material(
-      color: Colors.white,
+      color: AppColors.surface,
       borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
       child: Container(
-        // Constrain height if needed, or let it grow. 
+        // Constrain height if needed, or let it grow.
         // Using ~80% height for password sheet usually looks good.
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.85,
@@ -84,16 +87,21 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
                     onTap: widget.onClose, // Close button logic
                     child: Container(
                       padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(color: Colors.grey.shade100, shape: BoxShape.circle),
-                      child: const Icon(Icons.close, size: 20, color: AppColors.textPrimary),
+                      decoration: BoxDecoration(
+                          color: AppColors.textSecondary.withOpacity(0.1),
+                          shape: BoxShape.circle),
+                      child: const Icon(Icons.close,
+                          size: 20, color: AppColors.textPrimary),
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Text("Change Password", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  const Text("Change Password",
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
-            const Divider(height: 1, color: Color(0xFFEEEEEE)),
+            const Divider(height: 1, color: AppColors.textSecondary),
 
             // --- FORM CONTENT ---
             Flexible(
@@ -107,25 +115,45 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
                       _buildInfoBox(),
                       const SizedBox(height: 30),
                       _buildLabel("Current Password"),
-                      _buildTextField(_currentPasswordController, "Enter current password", _obscureCurrent, () => setState(() => _obscureCurrent = !_obscureCurrent)),
+                      _buildTextField(
+                          _currentPasswordController,
+                          "Enter current password",
+                          _obscureCurrent,
+                          () => setState(
+                              () => _obscureCurrent = !_obscureCurrent)),
                       const SizedBox(height: 20),
                       _buildLabel("New Password"),
-                      _buildTextField(_newPasswordController, "Enter new password", _obscureNew, () => setState(() => _obscureNew = !_obscureNew)),
+                      _buildTextField(
+                          _newPasswordController,
+                          "Enter new password",
+                          _obscureNew,
+                          () => setState(() => _obscureNew = !_obscureNew)),
                       const SizedBox(height: 20),
                       _buildLabel("Confirm New Password"),
-                      _buildTextField(_confirmPasswordController, "Re-enter new password", _obscureConfirm, () => setState(() => _obscureConfirm = !_obscureConfirm)),
+                      _buildTextField(
+                          _confirmPasswordController,
+                          "Re-enter new password",
+                          _obscureConfirm,
+                          () => setState(
+                              () => _obscureConfirm = !_obscureConfirm)),
                       const SizedBox(height: 40),
-                      
                       SizedBox(
-                        width: double.infinity, height: 50,
+                        width: double.infinity,
+                        height: 50,
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _handleChangePassword,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black, 
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                            backgroundColor: AppColors.textPrimary,
+                            foregroundColor: AppColors.textOnPrimary,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30)),
                           ),
-                          child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text("Update Password", style: TextStyle(fontWeight: FontWeight.bold)),
+                          child: _isLoading
+                              ? const CircularProgressIndicator(
+                                  color: AppColors.textOnPrimary)
+                              : const Text("Update Password",
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
                         ),
                       ),
                     ],
@@ -150,21 +178,38 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
       child: Row(children: [
         const Icon(Icons.security, color: AppColors.primary, size: 24),
         const SizedBox(width: 12),
-        Expanded(child: Text("Verify your current password to continue.", style: TextStyle(color: AppColors.textPrimary.withOpacity(0.8), fontSize: 14))),
+        Expanded(
+            child: Text("Verify your current password to continue.",
+                style: TextStyle(
+                    color: AppColors.textPrimary.withOpacity(0.8),
+                    fontSize: 14))),
       ]),
     );
   }
 
-  Widget _buildLabel(String text) => Padding(padding: const EdgeInsets.only(bottom: 8, left: 4), child: Text(text, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)));
+  Widget _buildLabel(String text) => Padding(
+      padding: const EdgeInsets.only(bottom: 8, left: 4),
+      child: Text(text,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)));
 
-  Widget _buildTextField(TextEditingController controller, String hint, bool isObscure, VoidCallback onToggle) {
+  Widget _buildTextField(TextEditingController controller, String hint,
+      bool isObscure, VoidCallback onToggle) {
     return Container(
-      decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+          color: AppColors.textSecondary.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(16)),
       child: TextFormField(
-        controller: controller, obscureText: isObscure,
+        controller: controller,
+        obscureText: isObscure,
         decoration: InputDecoration(
-          hintText: hint, border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          suffixIcon: IconButton(icon: Icon(isObscure ? Icons.visibility_off : Icons.visibility, color: Colors.grey), onPressed: onToggle),
+          hintText: hint,
+          border: InputBorder.none,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          suffixIcon: IconButton(
+              icon: Icon(isObscure ? Icons.visibility_off : Icons.visibility,
+                  color: AppColors.textSecondary),
+              onPressed: onToggle),
         ),
       ),
     );

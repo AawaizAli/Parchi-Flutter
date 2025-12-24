@@ -11,7 +11,8 @@ class RestaurantMiniCard extends StatelessWidget {
         Expanded(
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.grey[300], // Placeholder image bg
+              color: AppColors.textSecondary
+                  .withOpacity(0.3), // Placeholder image bg
               borderRadius: BorderRadius.circular(12),
               image: const DecorationImage(
                 image: NetworkImage("https://placehold.co/100x100/png"),
@@ -25,12 +26,18 @@ class RestaurantMiniCard extends StatelessWidget {
           "KFC",
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+          style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary),
         ),
         const Text(
           "20% OFF",
           // Used Error color (Red) for discounts as it grabs attention
-          style: TextStyle(fontSize: 10, color: AppColors.error, fontWeight: FontWeight.w700),
+          style: TextStyle(
+              fontSize: 10,
+              color: AppColors.error,
+              fontWeight: FontWeight.w700),
         ),
       ],
     );

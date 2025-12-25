@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math';
 import '../../utils/colours.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/redemption_provider.dart';
 
 // =========================================================
 // 1. ENTRY POINT
@@ -97,7 +99,7 @@ class ParchiCard extends StatelessWidget {
 // =========================================================
 // 2. DETAIL VIEW
 // =========================================================
-class ParchiCardDetail extends StatefulWidget {
+class ParchiCardDetail extends ConsumerStatefulWidget {
   final String studentName;
   final String studentId;
   final bool isGolden;
@@ -110,12 +112,12 @@ class ParchiCardDetail extends StatefulWidget {
   });
 
   @override
-  State<ParchiCardDetail> createState() => _ParchiCardDetailState();
+  ConsumerState<ParchiCardDetail> createState() => _ParchiCardDetailState();
 }
 
-enum BackFaceView { currentMonth, yearlyStats, monthDetail }
+// enum BackFaceView removed as we only show current month
 
-class _ParchiCardDetailState extends State<ParchiCardDetail>
+class _ParchiCardDetailState extends ConsumerState<ParchiCardDetail>
     with TickerProviderStateMixin {
   late AnimationController _flipController;
   late Animation<double> _flipAnimation;
@@ -124,8 +126,6 @@ class _ParchiCardDetailState extends State<ParchiCardDetail>
   late Animation<double> _hoverAnimation;
 
   bool _isFront = true;
-  BackFaceView _backView = BackFaceView.currentMonth;
-  String _selectedMonth = "";
 
   @override
   void initState() {
@@ -155,38 +155,13 @@ class _ParchiCardDetailState extends State<ParchiCardDetail>
   void _flipCard() {
     if (_isFront) {
       _flipController.forward();
-      setState(() {
-        _backView = BackFaceView.currentMonth;
-      });
     } else {
       _flipController.reverse();
     }
     _isFront = !_isFront;
   }
 
-  void _handleBackFaceSwipe(DragEndDetails details) {
-    if (_isFront) return;
-
-    double velocity = details.primaryVelocity ?? 0;
-
-    if (velocity < 0) {
-      if (_backView == BackFaceView.currentMonth) {
-        setState(() {
-          _backView = BackFaceView.yearlyStats;
-        });
-      }
-    } else if (velocity > 0) {
-      if (_backView == BackFaceView.yearlyStats) {
-        setState(() {
-          _backView = BackFaceView.currentMonth;
-        });
-      } else if (_backView == BackFaceView.monthDetail) {
-        setState(() {
-          _backView = BackFaceView.yearlyStats;
-        });
-      }
-    }
-  }
+  // Swipe handler removed
 
   Future<void> _handleClose() async {
     if (!_isFront) {
@@ -214,7 +189,6 @@ class _ParchiCardDetailState extends State<ParchiCardDetail>
         body: Center(
           child: GestureDetector(
             onTap: _flipCard,
-            onHorizontalDragEnd: _handleBackFaceSwipe,
             child: AnimatedBuilder(
               animation: Listenable.merge([_flipAnimation, _hoverAnimation]),
               builder: (context, child) {
@@ -332,236 +306,107 @@ class _ParchiCardDetailState extends State<ParchiCardDetail>
   }
 
   Widget _buildBackContent() {
-    switch (_backView) {
-      case BackFaceView.currentMonth:
-        return _buildCurrentMonthStats();
-      case BackFaceView.yearlyStats:
-        return _buildYearlyStats();
-      case BackFaceView.monthDetail:
-        return _buildMonthDetail();
-    }
+    return _buildCurrentMonthStats();
   }
 
   Widget _buildCurrentMonthStats() {
-    const int usedCount = 15;
-    const int totalCount = 20;
-    const String totalSaved = "PKR 4,500";
+    final statsAsync = ref.watch(redemptionStatsProvider);
 
-    return Column(
-      key: const ValueKey("CurrentMonth"),
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Row(
+    return statsAsync.when(
+      data: (stats) {
+        final int usedCount = stats.totalRedemptions;
+        const int totalCount = 20; // Hardcoded limit for now
+        final String totalSaved =
+            "PKR ${stats.totalSavings.toStringAsFixed(0)}";
+        double progress = (usedCount / totalCount).clamp(0.0, 1.0);
+
+        return Column(
+          key: const ValueKey("CurrentMonth"),
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Expanded(
-              flex: 4,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    height: 100,
-                    width: 100,
-                    child: CircularProgressIndicator(
-                      value: 1.0,
-                      color: AppColors.textSecondary.withOpacity(0.1),
-                      strokeWidth: 8,
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 100,
-                    width: 100,
-                    child: CircularProgressIndicator(
-                      value: usedCount / totalCount,
-                      color: AppColors.secondary,
-                      strokeCap: StrokeCap.round,
-                      strokeWidth: 8,
-                    ),
-                  ),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+            Row(
+              children: [
+                Expanded(
+                  flex: 4,
+                  child: Stack(
+                    alignment: Alignment.center,
                     children: [
-                      Text("$usedCount",
-                          style: const TextStyle(
-                              color: AppColors.surface,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold)),
-                      const Text("Used",
-                          style: TextStyle(
-                              color: AppColors.textSecondary, fontSize: 10)),
+                      SizedBox(
+                        height: 100,
+                        width: 100,
+                        child: CircularProgressIndicator(
+                          value: 1.0,
+                          color: AppColors.textSecondary.withOpacity(0.1),
+                          strokeWidth: 8,
+                        ),
+                      ),
+                      SizedBox(
+                        height: 100,
+                        width: 100,
+                        child: CircularProgressIndicator(
+                          value: progress,
+                          color: AppColors.secondary,
+                          strokeCap: StrokeCap.round,
+                          strokeWidth: 8,
+                        ),
+                      ),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text("$usedCount",
+                              style: const TextStyle(
+                                  color: AppColors.surface,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold)),
+                          const Text("Used",
+                              style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 10)),
+                        ],
+                      ),
                     ],
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 15),
-            const Expanded(
-              flex: 6,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text("THIS MONTH",
-                      style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 10,
-                          letterSpacing: 1)),
-                  Divider(color: Colors.white24),
-                  SizedBox(height: 5),
-                  Text("Discounts: $usedCount/$totalCount",
-                      style: TextStyle(color: AppColors.surface, fontSize: 16)),
-                  SizedBox(height: 5),
-                  Text("Total Saved:",
-                      style: TextStyle(
-                          color: AppColors.textSecondary, fontSize: 12)),
-                  Text(totalSaved,
-                      style: TextStyle(
-                          color: AppColors.success,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const Spacer(),
-        const Text(
-          "Swipe left for yearly stats →",
-          style: TextStyle(
-              color: Colors.white30, fontSize: 10, fontStyle: FontStyle.italic),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildYearlyStats() {
-    final months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
-    final values = [0.3, 0.5, 0.8, 0.4, 0.9, 0.6];
-
-    return Column(
-      key: const ValueKey("YearlyStats"),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "YEARLY OVERVIEW",
-          style: TextStyle(
-              color: AppColors.textSecondary, fontSize: 10, letterSpacing: 1.2),
-        ),
-        const SizedBox(height: 15),
-        Expanded(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: List.generate(months.length, (index) {
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedMonth = months[index];
-                    _backView = BackFaceView.monthDetail;
-                  });
-                },
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Container(
-                      width: 12,
-                      height: 100 * values[index],
-                      decoration: BoxDecoration(
-                        color: values[index] > 0.7
-                            ? AppColors.secondary
-                            : AppColors.primary,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      months[index],
-                      style:
-                          const TextStyle(color: Colors.white70, fontSize: 10),
-                    ),
-                  ],
                 ),
-              );
-            }),
-          ),
-        ),
-        const SizedBox(height: 10),
-        const Center(
-          child: Text(
-            "← Swipe right for month | Tap bar for details",
-            style: TextStyle(
-                color: Colors.white24,
-                fontSize: 10,
-                fontStyle: FontStyle.italic),
-          ),
-        )
-      ],
-    );
-  }
-
-  Widget _buildMonthDetail() {
-    return Column(
-      key: const ValueKey("MonthDetail"),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              "$_selectedMonth RECAP",
-              style: const TextStyle(
-                  color: AppColors.secondary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1),
+                const SizedBox(width: 15),
+                Expanded(
+                  flex: 6,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text("THIS MONTH",
+                          style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 10,
+                              letterSpacing: 1)),
+                      const Divider(color: Colors.white24),
+                      const SizedBox(height: 5),
+                      Text("Discounts: $usedCount/$totalCount",
+                          style: const TextStyle(
+                              color: AppColors.surface, fontSize: 16)),
+                      const SizedBox(height: 5),
+                      const Text("Total Saved:",
+                          style: TextStyle(
+                              color: AppColors.textSecondary, fontSize: 12)),
+                      Text(totalSaved,
+                          style: const TextStyle(
+                              color: AppColors.success,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            IconButton(
-              icon: const Icon(Icons.close,
-                  color: AppColors.textOnPrimary, size: 18),
-              onPressed: () {
-                setState(() {
-                  _backView = BackFaceView.yearlyStats;
-                });
-              },
-            )
+            const Spacer(),
           ],
-        ),
-        const Divider(color: Colors.white24),
-        Expanded(
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              _buildHistoryItem("KFC", "PKR 500 Saved"),
-              _buildHistoryItem("Pizza Max", "PKR 320 Saved"),
-              _buildHistoryItem("Burger O'Clock", "PKR 150 Saved"),
-            ],
-          ),
-        )
-      ],
-    );
-  }
-
-  Widget _buildHistoryItem(String name, String saved) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.restaurant, color: Colors.white54, size: 14),
-              const SizedBox(width: 8),
-              Text(name,
-                  style: const TextStyle(
-                      color: AppColors.textOnPrimary, fontSize: 12)),
-            ],
-          ),
-          Text(saved,
-              style: const TextStyle(
-                  color: AppColors.success,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold)),
-        ],
-      ),
+        );
+      },
+      loading: () => const Center(
+          child: CircularProgressIndicator(color: AppColors.secondary)),
+      error: (err, stack) => Center(
+          child: Text("Error loading stats",
+              style: TextStyle(color: AppColors.error))),
     );
   }
 }

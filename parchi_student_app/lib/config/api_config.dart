@@ -15,11 +15,19 @@ class ApiConfig {
   static String get profileEndpoint => '$baseUrl/auth/me';
   static String get changePasswordEndpoint => '$baseUrl/auth/change-password';
   static String get forgotPasswordEndpoint => '$baseUrl/auth/forgot-password';
-  static String get updateProfilePictureEndpoint => '$baseUrl/auth/student/profile-picture';
+  static String get updateProfilePictureEndpoint =>
+      '$baseUrl/auth/student/profile-picture';
   // Offers Endpoints
   static String get activeOffersEndpoint => '$baseUrl/offers/active';
-  static String offerDetailsEndpoint(String id) => '$baseUrl/offers/$id/details';
-  static String merchantOffersEndpoint(String merchantId) => '$baseUrl/offers/merchant/$merchantId';
+  static String offerDetailsEndpoint(String id) =>
+      '$baseUrl/offers/$id/details';
+  static String merchantOffersEndpoint(String merchantId) =>
+      '$baseUrl/offers/merchant/$merchantId';
   static String get allBrandsEndpoint => '$baseUrl/merchants/brands';
-}
 
+  // Redemption Endpoints
+  static String get redemptionHistoryEndpoint => '$baseUrl/redemptions';
+  static String get redemptionStatsEndpoint => '$baseUrl/redemptions/stats';
+  static String redemptionDetailsEndpoint(String id) =>
+      '$baseUrl/redemptions/$id';
+}

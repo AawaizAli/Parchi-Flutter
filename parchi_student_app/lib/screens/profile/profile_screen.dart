@@ -7,6 +7,7 @@ import '../../providers/user_provider.dart';
 import '../auth/login_screens/login_screen.dart';
 import 'Change_password/change_password_screen.dart';
 import 'pfp_change/profile_picture_upload_screen.dart';
+import 'redemption_history/redemption_history_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -301,7 +302,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                               label: "Redemption History",
                               color: AppColors.success.withOpacity(0.1),
                               iconColor: AppColors.success,
-                              onTap: () {},
+                              onTap: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) =>
+                                            const RedemptionHistoryScreen()));
+                              },
                             ),
                             const SizedBox(height: 24),
                             const Text("Support",

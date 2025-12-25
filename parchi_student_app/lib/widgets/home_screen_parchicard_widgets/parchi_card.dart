@@ -15,8 +15,8 @@ class ParchiCard extends StatelessWidget {
 
   const ParchiCard({
     super.key,
-    this.studentName = "AAWAIZ ALI",
-    this.studentId = "PK-12345",
+    this.studentName = "", // Empty default instead of dummy name
+    this.studentId = "", // Empty default instead of dummy ID
     this.isGolden = false, // Default is standard
   });
 
@@ -333,9 +333,9 @@ class _ParchiCardDetailState extends ConsumerState<ParchiCardDetail>
   }
 
   Widget _buildStatsContent(int usedCount, num totalSavedNum) {
-    const int totalCount = 20; // Hardcoded limit for now
+    // totalCount removed as it was dummy data
     final String totalSaved = "PKR ${totalSavedNum.toStringAsFixed(0)}";
-    double progress = (usedCount / totalCount).clamp(0.0, 1.0);
+    // Progress bar removed as it depended on dummy limit
 
     return Column(
       key: const ValueKey("CurrentMonth"),
@@ -353,17 +353,9 @@ class _ParchiCardDetailState extends ConsumerState<ParchiCardDetail>
                     width: 100,
                     child: CircularProgressIndicator(
                       value: 1.0,
+                      // Just a full circle for aesthetic, or remove entirely.
+                      // Let's keep a subtle ring for design consistency but no progress.
                       color: AppColors.textSecondary.withOpacity(0.1),
-                      strokeWidth: 8,
-                    ),
-                  ),
-                  SizedBox(
-                    height: 100,
-                    width: 100,
-                    child: CircularProgressIndicator(
-                      value: progress,
-                      color: AppColors.secondary,
-                      strokeCap: StrokeCap.round,
                       strokeWidth: 8,
                     ),
                   ),
@@ -397,7 +389,7 @@ class _ParchiCardDetailState extends ConsumerState<ParchiCardDetail>
                           letterSpacing: 1)),
                   const Divider(color: Colors.white24),
                   const SizedBox(height: 5),
-                  Text("Discounts: $usedCount/$totalCount",
+                  Text("Discounts Used: $usedCount",
                       style: const TextStyle(
                           color: AppColors.surface, fontSize: 16)),
                   const SizedBox(height: 5),

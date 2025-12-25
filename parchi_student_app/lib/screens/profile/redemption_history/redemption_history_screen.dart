@@ -14,18 +14,34 @@ class RedemptionHistoryScreen extends StatefulWidget {
 }
 
 class _RedemptionHistoryScreenState extends State<RedemptionHistoryScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late TabController _tabController;
+  final DraggableScrollableController _sheetController =
+      DraggableScrollableController();
+  final ValueNotifier<double> _expandProgress = ValueNotifier(0.0);
+
   bool _isLoading = true;
   List<RedemptionModel> _allRedemptions = [];
   RedemptionStats? _stats;
   String? _error;
 
+  // Sheet configuration
+  double _minSheetSize = 0.65;
+  double _maxSheetSize = 0.92;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _sheetController.addListener(_onSheetChanged);
     _loadData();
+  }
+
+  void _onSheetChanged() {
+    double currentSize = _sheetController.size;
+    double progress =
+        (currentSize - _minSheetSize) / (_maxSheetSize - _minSheetSize);
+    _expandProgress.value = progress.clamp(0.0, 1.0);
   }
 
   Future<void> _loadData() async {
@@ -36,15 +52,17 @@ class _RedemptionHistoryScreenState extends State<RedemptionHistoryScreen>
 
     try {
       final results = await Future.wait([
-        redemptionService.getRedemptions(), // Fetch all initially
+        redemptionService.getRedemptions(),
         redemptionService.getStats(),
       ]);
 
-      setState(() {
-        _allRedemptions = results[0] as List<RedemptionModel>;
-        _stats = results[1] as RedemptionStats;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _allRedemptions = results[0] as List<RedemptionModel>;
+          _stats = results[1] as RedemptionStats;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -55,59 +73,235 @@ class _RedemptionHistoryScreenState extends State<RedemptionHistoryScreen>
     }
   }
 
-  // Helper removed as we don't need status filtering anymore for tabs
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _sheetController.removeListener(_onSheetChanged);
+    _sheetController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Dynamic layout calculation
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final double topPadding = MediaQuery.of(context).padding.top;
+    final double headerHeight = topPadding + 60; // Approximate header space
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
-      appBar: AppBar(
-        title: const Text('Redemption History',
-            style: TextStyle(color: AppColors.textPrimary)),
-        backgroundColor: AppColors.surface,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.textSecondary,
-          indicatorColor: AppColors.primary,
-          tabs: const [
-            Tab(text: "All"),
-            Tab(text: "Yearly"),
-          ],
-        ),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? Center(
-                  child: Text(_error!,
-                      style: const TextStyle(color: AppColors.error)))
-              : Column(
+      body: Stack(
+        children: [
+          // [LAYER 1] Animated Background / Header (The Stats)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: screenHeight * 0.45, // Occupy top portion
+            child: ValueListenableBuilder<double>(
+              valueListenable: _expandProgress,
+              builder: (context, progress, child) {
+                return Opacity(
+                  opacity: (1.0 - (progress * 2)).clamp(0.0, 1.0),
+                  child: Transform.translate(
+                    offset: Offset(0, -progress * 50),
+                    child: _buildStatsBackground(),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // [LAYER 2] Draggable Sheet
+          DraggableScrollableSheet(
+            controller: _sheetController,
+            initialChildSize: _minSheetSize,
+            minChildSize: _minSheetSize,
+            maxChildSize: _maxSheetSize,
+            snap: true,
+            builder: (BuildContext context, ScrollController scrollController) {
+              return Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(30)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.textPrimary.withOpacity(0.12),
+                      blurRadius: 10,
+                      offset: const Offset(0, -5),
+                    )
+                  ],
+                ),
+                child: Column(
                   children: [
-                    if (_stats != null) _buildStatsHeader(),
-                    Expanded(
-                      child: TabBarView(
-                        controller: _tabController,
-                        children: [
-                          _buildList(_allRedemptions),
-                          _buildYearlyList(),
-                        ],
+                    // Drag Handle
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(top: 12, bottom: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.textSecondary.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
+                    ),
+
+                    // Tabs
+                    TabBar(
+                      controller: _tabController,
+                      labelColor: AppColors.primary,
+                      unselectedLabelColor: AppColors.textSecondary,
+                      indicatorColor: AppColors.primary,
+                      indicatorWeight: 3,
+                      labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+                      tabs: const [
+                        Tab(text: "All Activity"),
+                        Tab(text: "Monthly Statements"),
+                      ],
+                    ),
+                    const Divider(height: 1),
+
+                    // Content
+                    Expanded(
+                      child: _isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : _error != null
+                              ? Center(
+                                  child: Text(_error!,
+                                      style: const TextStyle(
+                                          color: AppColors.error)))
+                              : TabBarView(
+                                  controller: _tabController,
+                                  children: [
+                                    _buildList(_allRedemptions),
+                                    _buildYearlyList(),
+                                  ],
+                                ),
                     ),
                   ],
                 ),
+              );
+            },
+          ),
+
+          // [LAYER 3] Custom Back Button at the very top
+          Positioned(
+            top: topPadding + 10,
+            left: 24,
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                height: 40,
+                width: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white.withOpacity(0.3)),
+                ),
+                child: const Icon(Icons.arrow_back_ios_new,
+                    size: 18, color: Colors.white),
+              ),
+            ),
+          ),
+
+          // Title next to back button
+          Positioned(
+            top: topPadding + 20,
+            left: 0,
+            right: 0,
+            child: const Center(
+              child: Text(
+                "Redemption History",
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  // --- YEARLY VIEW IMPLEMENTATION ---
-  Widget _buildYearlyList() {
-    if (_allRedemptions.isEmpty) {
-      return _buildList([]); // Show empty state
+  Widget _buildStatsBackground() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 100, 24, 24),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.primary, Color(0xFF2A5298)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          const Text("TOTAL SAVINGS",
+              style: TextStyle(
+                  color: Colors.white70,
+                  letterSpacing: 1.5,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          Text(
+            _stats != null
+                ? "Rs. ${_stats!.totalSavings.toStringAsFixed(0)}"
+                : "...",
+            style: const TextStyle(
+                color: Colors.white, fontSize: 42, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white24),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.verified, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  "${_stats?.totalRedemptions ?? 0} Redemptions Verified",
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  // Reuse existing list builders but adapt formatting if needed
+  Widget _buildList(List<RedemptionModel> items) {
+    if (items.isEmpty) {
+      return _buildEmptyState();
     }
 
-    // 1. Group by Month (e.g., "December 2025")
+    return ListView.builder(
+      padding: const EdgeInsets.all(24),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return _buildRedemptionCard(item);
+      },
+    );
+  }
+
+  Widget _buildYearlyList() {
+    if (_allRedemptions.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    // 1. Group by Month
     final Map<String, List<RedemptionModel>> grouped = {};
     for (var r in _allRedemptions) {
       final key = DateFormat('MMMM yyyy').format(r.redeemedAt);
@@ -118,38 +312,44 @@ class _RedemptionHistoryScreenState extends State<RedemptionHistoryScreen>
     }
 
     // 2. Sort Keys (Months) Descending
-    // We need to parse back to sort correctly, or rely on insert order if data is sorted (it usually is from API).
-    // Let's force sort by sorting the keys based on the first item's date.
     final sortedKeys = grouped.keys.toList()
       ..sort((a, b) {
         final dateA = grouped[a]!.first.redeemedAt;
         final dateB = grouped[b]!.first.redeemedAt;
-        return dateB.compareTo(dateA); // Descending
+        return dateB.compareTo(dateA);
       });
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
       itemCount: sortedKeys.length,
       itemBuilder: (context, index) {
         final monthKey = sortedKeys[index];
         final monthItems = grouped[monthKey]!;
 
         return Container(
-          margin: const EdgeInsets.only(bottom: 12),
+          margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(12),
+            color: AppColors.backgroundLight.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.textSecondary.withOpacity(0.1)),
           ),
           child: Theme(
             data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
             child: ExpansionTile(
+              initiallyExpanded: index == 0, // Expand first month by default
+              tilePadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               title: Text(
                 monthKey,
                 style: const TextStyle(
-                    fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                    fontSize: 16),
               ),
-              childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              subtitle: Text("${monthItems.length} redemptions",
+                  style: const TextStyle(
+                      color: AppColors.textSecondary, fontSize: 12)),
+              childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               children:
                   monthItems.map((item) => _buildRedemptionCard(item)).toList(),
             ),
@@ -159,95 +359,51 @@ class _RedemptionHistoryScreenState extends State<RedemptionHistoryScreen>
     );
   }
 
-  Widget _buildStatsHeader() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _buildStatItem("Total Savings",
-              "Rs. ${_stats!.totalSavings.toStringAsFixed(0)}"),
-          Container(width: 1, height: 40, color: Colors.white.withOpacity(0.3)),
-          _buildStatItem("Redemptions", "${_stats!.totalRedemptions}"),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.backgroundLight,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.history_toggle_off,
+                size: 48, color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 16),
+          const Text("No redemptions yet",
+              style: TextStyle(color: AppColors.textSecondary)),
         ],
       ),
-    );
-  }
-
-  Widget _buildStatItem(String label, String value) {
-    return Column(
-      children: [
-        Text(value,
-            style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold)),
-        const SizedBox(height: 4),
-        Text(label,
-            style:
-                TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12)),
-      ],
-    );
-  }
-
-  Widget _buildList(List<RedemptionModel> items) {
-    if (items.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.history,
-                size: 64, color: AppColors.textSecondary.withOpacity(0.3)),
-            const SizedBox(height: 16),
-            const Text("No redemptions found",
-                style: TextStyle(color: AppColors.textSecondary)),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return _buildRedemptionCard(item);
-      },
     );
   }
 
   Widget _buildRedemptionCard(RedemptionModel item) {
-    final dateStr = DateFormat('MMM d, yyyy • h:mm a').format(item.redeemedAt);
-    Color statusColor = item.status == 'APPROVED'
+    // Condensed card style to fit list better
+    final dateStr = DateFormat('MMM d, h:mm a').format(item.redeemedAt);
+    final statusColor = item.status == 'APPROVED'
         ? AppColors.success
         : item.status == 'REJECTED'
             ? AppColors.error
             : AppColors.primary;
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      elevation: 0,
-      color: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: AppColors.textSecondary.withOpacity(0.1)),
-      ),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            )
+          ],
+          border: Border.all(color: Colors.grey.withOpacity(0.1))),
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -256,108 +412,74 @@ class _RedemptionHistoryScreenState extends State<RedemptionHistoryScreen>
                 builder: (_) => RedemptionDetailScreen(redemption: item),
               ));
         },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              // Thumbnail
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: AppColors.backgroundLight,
-                  image: item.offer?.imageUrl != null
-                      ? DecorationImage(
-                          image: NetworkImage(item.offer!.imageUrl!),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
-                ),
-                child: item.offer?.imageUrl == null
-                    ? const Icon(Icons.confirmation_number,
-                        color: AppColors.textSecondary)
+        child: Row(
+          children: [
+            // Icon
+            Container(
+              height: 48,
+              width: 48,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                image: item.offer?.imageUrl != null
+                    ? DecorationImage(
+                        image: NetworkImage(item.offer!.imageUrl!),
+                        fit: BoxFit.cover,
+                      )
                     : null,
               ),
-              const SizedBox(width: 16),
-              // Content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.offer?.title ?? "Redemption",
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: AppColors.textPrimary),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      item.branchName ??
-                          item.offer?.merchant?.businessName ??
-                          "Mergechant",
-                      style: const TextStyle(
-                          color: AppColors.textSecondary, fontSize: 13),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(dateStr,
-                        style: const TextStyle(
-                            color: AppColors.textSecondary, fontSize: 11)),
-                  ],
-                ),
-              ),
-              // Status Badge
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              child: item.offer?.imageUrl == null
+                  ? Icon(Icons.local_offer, color: AppColors.primary, size: 24)
+                  : null,
+            ),
+            const SizedBox(width: 16),
+            // Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      item.status,
-                      style: TextStyle(
-                          color: statusColor,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold),
-                    ),
+                  Text(
+                    item.offer?.title ?? "Redemption",
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 14),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  if (item.isBonusApplied) ...[
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(
-                              color: Colors.orange.withOpacity(0.5),
-                              width: 0.5)),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.star, size: 8, color: Colors.orange),
-                          SizedBox(width: 2),
-                          Text("BONUS",
-                              style: TextStyle(
-                                  color: Colors.orange,
-                                  fontSize: 8,
-                                  fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ),
-                  ]
+                  const SizedBox(height: 2),
+                  Text(
+                    item.branchName ?? "Unknown Branch",
+                    style: const TextStyle(
+                        color: AppColors.textSecondary, fontSize: 12),
+                  ),
                 ],
-              )
-            ],
-          ),
+              ),
+            ),
+            // Status/Date
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(dateStr,
+                    style: const TextStyle(
+                        color: AppColors.textSecondary, fontSize: 10)),
+                const SizedBox(height: 4),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    item.status,
+                    style: TextStyle(
+                        color: statusColor,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            )
+          ],
         ),
       ),
     );

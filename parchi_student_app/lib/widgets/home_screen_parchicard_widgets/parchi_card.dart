@@ -130,6 +130,10 @@ class _ParchiCardDetailState extends ConsumerState<ParchiCardDetail>
   @override
   void initState() {
     super.initState();
+    // Refresh stats when card is opened (Silent Refresh)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.invalidate(redemptionStatsProvider);
+    });
 
     _flipController = AnimationController(
       vsync: this,
@@ -312,101 +316,106 @@ class _ParchiCardDetailState extends ConsumerState<ParchiCardDetail>
   Widget _buildCurrentMonthStats() {
     final statsAsync = ref.watch(redemptionStatsProvider);
 
-    return statsAsync.when(
-      data: (stats) {
-        final int usedCount = stats.totalRedemptions;
-        const int totalCount = 20; // Hardcoded limit for now
-        final String totalSaved =
-            "PKR ${stats.totalSavings.toStringAsFixed(0)}";
-        double progress = (usedCount / totalCount).clamp(0.0, 1.0);
+    // [SILENT REFRESH LOGIC]
+    if (statsAsync.hasValue) {
+      final stats = statsAsync.value!;
+      return _buildStatsContent(stats.totalRedemptions, stats.totalSavings);
+    } else if (statsAsync.isLoading) {
+      return const Center(
+          child: CircularProgressIndicator(color: AppColors.secondary));
+    } else if (statsAsync.hasError) {
+      return Center(
+          child: Text("Error loading stats",
+              style: TextStyle(color: AppColors.error)));
+    } else {
+      return const SizedBox.shrink();
+    }
+  }
 
-        return Column(
-          key: const ValueKey("CurrentMonth"),
-          mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildStatsContent(int usedCount, num totalSavedNum) {
+    const int totalCount = 20; // Hardcoded limit for now
+    final String totalSaved = "PKR ${totalSavedNum.toStringAsFixed(0)}";
+    double progress = (usedCount / totalCount).clamp(0.0, 1.0);
+
+    return Column(
+      key: const ValueKey("CurrentMonth"),
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Row(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  flex: 4,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      SizedBox(
-                        height: 100,
-                        width: 100,
-                        child: CircularProgressIndicator(
-                          value: 1.0,
-                          color: AppColors.textSecondary.withOpacity(0.1),
-                          strokeWidth: 8,
-                        ),
-                      ),
-                      SizedBox(
-                        height: 100,
-                        width: 100,
-                        child: CircularProgressIndicator(
-                          value: progress,
-                          color: AppColors.secondary,
-                          strokeCap: StrokeCap.round,
-                          strokeWidth: 8,
-                        ),
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text("$usedCount",
-                              style: const TextStyle(
-                                  color: AppColors.surface,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold)),
-                          const Text("Used",
-                              style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 10)),
-                        ],
-                      ),
-                    ],
+            Expanded(
+              flex: 4,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    height: 100,
+                    width: 100,
+                    child: CircularProgressIndicator(
+                      value: 1.0,
+                      color: AppColors.textSecondary.withOpacity(0.1),
+                      strokeWidth: 8,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  flex: 6,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  SizedBox(
+                    height: 100,
+                    width: 100,
+                    child: CircularProgressIndicator(
+                      value: progress,
+                      color: AppColors.secondary,
+                      strokeCap: StrokeCap.round,
+                      strokeWidth: 8,
+                    ),
+                  ),
+                  Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text("THIS MONTH",
-                          style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 10,
-                              letterSpacing: 1)),
-                      const Divider(color: Colors.white24),
-                      const SizedBox(height: 5),
-                      Text("Discounts: $usedCount/$totalCount",
+                      Text("$usedCount",
                           style: const TextStyle(
-                              color: AppColors.surface, fontSize: 16)),
-                      const SizedBox(height: 5),
-                      const Text("Total Saved:",
-                          style: TextStyle(
-                              color: AppColors.textSecondary, fontSize: 12)),
-                      Text(totalSaved,
-                          style: const TextStyle(
-                              color: AppColors.success,
-                              fontSize: 20,
+                              color: AppColors.surface,
+                              fontSize: 24,
                               fontWeight: FontWeight.bold)),
+                      const Text("Used",
+                          style: TextStyle(
+                              color: AppColors.textSecondary, fontSize: 10)),
                     ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-            const Spacer(),
+            const SizedBox(width: 15),
+            Expanded(
+              flex: 6,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text("THIS MONTH",
+                      style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 10,
+                          letterSpacing: 1)),
+                  const Divider(color: Colors.white24),
+                  const SizedBox(height: 5),
+                  Text("Discounts: $usedCount/$totalCount",
+                      style: const TextStyle(
+                          color: AppColors.surface, fontSize: 16)),
+                  const SizedBox(height: 5),
+                  const Text("Total Saved:",
+                      style: TextStyle(
+                          color: AppColors.textSecondary, fontSize: 12)),
+                  Text(totalSaved,
+                      style: const TextStyle(
+                          color: AppColors.success,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
           ],
-        );
-      },
-      loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.secondary)),
-      error: (err, stack) => Center(
-          child: Text("Error loading stats",
-              style: TextStyle(color: AppColors.error))),
+        ),
+        const Spacer(),
+      ],
     );
   }
 }

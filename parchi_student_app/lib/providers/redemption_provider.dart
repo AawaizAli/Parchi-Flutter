@@ -8,7 +8,7 @@ final redemptionStatsProvider = FutureProvider<RedemptionStats>((ref) async {
 
 // We can add more specific providers if needed, e.g. recentRedemptions
 final recentRedemptionsProvider =
-    FutureProvider<List<RedemptionModel>>((ref) async {
+    FutureProvider.autoDispose<List<RedemptionModel>>((ref) async {
   // Fetch only first page
   return await redemptionService.getRedemptions(page: 1);
 });

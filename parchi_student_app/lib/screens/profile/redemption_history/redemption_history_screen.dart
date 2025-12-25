@@ -24,7 +24,7 @@ class _RedemptionHistoryScreenState extends State<RedemptionHistoryScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     _loadData();
   }
 
@@ -55,12 +55,7 @@ class _RedemptionHistoryScreenState extends State<RedemptionHistoryScreen>
     }
   }
 
-  List<RedemptionModel> _filterRedemptions(String statusFilter) {
-    if (statusFilter == 'ALL') return _allRedemptions;
-    return _allRedemptions
-        .where((r) => r.status.toUpperCase() == statusFilter)
-        .toList();
-  }
+  // Helper removed as we don't need status filtering anymore for tabs
 
   @override
   Widget build(BuildContext context) {
@@ -79,8 +74,7 @@ class _RedemptionHistoryScreenState extends State<RedemptionHistoryScreen>
           indicatorColor: AppColors.primary,
           tabs: const [
             Tab(text: "All"),
-            Tab(text: "Approved"),
-            Tab(text: "Pending"),
+            Tab(text: "Yearly"),
           ],
         ),
       ),
@@ -97,14 +91,71 @@ class _RedemptionHistoryScreenState extends State<RedemptionHistoryScreen>
                       child: TabBarView(
                         controller: _tabController,
                         children: [
-                          _buildList(_filterRedemptions('ALL')),
-                          _buildList(_filterRedemptions('APPROVED')),
-                          _buildList(_filterRedemptions('PENDING')),
+                          _buildList(_allRedemptions),
+                          _buildYearlyList(),
                         ],
                       ),
                     ),
                   ],
                 ),
+    );
+  }
+
+  // --- YEARLY VIEW IMPLEMENTATION ---
+  Widget _buildYearlyList() {
+    if (_allRedemptions.isEmpty) {
+      return _buildList([]); // Show empty state
+    }
+
+    // 1. Group by Month (e.g., "December 2025")
+    final Map<String, List<RedemptionModel>> grouped = {};
+    for (var r in _allRedemptions) {
+      final key = DateFormat('MMMM yyyy').format(r.redeemedAt);
+      if (!grouped.containsKey(key)) {
+        grouped[key] = [];
+      }
+      grouped[key]!.add(r);
+    }
+
+    // 2. Sort Keys (Months) Descending
+    // We need to parse back to sort correctly, or rely on insert order if data is sorted (it usually is from API).
+    // Let's force sort by sorting the keys based on the first item's date.
+    final sortedKeys = grouped.keys.toList()
+      ..sort((a, b) {
+        final dateA = grouped[a]!.first.redeemedAt;
+        final dateB = grouped[b]!.first.redeemedAt;
+        return dateB.compareTo(dateA); // Descending
+      });
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: sortedKeys.length,
+      itemBuilder: (context, index) {
+        final monthKey = sortedKeys[index];
+        final monthItems = grouped[monthKey]!;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.textSecondary.withOpacity(0.1)),
+          ),
+          child: Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              title: Text(
+                monthKey,
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              ),
+              childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              children:
+                  monthItems.map((item) => _buildRedemptionCard(item)).toList(),
+            ),
+          ),
+        );
+      },
     );
   }
 

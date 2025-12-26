@@ -109,13 +109,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return ValueListenableBuilder<double>(
       valueListenable: _expandProgress,
       builder: (context, progress, child) {
-        // Interpolate color from Surface (White) to Primary (Blue)
-        final backgroundColor =
-            Color.lerp(AppColors.surface, AppColors.primary, progress) ??
-                AppColors.surface;
-
         return Scaffold(
-          backgroundColor: backgroundColor,
+          backgroundColor: AppColors.surface,
           body: Stack(
             children: [
               // LAYER 1: Parchi Card
@@ -131,10 +126,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       final lname = user?.lastName ?? "";
                       final fullName = "$fname $lname".trim().toUpperCase();
                       final pId = user?.parchiId ?? "PENDING";
+                      final uni = user?.university ?? "Unknown University";
 
                       return ParchiCard(
                         studentName: fullName.isEmpty ? "STUDENT" : fullName,
                         studentId: pId,
+                        universityName: uni,
                       );
                     },
                     loading: () => const ParchiCard(
@@ -158,76 +155,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 },
               ),
 
-              // LAYER 3: Fixed Header
+              // LAYER 3: Fixed Header (Unified Search & Compact Parchi Card)
               Positioned(
                 top: 0,
                 left: 0,
                 right: 0,
-                child: SafeArea(
-                  bottom: false,
-                  child: Padding(
-                    padding: const EdgeInsets.only(
-                        left: 16.0,
-                        right: 16.0,
-                        top: 4.0,
-                        bottom: 0.0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            height: 45,
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceVariant,
-                              borderRadius: BorderRadius.circular(25),
-                            ),
-                            child: const TextField(
-                              decoration: InputDecoration(
-                                hintText: "Search restaurants...",
-                                hintStyle:
-                                    TextStyle(color: AppColors.textSecondary),
-                                prefixIcon: Padding(
-                                  padding: const EdgeInsets.only(left: 12.0),
-                                  child: Icon(
-                                    Icons.search,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                                prefixIconConstraints:
-                                    BoxConstraints(minWidth: 45),
-                                border: InputBorder.none,
-                                contentPadding:
-                                    EdgeInsets.symmetric(vertical: 12),
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizeTransition(
-                          sizeFactor: AlwaysStoppedAnimation(1.0 - progress),
-                          axis: Axis.horizontal,
-                          axisAlignment: -1.0,
-                          child: FadeTransition(
-                            opacity: AlwaysStoppedAnimation(1.0 - progress),
-                            child: Row(
-                              children: [
-                                const SizedBox(width: 10),
-                                Container(
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.surfaceVariant,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  // [UPDATED] Replaced empty onPressed with _openNotifications
-                                  child: IconButton(
-                                    icon: const Icon(Icons.notifications_none,
-                                        color: AppColors.textSecondary),
-                                    onPressed: _openNotifications,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                child: userAsync.when(
+                  data: (user) {
+                    final fname = user?.firstName ?? "Student";
+                    final lname = user?.lastName ?? "";
+                    final fullName = "$fname $lname".trim().toUpperCase();
+                    final pId = user?.parchiId ?? "PENDING";
+                    final uni = user?.university ?? "Unknown University";
+
+                    return CompactParchiHeader(
+                      studentName: fullName.isEmpty ? "STUDENT" : fullName,
+                      studentId: pId,
+                      universityName: uni,
+                      scrollProgress: progress,
+                      onNotificationTap: _openNotifications,
+                    );
+                  },
+                  loading: () => CompactParchiHeader(
+                    studentName: "LOADING...",
+                    studentId: "PK-....",
+                    universityName: "...",
+                    scrollProgress: progress,
+                    onNotificationTap: _openNotifications,
+                  ),
+                  error: (err, stack) => CompactParchiHeader(
+                    studentName: "OFFLINE",
+                    studentId: "ERROR",
+                    universityName: "...",
+                    scrollProgress: progress,
+                    onNotificationTap: _openNotifications,
                   ),
                 ),
               ),

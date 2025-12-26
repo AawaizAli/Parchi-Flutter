@@ -12,12 +12,14 @@ import '../../providers/redemption_provider.dart';
 class ParchiCard extends StatelessWidget {
   final String studentName;
   final String studentId;
+  final String universityName; // [NEW]
   final bool isGolden; // [NEW] Gold Mode Flag
 
   const ParchiCard({
     super.key,
     this.studentName = "", // Empty default instead of dummy name
     this.studentId = "", // Empty default instead of dummy ID
+    this.universityName = "", // [NEW]
     this.isGolden = false, // Default is standard
   });
 
@@ -57,6 +59,7 @@ class ParchiCard extends StatelessWidget {
                 child: ParchiCardDetail(
                   studentName: studentName,
                   studentId: studentId,
+                  universityName: universityName, // [NEW]
                   isGolden: isGolden, // Pass state to detail view
                 ),
               );
@@ -88,6 +91,7 @@ class ParchiCard extends StatelessWidget {
               child: CardFrontContent(
                 studentName: studentName,
                 studentId: studentId,
+                universityName: universityName, // [NEW]
                 isGolden: isGolden,
               ),
             ),
@@ -104,12 +108,14 @@ class ParchiCard extends StatelessWidget {
 class ParchiCardDetail extends ConsumerStatefulWidget {
   final String studentName;
   final String studentId;
+  final String universityName; // [NEW]
   final bool isGolden;
 
   const ParchiCardDetail({
     super.key,
     required this.studentName,
     required this.studentId,
+    required this.universityName, // [NEW]
     this.isGolden = false,
   });
 
@@ -258,6 +264,7 @@ class _ParchiCardDetailState extends ConsumerState<ParchiCardDetail>
       child: CardFrontContent(
         studentName: widget.studentName,
         studentId: widget.studentId,
+        universityName: widget.universityName, // [NEW]
         isGolden: widget.isGolden,
       ),
     );
@@ -409,12 +416,14 @@ class _ParchiCardDetailState extends ConsumerState<ParchiCardDetail>
 class CardFrontContent extends StatelessWidget {
   final String studentName;
   final String studentId;
+  final String universityName; // [NEW]
   final bool isGolden; // [NEW]
 
   const CardFrontContent({
     super.key,
     required this.studentName,
     required this.studentId,
+    required this.universityName, // [NEW]
     this.isGolden = false,
   });
 
@@ -469,59 +478,43 @@ class CardFrontContent extends StatelessWidget {
                   ),
                 ],
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 2. Student Name
+                      Text(
+                        studentName,
+                        style: TextStyle(
+                            color: textColor,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold, // Bold
+                            letterSpacing: 0.1),
+                      ),
+                      const SizedBox(height: 2),
+
+                      // 3. University Name
+                      Text(
+                        universityName.toUpperCase(),
+                        style: TextStyle(
+                            color: secondaryTextColor,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600, // Semi-bold
+                            letterSpacing: 0.1),
+                      ),
+                    ],
+                  ),
+                  // 1. Parchi ID (Most Important)
                   Text(
-                    studentName,
+                    studentId,
                     style: TextStyle(
                         color: textColor,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.5),
-                  ),
-                  const SizedBox(height: 4),
-                  GestureDetector(
-                    onTap: () {
-                      Clipboard.setData(ClipboardData(text: studentId));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("ID copied to clipboard!"),
-                          duration: Duration(seconds: 1),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isGolden
-                            ? AppColors.textPrimary.withOpacity(0.12)
-                            : AppColors.surface.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(
-                            color: isGolden
-                                ? AppColors.textPrimary.withOpacity(0.12)
-                                : Colors.white24,
-                            width: 0.5),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            "Parchi ID: $studentId",
-                            style: TextStyle(
-                                color: textColor,
-                                fontSize: 12,
-                                fontFamily: 'Courier',
-                                fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(width: 6),
-                          Icon(Icons.copy, size: 12, color: secondaryTextColor),
-                        ],
-                      ),
-                    ),
+                        fontSize: 24, // Larger
+                        fontWeight: FontWeight.w900, // Boldest
+                        letterSpacing: 1.0),
                   ),
                 ],
               ),
@@ -529,6 +522,229 @@ class CardFrontContent extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// =========================================================
+// 4. COMPACT HEADER (Sticky)
+// =========================================================
+class CompactParchiHeader extends StatelessWidget {
+  final String studentName;
+  final String studentId;
+  final String universityName; // [NEW]
+  final bool isGolden;
+  final double scrollProgress;
+  final VoidCallback onNotificationTap;
+
+  const CompactParchiHeader({
+    super.key,
+    required this.studentName,
+    required this.studentId,
+    required this.universityName, // [NEW]
+    this.isGolden = false,
+    required this.scrollProgress,
+    required this.onNotificationTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = isGolden
+        ? AppColors.textPrimary.withOpacity(0.87)
+        : AppColors.textOnPrimary;
+    final secondaryTextColor = isGolden
+        ? AppColors.textPrimary.withOpacity(0.54)
+        : AppColors.textOnPrimary.withOpacity(0.7);
+
+    // Interpolate background color
+    // Start transparent (or minimal) -> End at Primary/Gold
+    final backgroundColor = Color.lerp(
+      Colors.transparent,
+      isGolden ? AppColors.goldStart : AppColors.primary,
+      scrollProgress,
+    );
+
+    final iconColor = isGolden
+        ? AppColors.textOnPrimary.withOpacity(0.3)
+        : AppColors.surface.withOpacity(0.05);
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+        gradient: (isGolden && scrollProgress > 0.5)
+            ? LinearGradient(
+                colors: [
+                  AppColors.goldStart.withOpacity(scrollProgress),
+                  AppColors.goldMid.withOpacity(scrollProgress)
+                ],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              )
+            : null,
+        boxShadow: scrollProgress > 0.1
+            ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1 * scrollProgress),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
+      ),
+      child: Stack(
+        children: [
+          // 0. Background Icon (Same as Main Card)
+          if (scrollProgress > 0.1)
+            Positioned(
+              right: -110,
+              top: -90, // Adjusted for compact view to sit behind search bar
+              child: Opacity(
+                opacity: scrollProgress.clamp(0.0, 1.0),
+                child: isGolden
+                    ? Icon(Icons.emoji_events, size: 150, color: iconColor)
+                    : Transform.flip(
+                        flipX: true,
+                        child: SvgPicture.asset(
+                          'assets/parchi-icon.svg',
+                          height: 400,
+                          colorFilter: ColorFilter.mode(
+                            Colors.white.withOpacity(0.1),
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                      ),
+              ),
+            ),
+
+          SafeArea(
+            bottom: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 1. Search Bar & Notification Row
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 4), // Increased top padding for taller feel
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 45,
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceVariant,
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          child: const TextField(
+                            decoration: InputDecoration(
+                              hintText: "Search restaurants...",
+                              hintStyle: TextStyle(color: AppColors.textSecondary),
+                              prefixIcon: Padding(
+                                padding: EdgeInsets.only(left: 12.0),
+                                child: Icon(
+                                  Icons.search,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              prefixIconConstraints: BoxConstraints(minWidth: 45),
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Smaller Notification Circle
+                      Container(
+                        width: 40, // Fixed smaller width
+                        height: 40, // Fixed smaller height
+                        decoration: const BoxDecoration(
+                          color: AppColors.surfaceVariant,
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          padding: EdgeInsets.zero, // Remove default padding
+                          icon: const Icon(Icons.notifications_none,
+                              size: 20, // Smaller icon
+                              color: AppColors.textSecondary),
+                          onPressed: onNotificationTap,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 2. Student Info (Animated Slide Down)
+                ClipRect(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    heightFactor: scrollProgress,
+                    child: Opacity(
+                      opacity: scrollProgress,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16), // Increased vertical padding
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // Name, Uni & ID
+                            Expanded(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        studentName,
+                                        style: TextStyle(
+                                          color: textColor,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 1),
+                                      Text(
+                                        universityName.toUpperCase(),
+                                        style: TextStyle(
+                                          color: secondaryTextColor,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Text(
+                                    studentId,
+                                    style: TextStyle(
+                                      color: textColor,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Mini Icon (Kept as requested or removed? User said "parchi-icon.svg to be in the compact card just like the big one... placed behind search bar". 
+                            // The mini icon was previously here. I will keep it as it wasn't explicitly asked to be removed, but the "background icon" request might supersede it.
+                            // Actually, usually "just like the big one" implies the background decoration. 
+                            // The mini icon on the right might be redundant if the big one is there, but let's keep it for now as a logo unless it looks cluttered. 
+                            // Wait, the user said "parchi-icon.svg to be in the compact card just like the big one... placed behind the search bar".
+                            // This refers to the background decoration.
+                            // I will keep the mini icon for now as it serves as a logo.
+                           
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

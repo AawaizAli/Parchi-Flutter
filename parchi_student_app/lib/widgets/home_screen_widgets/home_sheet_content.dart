@@ -10,6 +10,8 @@ import 'package:parchi_student_app/widgets/home_screen_restraunts_widgets/brand_
 import '../home_screen_restraunts_widgets/restaurant_big_card.dart';
 import '../home_screen_restraunts_widgets/restaurant_medium_card.dart';
 import '../../screens/home/offers/offer_details_screen.dart';
+import '../../screens/home/merchant_details_screen.dart';
+import '../../models/merchant_detail_model.dart';
 
 class HomeSheetContent extends ConsumerStatefulWidget {
   final ScrollController scrollController;
@@ -27,15 +29,14 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
   // --- DUMMY DATA FOR BRANDS ---
   // --- DUMMY DATA FOR BRANDS REMOVED ---
 
-  // --- DUMMY DATA FOR ALL RESTAURANTS ---
-  final List<Map<String, String>> allRestaurants = List.generate(
+  // --- DUMMY DATA FOR ALL RESTAURANTS (MERCHANTS) ---
+  // --- DUMMY DATA FOR ALL RESTAURANTS (MERCHANTS) ---
+  List<Map<String, String>> get allRestaurants => List.generate(
       8,
       (index) => {
             "name": "Restaurant ${index + 1}",
             "image": "https://placehold.co/600x300/png?text=Food${index + 1}",
-            "rating": "${4.0 + (index % 10) / 10}",
-            "meta": "${20 + index} min • \$\$ • Cuisine",
-            "discount": "${10 + (index * 5)}% OFF",
+            "category": "Cuisine ${index + 1}",
           });
 
   // --- REFRESH LOGIC ---
@@ -44,8 +45,6 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
       // Load fresh data
       await ref.refresh(activeOffersProvider.future);
       await ref.refresh(brandsProvider.future);
-      // await ref.refresh(allRestaurantsProvider.future);
-      // await Future.delayed(const Duration(seconds: 2)); // Uncomment to test the loader duration
     } catch (e) {
       debugPrint("Refresh failed: $e");
     }
@@ -61,94 +60,49 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
     );
   }
 
-  // --- FILTER MODAL LOGIC ---
-  void _showOffersModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(0)),
-      ),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(24),
-          height: 320,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Offers",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  IconButton(
-                    icon:
-                        const Icon(Icons.close, color: AppColors.textSecondary),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              _buildFilterOption("30% OFF"),
-              _buildFilterOption("15% OFF"),
-              _buildFilterOption("10% OFF"),
-              const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    "Apply",
-                    style: TextStyle(
-                      color: AppColors.textOnPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+  void _onMerchantTap(BuildContext context, String merchantName, String image) {
+    // Create dummy data for the merchant details
+    final dummyMerchant = MerchantDetailModel(
+      id: "dummy_id",
+      businessName: merchantName,
+      logoPath: image,
+      category: "Fast Food",
+      termsAndConditions:
+          "1. Offer valid for dine-in only.\n2. Cannot be combined with other offers.\n3. Show student ID to redeem.\n4. Valid at participating branches only.",
+      branches: [
+        BranchModel(
+          id: "b1",
+          name: "$merchantName - Downtown",
+          address: "123 Main St, City Center",
+          bonusSettings: BonusSettingsModel(
+            redemptionsRequired: 5,
+            currentRedemptions: 3,
+            discountDescription: "Free Meal",
           ),
-        );
-      },
+        ),
+        BranchModel(
+          id: "b2",
+          name: "$merchantName - Mall Road",
+          address: "456 Mall Rd, Shopping District",
+          bonusSettings: BonusSettingsModel(
+            redemptionsRequired: 10,
+            currentRedemptions: 1,
+            discountDescription: "50% OFF",
+          ),
+        ),
+        BranchModel(
+          id: "b3",
+          name: "$merchantName - University Campus",
+          address: "789 Campus Dr, University Area",
+          // No bonus settings for this branch
+        ),
+      ],
     );
-  }
 
-  Widget _buildFilterOption(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            height: 24,
-            width: 24,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: AppColors.textSecondary),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              color: AppColors.textPrimary,
-            ),
-          ),
-        ],
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MerchantDetailsScreen(merchant: dummyMerchant),
       ),
     );
   }
@@ -167,208 +121,216 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
         offsetToArmed: indicatorSize,
         builder: (BuildContext context, Widget child,
             IndicatorController controller) {
-            return Stack(
-              children: <Widget>[
-                // 1. The Animated Custom Loader (Stays at the top)
-                AnimatedBuilder(
-                  animation: controller,
-                  builder: (context, _) {
-                    return SizedBox(
-                      height: controller.value * indicatorSize,
-                      width: double.infinity,
-                      child: Center(
-                        child: ParchiLoader(
-                          isLoading: controller.isLoading,
-                          progress: controller.value,
-                        ),
+          return Stack(
+            children: <Widget>[
+              // 1. The Animated Custom Loader (Stays at the top)
+              AnimatedBuilder(
+                animation: controller,
+                builder: (context, _) {
+                  return SizedBox(
+                    height: controller.value * indicatorSize,
+                    width: double.infinity,
+                    child: Center(
+                      child: ParchiLoader(
+                        isLoading: controller.isLoading,
+                        progress: controller.value,
                       ),
+                    ),
+                  );
+                },
+              ),
+
+              // 2. The Main Content (Pushes down as you drag)
+              Transform.translate(
+                offset: Offset(0.0, controller.value * indicatorSize),
+                child: child,
+              ),
+            ],
+          );
+        },
+        child: CustomScrollView(
+          controller: widget.scrollController,
+          physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics()),
+          slivers: [
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+            // --- SECTION 1: TOP BRANDS (GRID) ---
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                child: Text(
+                  "Top Brands",
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary),
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 240, // Height for 2 rows of items
+                child: ref.watch(brandsProvider).when(
+                      loading: () => const Center(
+                          child: CircularProgressIndicator(
+                              color: AppColors.primary)),
+                      error: (err, stack) => Center(child: Text('Error: $err')),
+                      data: (brands) {
+                        if (brands.isEmpty) {
+                          return const Center(
+                              child: Text("No brands available"));
+                        }
+                        // Take first 6 brands for 2x3 grid
+                        final displayBrands = brands.take(6).toList();
+
+                        return GridView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            childAspectRatio: 0.85,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                          ),
+                          itemCount: displayBrands.length,
+                          itemBuilder: (context, index) {
+                            final brand = displayBrands[index];
+                            return GestureDetector(
+                              onTap: () => _onMerchantTap(
+                                context,
+                                brand.businessName,
+                                brand.logoPath ??
+                                    "https://placehold.co/100x100/png?text=No+Image",
+                              ),
+                              child: BrandCard(
+                                name: brand.businessName,
+                                image: brand.logoPath ??
+                                    "https://placehold.co/100x100/png?text=No+Image",
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+              ),
+            ),
+
+            // --- SECTION 2: ACTIVE OFFERS (CAROUSEL) ---
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Active Offers",
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary),
+                    ),
+                    Icon(Icons.arrow_forward_ios,
+                        size: 16, color: AppColors.primary)
+                  ],
+                ),
+              ),
+            ),
+
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 180,
+                child: offersAsync.when(
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  ),
+                  error: (err, stack) => Center(
+                    child: Text(
+                      "Error loading offers",
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                  ),
+                  data: (offers) {
+                    if (offers.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          "No active offers right now.",
+                          style: TextStyle(color: AppColors.textSecondary),
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      scrollDirection: Axis.horizontal,
+                      itemCount: offers.length,
+                      itemBuilder: (context, index) {
+                        final offer = offers[index];
+                        final String displayImage = offer.imageUrl ??
+                            "https://placehold.co/600x300/png?text=No+Image";
+
+                        return GestureDetector(
+                          onTap: () => _onOfferTap(context, offer.id),
+                          child: RestaurantMediumCard(
+                            name: offer.title,
+                            image: displayImage,
+                            discount: offer.formattedDiscount,
+                            branchName: offer.branchName ?? "All Branches",
+                          ),
+                        );
+                      },
                     );
                   },
                 ),
+              ),
+            ),
 
-                // 2. The Main Content (Pushes down as you drag)
-                Transform.translate(
-                  offset: Offset(0.0, controller.value * indicatorSize),
-                  child: child,
-                ),
-              ],
-            );
-          },
-          child: CustomScrollView(
-            controller: widget.scrollController,
-            physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics()),
-            slivers: [
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-              // --- SECTION 1: TOP BRANDS ---
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text(
-                    "Top Brands",
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary),
-                  ),
+            // --- SECTION 3: ALL RESTAURANTS HEADER ---
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
+                child: Text(
+                  "All Restaurants",
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary),
                 ),
               ),
+            ),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 160,
-                  child: ref.watch(brandsProvider).when(
-                        loading: () => const Center(
-                            child: CircularProgressIndicator(
-                                color: AppColors.primary)),
-                        error: (err, stack) =>
-                            Center(child: Text('Error: $err')),
-                        data: (brands) {
-                          if (brands.isEmpty) {
-                            return const Center(
-                                child: Text("No brands available"));
-                          }
-                          return ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            scrollDirection: Axis.horizontal,
-                            itemCount: brands.length,
-                            itemBuilder: (context, index) {
-                              final brand = brands[index];
-                              return BrandCard(
-                                name: brand.businessName,
-                                time: "30-45 min", // Placeholder
-                                image: brand.logoPath ??
-                                    "https://placehold.co/100x100/png?text=No+Image",
-                              );
-                            },
-                          );
-                        },
+            // --- ALL RESTAURANTS LIST ---
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final rest = allRestaurants[index];
+                    return GestureDetector(
+                      onTap: () => _onMerchantTap(
+                        context,
+                        rest["name"]!,
+                        rest["image"]!,
                       ),
-                ),
-              ),
-
-              // --- SECTION 2: ACTIVE OFFERS ---
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Active Offers",
-                        style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary),
-                      ),
-                      Icon(Icons.arrow_forward_ios,
-                          size: 16, color: AppColors.primary)
-                    ],
-                  ),
-                ),
-              ),
-
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 180,
-                  child: offersAsync.when(
-                    loading: () => const Center(
-                      child:
-                          CircularProgressIndicator(color: AppColors.primary),
-                    ),
-                    error: (err, stack) => Center(
-                      child: Text(
-                        "Error loading offers",
-                        style: TextStyle(color: AppColors.textSecondary),
-                      ),
-                    ),
-                    data: (offers) {
-                      if (offers.isEmpty) {
-                        return Center(
-                          child: Text(
-                            "No active offers right now.",
-                            style: TextStyle(color: AppColors.textSecondary),
-                          ),
-                        );
-                      }
-
-                      return ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        scrollDirection: Axis.horizontal,
-                        itemCount: offers.length,
-                        itemBuilder: (context, index) {
-                          final offer = offers[index];
-                          final String displayImage = offer.imageUrl ??
-                              offer.merchant?.logoPath ??
-                              "https://placehold.co/600x300/png?text=No+Image";
-
-                          return GestureDetector(
-                            onTap: () => _onOfferTap(context, offer.id),
-                            child: RestaurantMediumCard(
-                              name: offer.merchant?.businessName ?? offer.title,
-                              image: displayImage,
-                              rating: "4.5",
-                              meta:
-                                  "Valid until ${offer.validUntil.day}/${offer.validUntil.month}",
-                              discount: offer.formattedDiscount,
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ),
-
-              // --- SECTION 3: ALL RESTAURANTS HEADER ---
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
-                  child: Text(
-                    "All Restaurants",
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary),
-                  ),
-                ),
-              ),
-
-              // --- STICKY FILTER HEADER ---
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _FilterHeaderDelegate(
-                  onFilterTap: () => _showOffersModal(context),
-                ),
-              ),
-
-              // --- ALL RESTAURANTS LIST ---
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final rest = allRestaurants[index];
-                      return RestaurantBigCard(
+                      child: RestaurantBigCard(
                         name: rest["name"]!,
                         image: rest["image"]!,
-                        rating: rest["rating"]!,
-                        meta: rest["meta"]!,
-                        discount: rest["discount"]!,
-                      );
-                    },
-                    childCount: allRestaurants.length,
-                  ),
+                        category: rest["category"]!,
+                      ),
+                    );
+                  },
+                  childCount: allRestaurants.length,
                 ),
               ),
+            ),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 20)),
-            ],
-          ),
-
+            const SliverToBoxAdapter(child: SizedBox(height: 20)),
+          ],
+        ),
       ),
     );
   }

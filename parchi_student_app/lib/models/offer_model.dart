@@ -8,6 +8,7 @@ class OfferModel {
   final DateTime validUntil;
   final Merchant? merchant;
   final double? distance;
+  final String? branchName;
 
   OfferModel({
     required this.id,
@@ -19,6 +20,7 @@ class OfferModel {
     required this.validUntil,
     this.merchant,
     this.distance,
+    this.branchName,
   });
 
   factory OfferModel.fromJson(Map<String, dynamic> json) {
@@ -33,6 +35,7 @@ class OfferModel {
       validUntil: DateTime.tryParse(json['validUntil'] ?? '') ?? DateTime.now(),
       merchant: json['merchant'] != null ? Merchant.fromJson(json['merchant']) : null,
       distance: json['distance'] != null ? (json['distance'] as num).toDouble() : null,
+      branchName: json['branchName'],
     );
   }
 

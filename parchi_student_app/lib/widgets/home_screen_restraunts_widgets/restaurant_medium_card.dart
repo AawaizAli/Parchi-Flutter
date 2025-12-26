@@ -4,23 +4,21 @@ import '../../utils/colours.dart';
 class RestaurantMediumCard extends StatelessWidget {
   final String name;
   final String image;
-  final String rating;
-  final String meta; // "20-35 min • $$"
   final String discount; // "30% OFF"
+  final String branchName; // "Downtown Branch"
 
   const RestaurantMediumCard({
     super.key,
     required this.name,
     required this.image,
-    required this.rating,
-    required this.meta,
     required this.discount,
+    required this.branchName,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 140, // Fixed width for horizontal scrolling
+      width: 160, // Fixed width for horizontal scrolling
       margin: const EdgeInsets.only(right: 12),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -71,7 +69,7 @@ class RestaurantMediumCard extends StatelessWidget {
                     discount,
                     style: const TextStyle(
                       color: AppColors.textOnPrimary,
-                      fontSize: 8,
+                      fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -91,34 +89,18 @@ class RestaurantMediumCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.star,
-                        size: 12, color: AppColors.secondary),
-                    const SizedBox(width: 2),
-                    Text(
-                      rating,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
                 Text(
-                  meta,
+                  branchName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 10,
+                    fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
                 ),

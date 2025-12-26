@@ -67,7 +67,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
       context: context,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(0)),
       ),
       builder: (context) {
         return Container(
@@ -159,24 +159,14 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
     const double indicatorSize = 100.0; // Total height area for the loader
 
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.backgroundLight,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textPrimary.withOpacity(0.12),
-            blurRadius: 10,
-            offset: Offset(0, -5),
-          )
-        ],
       ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-        child: CustomRefreshIndicator(
-          onRefresh: _refreshData,
-          offsetToArmed: indicatorSize,
-          builder: (BuildContext context, Widget child,
-              IndicatorController controller) {
+      child: CustomRefreshIndicator(
+        onRefresh: _refreshData,
+        offsetToArmed: indicatorSize,
+        builder: (BuildContext context, Widget child,
+            IndicatorController controller) {
             return Stack(
               children: <Widget>[
                 // 1. The Animated Custom Loader (Stays at the top)
@@ -378,7 +368,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
             ],
           ),
-        ),
+
       ),
     );
   }

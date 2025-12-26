@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
 import 'dart:math';
 import '../../utils/colours.dart';
@@ -67,10 +68,11 @@ class ParchiCard extends StatelessWidget {
           child: Material(
             color: Colors.transparent,
             child: Container(
-              height: 180,
+              height: 200,
               width: double.infinity,
               decoration: BoxDecoration(
-                gradient: isGolden ? goldGradient : standardGradient,
+                color: isGolden ? null : AppColors.primary,
+                gradient: isGolden ? goldGradient : null,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
@@ -150,7 +152,7 @@ class _ParchiCardDetailState extends ConsumerState<ParchiCardDetail>
     )..repeat(reverse: true);
 
     _hoverAnimation =
-        Tween<double>(begin: -10, end: 10).animate(CurvedAnimation(
+        Tween<double>(begin: -5, end: 5).animate(CurvedAnimation(
       parent: _hoverController,
       curve: Curves.easeInOutSine,
     ));
@@ -245,21 +247,13 @@ class _ParchiCardDetailState extends ConsumerState<ParchiCardDetail>
     );
 
     return Container(
-      height: 220,
-      width: MediaQuery.of(context).size.width * 0.9,
+      height: 200,
+      width: MediaQuery.of(context).size.width - 32, // Match horizontal padding of 16 * 2
       decoration: BoxDecoration(
-        gradient: widget.isGolden ? goldGradient : standardGradient,
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: widget.isGolden
-                ? AppColors.goldShadow.withOpacity(0.6)
-                : AppColors.primary.withOpacity(0.6),
-            blurRadius: 40,
-            spreadRadius: 10,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        color: widget.isGolden ? null : AppColors.primary,
+        gradient: widget.isGolden ? goldGradient : null,
+        borderRadius: BorderRadius.circular(20),
+        // Glow removed
       ),
       child: CardFrontContent(
         studentName: widget.studentName,
@@ -270,31 +264,25 @@ class _ParchiCardDetailState extends ConsumerState<ParchiCardDetail>
   }
 
   Widget _buildBackFace() {
-    // Keep back face standard for readability or make it dark gold
     return Container(
-      height: 220,
-      width: MediaQuery.of(context).size.width * 0.9,
+      height: 200,
+      width: MediaQuery.of(context).size.width - 32, // Match horizontal padding of 16 * 2
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.backgroundDark, AppColors.textPrimary],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(25),
+        color: widget.isGolden ? null : AppColors.primary, // Primary BG
+        gradient: widget.isGolden
+            ? const LinearGradient(
+                colors: [AppColors.goldStart, AppColors.goldMid],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : null,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
             color: widget.isGolden
                 ? AppColors.goldShadow
                 : AppColors.primary.withOpacity(0.5),
             width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: widget.isGolden
-                ? AppColors.goldShadow.withOpacity(0.3)
-                : AppColors.primary.withOpacity(0.3),
-            blurRadius: 40,
-            spreadRadius: 5,
-          ),
-        ],
+        // Glow removed
       ),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -337,77 +325,80 @@ class _ParchiCardDetailState extends ConsumerState<ParchiCardDetail>
     final String totalSaved = "PKR ${totalSavedNum.toStringAsFixed(0)}";
     // Progress bar removed as it depended on dummy limit
 
-    return Column(
-      key: const ValueKey("CurrentMonth"),
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              flex: 4,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    height: 100,
-                    width: 100,
-                    child: CircularProgressIndicator(
-                      value: 1.0,
-                      // Just a full circle for aesthetic, or remove entirely.
-                      // Let's keep a subtle ring for design consistency but no progress.
-                      color: AppColors.textSecondary.withOpacity(0.1),
-                      strokeWidth: 8,
+    return Center(
+      child: Column(
+        key: const ValueKey("CurrentMonth"),
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Expanded(
+                flex: 4,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      height: 100,
+                      width: 100,
+                      child: CircularProgressIndicator(
+                        value: 1.0,
+                        // Just a full circle for aesthetic, or remove entirely.
+                        // Let's keep a subtle ring for design consistency but no progress.
+                        color: Colors.white.withOpacity(0.1),
+                        strokeWidth: 8,
+                      ),
                     ),
-                  ),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text("$usedCount",
-                          style: const TextStyle(
-                              color: AppColors.surface,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold)),
-                      const Text("Used",
-                          style: TextStyle(
-                              color: AppColors.textSecondary, fontSize: 10)),
-                    ],
-                  ),
-                ],
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text("$usedCount",
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold)),
+                        const Text("Used",
+                            style: TextStyle(
+                                color: Color(0xFFE3E935), fontSize: 10)),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 15),
-            Expanded(
-              flex: 6,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text("THIS MONTH",
-                      style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 10,
-                          letterSpacing: 1)),
-                  const Divider(color: Colors.white24),
-                  const SizedBox(height: 5),
-                  Text("Discounts Used: $usedCount",
-                      style: const TextStyle(
-                          color: AppColors.surface, fontSize: 16)),
-                  const SizedBox(height: 5),
-                  const Text("Total Saved:",
-                      style: TextStyle(
-                          color: AppColors.textSecondary, fontSize: 12)),
-                  Text(totalSaved,
-                      style: const TextStyle(
-                          color: AppColors.success,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold)),
-                ],
+              const SizedBox(width: 15),
+              Expanded(
+                flex: 6,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text("THIS MONTH",
+                        style: TextStyle(
+                            color: Color(0xFFE3E935),
+                            fontSize: 10,
+                            letterSpacing: 1)),
+                    const Divider(color: Colors.white24),
+                    const SizedBox(height: 5),
+                    Text("Discounts Used: $usedCount",
+                        style: const TextStyle(
+                            color: Colors.white, fontSize: 16)),
+                    const SizedBox(height: 5),
+                    const Text("Total Saved:",
+                        style: TextStyle(
+                            color: Color(0xFFE3E935), fontSize: 12)),
+                    Text(totalSaved,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold)),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-        const Spacer(),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -442,13 +433,22 @@ class CardFrontContent extends StatelessWidget {
 
     return Stack(
       children: [
-        Positioned(
-          right: -20,
-          top: -20,
-          child: Icon(
-              isGolden ? Icons.emoji_events : Icons.school, // Trophy for gold
-              size: 150,
-              color: iconColor),
+       Positioned(
+          right: -90,
+          top: -80,  
+          child: isGolden
+              ? Icon(Icons.emoji_events, size: 150, color: iconColor)
+              : Transform.flip(
+                  flipX: true, // This horizontally flips the child
+                  child: SvgPicture.asset(
+                    'assets/parchi-icon.svg',
+                    height: 300,
+                    colorFilter: ColorFilter.mode(
+                      Colors.white.withOpacity(0.1),
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                ),
         ),
         Padding(
           padding: const EdgeInsets.all(20.0),
@@ -459,11 +459,13 @@ class CardFrontContent extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(Icons.nfc, color: textColor, size: 30),
-                  Text(
-                    isGolden ? "GOLD MEMBER" : "PARCHI STUDENT",
-                    style: TextStyle(
-                        color: secondaryTextColor, fontWeight: FontWeight.bold),
+                  SvgPicture.asset(
+                    'assets/ParchiFullText.svg',
+                    height: 30,
+                    colorFilter: const ColorFilter.mode(
+                      Color(0xFFE3E935),
+                      BlendMode.srcIn,
+                    ),
                   ),
                 ],
               ),
@@ -508,7 +510,7 @@ class CardFrontContent extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            "ID: $studentId",
+                            "Parchi ID: $studentId",
                             style: TextStyle(
                                 color: textColor,
                                 fontSize: 12,

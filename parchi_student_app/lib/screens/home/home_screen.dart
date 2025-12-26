@@ -89,8 +89,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final double screenHeight = MediaQuery.of(context).size.height;
     final double topPadding = MediaQuery.of(context).padding.top;
 
-    final double headerHeight = topPadding + 32.0 + 60.0;
-    final double cardHeight = 180.0;
+    final double headerHeight = topPadding + 10.0 + 60.0;
+    final double cardHeight = 200.0;
 
     const double initialGap = 66.0;
     const double expandedGap = 20.0;
@@ -106,19 +106,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final userAsync = ref.watch(userProfileProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.secondary,
-      body: Stack(
-        children: [
-          // LAYER 1: Parchi Card
-          Positioned(
-            top: headerHeight,
-            left: 0,
-            right: 0,
-            child: ValueListenableBuilder<double>(
-              valueListenable: _expandProgress,
-              builder: (context, progress, child) {
-                return Opacity(
+    return ValueListenableBuilder<double>(
+      valueListenable: _expandProgress,
+      builder: (context, progress, child) {
+        // Interpolate color from Surface (White) to Primary (Blue)
+        final backgroundColor =
+            Color.lerp(AppColors.surface, AppColors.primary, progress) ??
+                AppColors.surface;
+
+        return Scaffold(
+          backgroundColor: backgroundColor,
+          body: Stack(
+            children: [
+              // LAYER 1: Parchi Card
+              Positioned(
+                top: headerHeight,
+                left: 0,
+                right: 0,
+                child: Opacity(
                   opacity: (1.0 - (progress * 3)).clamp(0.0, 1.0),
                   child: userAsync.when(
                     data: (user) {
@@ -137,43 +142,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     error: (err, stack) => const ParchiCard(
                         studentName: "OFFLINE", studentId: "ERROR"),
                   ),
-                );
-              },
-            ),
-          ),
+                ),
+              ),
 
-          // LAYER 2: Draggable Sheet
-          DraggableScrollableSheet(
-            controller: _sheetController,
-            initialChildSize: _minSheetSize,
-            minChildSize: _minSheetSize,
-            maxChildSize: _maxSheetSize,
-            snap: true,
-            builder: (BuildContext context, ScrollController scrollController) {
-              return HomeSheetContent(scrollController: scrollController);
-            },
-          ),
+              // LAYER 2: Draggable Sheet
+              DraggableScrollableSheet(
+                controller: _sheetController,
+                initialChildSize: _minSheetSize,
+                minChildSize: _minSheetSize,
+                maxChildSize: _maxSheetSize,
+                snap: true,
+                builder:
+                    (BuildContext context, ScrollController scrollController) {
+                  return HomeSheetContent(scrollController: scrollController);
+                },
+              ),
 
-          // LAYER 3: Fixed Header
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0, vertical: 16.0),
-                child: ValueListenableBuilder<double>(
-                  valueListenable: _expandProgress,
-                  builder: (context, progress, child) {
-                    return Row(
+              // LAYER 3: Fixed Header
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                        left: 16.0,
+                        right: 16.0,
+                        top: 4.0,
+                        bottom: 0.0),
+                    child: Row(
                       children: [
                         Expanded(
                           child: Container(
                             height: 45,
                             decoration: BoxDecoration(
-                              color: AppColors.surface,
+                              color: AppColors.surfaceVariant,
                               borderRadius: BorderRadius.circular(25),
                             ),
                             child: const TextField(
@@ -181,11 +185,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 hintText: "Search restaurants...",
                                 hintStyle:
                                     TextStyle(color: AppColors.textSecondary),
-                                prefixIcon: Icon(Icons.search,
-                                    color: AppColors.textSecondary),
+                                prefixIcon: Padding(
+                                  padding: const EdgeInsets.only(left: 12.0),
+                                  child: Icon(
+                                    Icons.search,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                prefixIconConstraints:
+                                    BoxConstraints(minWidth: 45),
                                 border: InputBorder.none,
                                 contentPadding:
-                                    EdgeInsets.symmetric(vertical: 10),
+                                    EdgeInsets.symmetric(vertical: 12),
                               ),
                             ),
                           ),
@@ -198,17 +209,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             opacity: AlwaysStoppedAnimation(1.0 - progress),
                             child: Row(
                               children: [
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 10),
                                 Container(
-                                  decoration: BoxDecoration(
-                                    color: AppColors.backgroundLight
-                                        .withOpacity(0.2),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.surfaceVariant,
                                     shape: BoxShape.circle,
                                   ),
                                   // [UPDATED] Replaced empty onPressed with _openNotifications
                                   child: IconButton(
                                     icon: const Icon(Icons.notifications_none,
-                                        color: AppColors.textOnPrimary),
+                                        color: AppColors.textSecondary),
                                     onPressed: _openNotifications,
                                   ),
                                 ),
@@ -217,14 +227,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                         ),
                       ],
-                    );
-                  },
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

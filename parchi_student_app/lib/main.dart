@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // [NEW] Import Riverpod
+import 'package:google_fonts/google_fonts.dart';
 import 'config/supabase_config.dart';
 import 'utils/colours.dart';
 import 'screens/home/home_screen.dart';
@@ -37,6 +38,7 @@ class ParchiApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Parchi MVP',
       theme: ThemeData(
+        textTheme: GoogleFonts.montserratTextTheme(),
         primaryColor: AppColors.primary,
         useMaterial3: true,
         scaffoldBackgroundColor: AppColors.backgroundLight,
@@ -129,21 +131,49 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _pages[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        backgroundColor: AppColors.surface,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textSecondary,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.leaderboard), label: "Leaderboard"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
-        ],
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.only(top: 2),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          border: Border(
+            top: BorderSide(
+              color: AppColors.textSecondary.withOpacity(0.1),
+              width: 0.5,
+            ),
+          ),
+        ),
+        // [UPDATED] Wrapped in Theme to remove splash effects
+        child: Theme(
+          data: ThemeData(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+          ),
+          child: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            selectedItemColor: AppColors.primary,
+            unselectedItemColor: AppColors.textSecondary,
+            selectedFontSize: 10,
+            unselectedFontSize: 10,
+            showSelectedLabels: true,
+            showUnselectedLabels: true,
+            type: BottomNavigationBarType.fixed,
+            enableFeedback: false, // Disables vibration/sound
+            items: const [
+              BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.leaderboard), label: "Leaderboard"),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.person), label: "Profile"),
+            ],
+          ),
+        ),
       ),
     );
   }

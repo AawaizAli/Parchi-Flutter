@@ -47,6 +47,9 @@ class AppColors {
   static const Color surface =
       Color(0xFFFFFFFF); // Pure white for cards/surfaces
 
+  static const Color surfaceVariant =
+      Color(0xFFF5F5F5); // Light grey for search bar and other elements
+
   // --- Text/Content Colors ---
   // Used for:
   // - Main Headings ("Top Brands", "Up to 30% off")

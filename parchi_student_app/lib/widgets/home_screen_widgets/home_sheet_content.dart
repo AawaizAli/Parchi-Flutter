@@ -173,7 +173,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
 
             SliverToBoxAdapter(
               child: SizedBox(
-                height: 240, // Height for 2 rows of items
+                height: 290, // Height for 2 rows of items
                 child: ref.watch(brandsProvider).when(
                       loading: () => const Center(
                           child: CircularProgressIndicator(

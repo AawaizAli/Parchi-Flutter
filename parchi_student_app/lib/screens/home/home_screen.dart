@@ -87,7 +87,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _navigateToProfile() {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const ProfileScreen()),
+      PageRouteBuilder(
+        transitionDuration:
+            const Duration(milliseconds: 500),
+        reverseTransitionDuration: const Duration(milliseconds: 400),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const ProfileScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          final curvedAnimation = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutExpo,
+          );
+
+          return ScaleTransition(
+            // Aligned to Top Left (Profile Icon)
+            alignment: const Alignment(-0.85, -0.9),
+            scale: curvedAnimation,
+            child: AnimatedBuilder(
+              animation: curvedAnimation,
+              builder: (context, child) {
+                final double currentRadius =
+                    200 * (1.0 - curvedAnimation.value);
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(currentRadius),
+                  child: child,
+                );
+              },
+              child: child,
+            ),
+          );
+        },
+      ),
     );
   }
 

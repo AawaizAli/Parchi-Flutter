@@ -90,26 +90,6 @@ class _ProfilePictureUploadSheetState extends ConsumerState<ProfilePictureUpload
               "Change Profile Photo",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
             ),
-            const SizedBox(height: 24),
-
-            // Preview Circle
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: const BoxDecoration(
-                  color: AppColors.parchiGold, shape: BoxShape.circle),
-              child: CircleAvatar(
-                radius: 50,
-                backgroundColor: AppColors.backgroundLight,
-                backgroundImage: _selectedImage != null
-                    ? FileImage(_selectedImage!)
-                    : (ref.read(userProfileProvider).value?.profilePicture != null
-                        ? NetworkImage(ref.read(userProfileProvider).value!.profilePicture!)
-                        : null) as ImageProvider?,
-                child: (_selectedImage == null && ref.read(userProfileProvider).value?.profilePicture == null)
-                    ? const Icon(Icons.person, size: 50, color: AppColors.textSecondary)
-                    : null,
-              ),
-            ),
             const SizedBox(height: 30),
 
             Row(

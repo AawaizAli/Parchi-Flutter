@@ -1,6 +1,6 @@
 {
-    "name": "parchi_student_app",
-    "short_name": "parchi_student_app",
+    "name": "Parchi",
+    "short_name": "Parchi",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

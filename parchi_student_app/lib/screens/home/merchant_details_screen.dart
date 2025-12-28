@@ -27,12 +27,22 @@ class MerchantDetailsScreen extends StatelessWidget {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Background Image (could be a cover photo, using logo for now or placeholder)
-                  Image.network(
-                    "https://placehold.co/600x400/png?text=Cover",
-                    fit: BoxFit.cover,
-                    errorBuilder: (ctx, err, stack) => Container(color: AppColors.primary.withOpacity(0.1)),
-                  ),
+                  // Background Image (banner or placeholder)
+                  merchant.bannerUrl != null
+                      ? Image.network(
+                          merchant.bannerUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (ctx, err, stack) => Container(
+                            color: AppColors.primary.withOpacity(0.1),
+                            child: const Icon(Icons.image_not_supported, color: AppColors.textSecondary),
+                          ),
+                        )
+                      : Container(
+                          color: AppColors.primary.withOpacity(0.1),
+                          child: const Center(
+                            child: Icon(Icons.store, color: AppColors.textSecondary, size: 64),
+                          ),
+                        ),
                   // Gradient Overlay
                   Container(
                     decoration: BoxDecoration(
@@ -64,11 +74,13 @@ class MerchantDetailsScreen extends StatelessWidget {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
-                              merchant.logoPath,
-                              fit: BoxFit.contain,
-                              errorBuilder: (ctx, err, stack) => const Icon(Icons.store, color: AppColors.textSecondary),
-                            ),
+                            child: merchant.logoPath != null
+                                ? Image.network(
+                                    merchant.logoPath!,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (ctx, err, stack) => const Icon(Icons.store, color: AppColors.textSecondary),
+                                  )
+                                : const Icon(Icons.store, color: AppColors.textSecondary),
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -87,7 +99,7 @@ class MerchantDetailsScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                merchant.category,
+                                merchant.category ?? 'Category',
                                 style: const TextStyle(
                                   color: Colors.white70,
                                   fontSize: 14,
@@ -128,7 +140,7 @@ class MerchantDetailsScreen extends StatelessWidget {
                       border: Border.all(color: AppColors.textSecondary.withOpacity(0.1)),
                     ),
                     child: Text(
-                      merchant.termsAndConditions,
+                      merchant.termsAndConditions ?? 'No terms and conditions available.',
                       style: const TextStyle(
                         fontSize: 14,
                         color: AppColors.textSecondary,
@@ -240,7 +252,7 @@ class MerchantDetailsScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  "${branch.bonusSettings!.currentRedemptions}/${branch.bonusSettings!.redemptionsRequired}",
+                  "${branch.bonusSettings!.currentRedemptions ?? 0}/${branch.bonusSettings!.redemptionsRequired}",
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -261,11 +273,112 @@ class MerchantDetailsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              "Visit ${branch.bonusSettings!.redemptionsRequired - branch.bonusSettings!.currentRedemptions} more times to unlock!",
+              "Visit ${branch.bonusSettings!.redemptionsRequired - (branch.bonusSettings!.currentRedemptions ?? 0)} more times to unlock!",
               style: const TextStyle(
                 fontSize: 12,
                 color: AppColors.textSecondary,
                 fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+
+          // Offers Section
+          if (branch.offers.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            const Divider(height: 1, color: AppColors.backgroundLight),
+            const SizedBox(height: 12),
+            const Text(
+              "Available Offers",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 140,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: branch.offers.length,
+                itemBuilder: (context, offerIndex) {
+                  final offer = branch.offers[offerIndex];
+                  return Container(
+                    width: 120,
+                    margin: const EdgeInsets.only(right: 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.backgroundLight,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.textSecondary.withOpacity(0.1),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Offer Image
+                        ClipRRect(
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(12),
+                          ),
+                          child: offer.imageUrl != null
+                              ? Image.network(
+                                  offer.imageUrl!,
+                                  width: double.infinity,
+                                  height: 80,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (ctx, err, stack) => Container(
+                                    height: 80,
+                                    color: AppColors.surface,
+                                    child: const Icon(
+                                      Icons.image_not_supported,
+                                      color: AppColors.textSecondary,
+                                      size: 32,
+                                    ),
+                                  ),
+                                )
+                              : Container(
+                                  height: 80,
+                                  color: AppColors.surface,
+                                  child: const Icon(
+                                    Icons.local_offer,
+                                    color: AppColors.primary,
+                                    size: 32,
+                                  ),
+                                ),
+                        ),
+                        // Offer Details
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                offer.title,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                offer.formattedDiscount,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
           ],

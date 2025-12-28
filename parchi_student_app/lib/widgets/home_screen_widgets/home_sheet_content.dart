@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 import '../../utils/colours.dart';
 import '../../providers/offers_provider.dart';
 import '../../providers/brands_provider.dart';
+import '../../providers/merchants_provider.dart';
 import 'package:parchi_student_app/widgets/home_screen_restraunts_widgets/brand_card.dart';
 import '../home_screen_restraunts_widgets/restaurant_big_card.dart';
 import '../home_screen_restraunts_widgets/restaurant_medium_card.dart';
@@ -60,49 +61,12 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
     );
   }
 
-  void _onMerchantTap(BuildContext context, String merchantName, String image) {
-    // Create dummy data for the merchant details
-    final dummyMerchant = MerchantDetailModel(
-      id: "dummy_id",
-      businessName: merchantName,
-      logoPath: image,
-      category: "Fast Food",
-      termsAndConditions:
-          "1. Offer valid for dine-in only.\n2. Cannot be combined with other offers.\n3. Show student ID to redeem.\n4. Valid at participating branches only.",
-      branches: [
-        BranchModel(
-          id: "b1",
-          name: "$merchantName - Downtown",
-          address: "123 Main St, City Center",
-          bonusSettings: BonusSettingsModel(
-            redemptionsRequired: 5,
-            currentRedemptions: 3,
-            discountDescription: "Free Meal",
-          ),
-        ),
-        BranchModel(
-          id: "b2",
-          name: "$merchantName - Mall Road",
-          address: "456 Mall Rd, Shopping District",
-          bonusSettings: BonusSettingsModel(
-            redemptionsRequired: 10,
-            currentRedemptions: 1,
-            discountDescription: "50% OFF",
-          ),
-        ),
-        BranchModel(
-          id: "b3",
-          name: "$merchantName - University Campus",
-          address: "789 Campus Dr, University Area",
-          // No bonus settings for this branch
-        ),
-      ],
-    );
-
+  void _onMerchantTap(BuildContext context, String merchantId) {
+    // Navigate to merchant details screen which will fetch data using the provider
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => MerchantDetailsScreen(merchant: dummyMerchant),
+        builder: (context) => _MerchantDetailsScreenWrapper(merchantId: merchantId),
       ),
     );
   }
@@ -203,9 +167,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                             return GestureDetector(
                               onTap: () => _onMerchantTap(
                                 context,
-                                brand.businessName,
-                                brand.logoPath ??
-                                    "https://placehold.co/100x100/png?text=No+Image",
+                                brand.id,
                               ),
                               child: BrandCard(
                                 name: brand.businessName,
@@ -311,11 +273,16 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                   (context, index) {
                     final rest = allRestaurants[index];
                     return GestureDetector(
-                      onTap: () => _onMerchantTap(
-                        context,
-                        rest["name"]!,
-                        rest["image"]!,
-                      ),
+                      onTap: () {
+                        // Note: "All Restaurants" section uses dummy data
+                        // This would need to be updated if you have a real API for all restaurants
+                        // For now, we'll show a message or skip navigation
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Restaurant details coming soon!"),
+                          ),
+                        );
+                      },
                       child: RestaurantBigCard(
                         name: rest["name"]!,
                         image: rest["image"]!,
@@ -456,6 +423,98 @@ class _ParchiLoaderState extends State<ParchiLoader>
           ),
         );
       },
+    );
+  }
+}
+
+// Wrapper widget to handle loading and error states for merchant details
+class _MerchantDetailsScreenWrapper extends ConsumerWidget {
+  final String merchantId;
+
+  const _MerchantDetailsScreenWrapper({required this.merchantId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final merchantAsync = ref.watch(merchantDetailsProvider(merchantId));
+
+    return merchantAsync.when(
+      data: (merchant) => MerchantDetailsScreen(merchant: merchant),
+      loading: () => Scaffold(
+        backgroundColor: AppColors.backgroundLight,
+        appBar: AppBar(
+          backgroundColor: AppColors.surface,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: const Text(
+            'Loading...',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      ),
+      error: (error, stack) => Scaffold(
+        backgroundColor: AppColors.backgroundLight,
+        appBar: AppBar(
+          backgroundColor: AppColors.surface,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: const Text(
+            'Error',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  size: 64,
+                  color: AppColors.textSecondary,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Failed to load merchant details',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  error.toString(),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () {
+                    ref.invalidate(merchantDetailsProvider(merchantId));
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

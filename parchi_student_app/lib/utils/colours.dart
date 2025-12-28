@@ -104,4 +104,8 @@ class AppColors {
   static const Color goldMid = Color(0xFFFFD700);
   static const Color goldEnd = Color(0xFFB8860B);
   static const Color goldShadow = Colors.amber;
+
+  // Used for:
+  // - Profile Screen Header SVG & Ring
+  static const Color parchiGold = Color(0xFFE3E935);
 }

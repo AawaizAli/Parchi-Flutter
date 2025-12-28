@@ -5,6 +5,7 @@ import '../../widgets/home_screen_parchicard_widgets/parchi_card.dart';
 import '../../widgets/home_screen_widgets/home_sheet_content.dart';
 import '../../providers/user_provider.dart';
 import 'notfication/notification_screen.dart'; // [NEW] Import the new screen
+import '../profile/profile_screen.dart'; // [NEW] Import Profile Screen
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -84,20 +85,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  void _navigateToProfile() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const ProfileScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final double screenHeight = MediaQuery.of(context).size.height;
     final double topPadding = MediaQuery.of(context).padding.top;
 
-    final double headerHeight = topPadding + 10.0 + 60.0;
+    final double collapsedHeaderHeight = topPadding + 5.0 + 60.0;
+    // Add extra height for the expanded student info part (~80px)
+    final double expandedHeaderHeight = collapsedHeaderHeight + 80.0;
+    
     final double cardHeight = 200.0;
 
     const double initialGap = 66.0;
-    const double expandedGap = 20.0;
+    const double expandedGap = 0.0; // Removed gap to eliminate white padding
 
     _maxSheetSize =
-        (screenHeight - (headerHeight + expandedGap)) / screenHeight;
-    _minSheetSize = (screenHeight - (headerHeight + cardHeight + initialGap)) /
+        (screenHeight - (expandedHeaderHeight + expandedGap)) / screenHeight;
+    _minSheetSize = (screenHeight - (collapsedHeaderHeight + cardHeight + initialGap)) /
         screenHeight;
 
     if (_minSheetSize < 0.2) _minSheetSize = 0.2;
@@ -115,7 +125,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               // LAYER 1: Parchi Card
               Positioned(
-                top: headerHeight,
+                top: collapsedHeaderHeight,
                 left: 0,
                 right: 0,
                 child: Opacity(
@@ -168,12 +178,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     final pId = user?.parchiId ?? "PENDING";
                     final uni = user?.university ?? "Unknown University";
 
+                    final initials = (fname.isNotEmpty ? fname[0] : "") +
+                        (lname.isNotEmpty ? lname[0] : "");
+
                     return CompactParchiHeader(
                       studentName: fullName.isEmpty ? "STUDENT" : fullName,
                       studentId: pId,
                       universityName: uni,
                       scrollProgress: progress,
                       onNotificationTap: _openNotifications,
+                      profilePicture: user?.profilePicture,
+                      studentInitials: initials.toUpperCase(),
+                      onProfileTap: _navigateToProfile,
                     );
                   },
                   loading: () => CompactParchiHeader(
@@ -182,6 +198,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     universityName: "...",
                     scrollProgress: progress,
                     onNotificationTap: _openNotifications,
+                    studentInitials: "ST",
+                    onProfileTap: _navigateToProfile,
                   ),
                   error: (err, stack) => CompactParchiHeader(
                     studentName: "OFFLINE",
@@ -189,6 +207,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     universityName: "...",
                     scrollProgress: progress,
                     onNotificationTap: _openNotifications,
+                    studentInitials: "ER",
+                    onProfileTap: _navigateToProfile,
                   ),
                 ),
               ),

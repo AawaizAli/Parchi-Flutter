@@ -7,7 +7,7 @@ import 'config/supabase_config.dart';
 import 'utils/colours.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/leaderboard/leaderboard_screen.dart';
-import 'screens/profile/profile_screen.dart';
+import 'screens/profile/redemption_history/redemption_history_screen.dart'; // [NEW] History Screen
 import 'screens/auth/login_screens/login_screen.dart';
 import 'services/auth_service.dart';
 
@@ -124,7 +124,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _pages = [
     const HomeScreen(),
     const LeaderboardScreen(),
-    const ProfileScreen(),
+    const RedemptionHistoryScreen(), // [NEW] History instead of Profile
   ];
 
   @override
@@ -170,7 +170,7 @@ class _MainScreenState extends State<MainScreen> {
               BottomNavigationBarItem(
                   icon: Icon(Icons.leaderboard), label: "Leaderboard"),
               BottomNavigationBarItem(
-                  icon: Icon(Icons.person), label: "Profile"),
+                  icon: Icon(Icons.history), label: "History"), // [NEW] History Icon
             ],
           ),
         ),

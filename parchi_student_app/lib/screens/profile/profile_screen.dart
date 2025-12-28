@@ -1,4 +1,5 @@
 import 'dart:ui'; // [REQUIRED] for ImageFilter
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../utils/colours.dart';
@@ -18,12 +19,7 @@ class ProfileScreen extends ConsumerStatefulWidget {
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen>
     with TickerProviderStateMixin {
-  // 1. Controller for the main Profile List DraggableSheet (The white background list)
-  final DraggableScrollableController _mainSheetController =
-      DraggableScrollableController();
-  final ValueNotifier<double> _mainSheetProgress = ValueNotifier(0.0);
-
-  // 2. GENERIC MODAL CONTROLLER (Handles BOTH PFP and Password sheets)
+  // GENERIC MODAL CONTROLLER (Handles BOTH PFP and Password sheets)
   late AnimationController _modalController;
 
   // State to track WHICH sheet is open
@@ -31,16 +27,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   // State to track if we should show the "Floating Avatar" effect
   bool _showFocusedAvatar = false;
 
-  // Layout Dimensions
-  double _minMainSheetSize = 0.6;
-  double _maxMainSheetSize = 0.95;
-
   @override
   void initState() {
     super.initState();
-    // Listener for the main list header fade effect
-    _mainSheetController.addListener(_onMainSheetChanged);
-
     // Initialize the shared modal animation controller
     _modalController = AnimationController(
       vsync: this,
@@ -49,17 +38,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     );
   }
 
-  void _onMainSheetChanged() {
-    double currentSize = _mainSheetController.size;
-    double progress = (currentSize - _minMainSheetSize) /
-        (_maxMainSheetSize - _minMainSheetSize);
-    _mainSheetProgress.value = progress.clamp(0.0, 1.0);
-  }
-
   @override
   void dispose() {
-    _mainSheetController.removeListener(_onMainSheetChanged);
-    _mainSheetController.dispose();
     _modalController.dispose();
     super.dispose();
   }
@@ -119,14 +99,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(userProfileProvider);
-    final double screenHeight = MediaQuery.of(context).size.height;
     final double topPadding = MediaQuery.of(context).padding.top;
-    final double headerContentHeight = 340.0;
-
-    _minMainSheetSize =
-        (screenHeight - (topPadding + headerContentHeight)) / screenHeight;
-    if (_minMainSheetSize < 0.4) _minMainSheetSize = 0.4;
-    if (_minMainSheetSize > 0.75) _minMainSheetSize = 0.75;
 
     // PopScope intercepts the Back Button
     return PopScope(
@@ -141,7 +114,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.secondary,
+        backgroundColor: AppColors.primary,
         resizeToAvoidBottomInset:
             false, // Handle keyboard manually in the stack
         body: userAsync.when(
@@ -161,16 +134,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: const BoxDecoration(
-                        color: AppColors.surface, shape: BoxShape.circle),
+                        color: AppColors.parchiGold, shape: BoxShape.circle),
                     child: CircleAvatar(
-                      radius: 60,
+                      radius: 50, // Slightly smaller to fit screen
                       backgroundColor: AppColors.backgroundLight,
                       backgroundImage: (user?.profilePicture != null)
                           ? NetworkImage(user!.profilePicture!)
                           : null,
                       child: (user?.profilePicture == null)
                           ? const Icon(Icons.person,
-                              size: 60, color: AppColors.textSecondary)
+                              size: 50, color: AppColors.textSecondary)
                           : null,
                     ),
                   ),
@@ -180,14 +153,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     child: GestureDetector(
                       onTap: isInteractive ? _openPfpSheet : null,
                       child: Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                            color: AppColors.textPrimary.withOpacity(0.87),
+                            color: AppColors.surfaceVariant,
                             shape: BoxShape.circle,
                             border:
                                 Border.all(color: AppColors.surface, width: 2)),
                         child: const Icon(Icons.edit,
-                            size: 18, color: AppColors.textOnPrimary),
+                            size: 14, color: AppColors.textSecondary),
                       ),
                     ),
                   ),
@@ -197,168 +170,117 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
             return Stack(
               children: [
-                // -------------------------------------------
-                // LAYER 1: Header (Background)
-                // -------------------------------------------
+                // Header Actions (Back & Logout)
                 Positioned(
                   top: topPadding,
-                  left: 0,
-                  right: 0,
-                  height: headerContentHeight,
-                  child: ValueListenableBuilder<double>(
-                    valueListenable: _mainSheetProgress,
-                    builder: (context, progress, child) {
-                      return Opacity(
-                        opacity: (1.0 - (progress * 3)).clamp(0.0, 1.0),
-                        child: Column(
+                  left: 16,
+                  right: 16,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      ),
+                      IconButton(
+                        onPressed: () => _handleLogout(context, ref),
+                        icon: const Icon(Icons.logout, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+                // MAIN CONTENT (Static Layout)
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 10),
+
+                        // Logo
+                        SvgPicture.asset(
+                          'assets/ParchiFullText.svg',
+                          height: 24,
+                          colorFilter: const ColorFilter.mode(
+                              AppColors.parchiGold, BlendMode.srcIn),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Avatar
+                        buildAvatar(isInteractive: true),
+                        const SizedBox(height: 16),
+
+                        // Name & ID
+                        Text(fullName,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 4),
+                        Text(parchiId,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold)),
+
+                        const SizedBox(height: 30),
+
+                        // Details Card
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: AppColors.backgroundLight,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 5))
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              _buildDetailRow("Email", email),
+                              _buildDivider(),
+                              _buildDetailRow("University", university),
+                              _buildDivider(),
+                              _buildDetailRow("Phone", phone),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Actions Row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const SizedBox(height: 10),
-                            const Text("Profile",
-                                style: TextStyle(
-                                    color: AppColors.textOnPrimary,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 30),
-                            buildAvatar(isInteractive: true),
-                            const SizedBox(height: 20),
-                            Text(fullName,
-                                style: const TextStyle(
-                                    color: AppColors.textOnPrimary,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold)),
+                            _buildActionTile(
+                              icon: Icons.lock_outline,
+                              label: "Change\nPassword",
+                              onTap: _openPasswordSheet,
+                            ),
+                            _buildActionTile(
+                              icon: Icons.help_outline,
+                              label: "Help\nCenter",
+                              onTap: () {}, // TODO: Implement Help Center
+                            ),
+                            _buildActionTile(
+                              icon: Icons.info_outline,
+                              label: "About\nUs",
+                              onTap: () {}, // TODO: Implement About Us
+                            ),
                           ],
                         ),
-                      );
-                    },
+                        
+                        const Spacer(flex: 2),
+                      ],
+                    ),
                   ),
                 ),
 
                 // -------------------------------------------
-                // LAYER 2: Main List Sheet
-                // -------------------------------------------
-                DraggableScrollableSheet(
-                  controller: _mainSheetController,
-                  initialChildSize: _minMainSheetSize,
-                  minChildSize: _minMainSheetSize,
-                  maxChildSize: _maxMainSheetSize,
-                  snap: true,
-                  builder: (context, scrollController) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.backgroundLight,
-                        borderRadius:
-                            BorderRadius.vertical(top: Radius.circular(30)),
-                        boxShadow: [
-                          BoxShadow(
-                              color: AppColors.textPrimary.withOpacity(0.12),
-                              blurRadius: 10,
-                              offset: const Offset(0, -5))
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(30)),
-                        child: ListView(
-                          controller: scrollController,
-                          padding: const EdgeInsets.all(24),
-                          children: [
-                            Center(
-                                child: Container(
-                                    width: 40,
-                                    height: 4,
-                                    margin: const EdgeInsets.only(bottom: 24),
-                                    decoration: BoxDecoration(
-                                        color: AppColors.textSecondary
-                                            .withOpacity(0.3),
-                                        borderRadius:
-                                            BorderRadius.circular(2)))),
-                            _buildDetailRow("Email", email),
-                            _buildDivider(),
-                            _buildDetailRow("University", university),
-                            _buildDivider(),
-                            _buildDetailRow("Phone", phone),
-                            _buildDivider(),
-                            _buildDetailRow("Parchi ID", parchiId),
-                            const SizedBox(height: 40),
-                            const Text("Account Settings",
-                                style: TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 10),
-
-                            // CHANGE PASSWORD TILE
-                            _buildMenuTile(
-                              icon: Icons.lock_outline,
-                              label: "Change Password",
-                              color: AppColors.error.withOpacity(0.1),
-                              iconColor: AppColors.error,
-                              onTap:
-                                  _openPasswordSheet, // <--- Triggers generic modal
-                            ),
-
-                            _buildMenuTile(
-                              icon: Icons.history,
-                              label: "Redemption History",
-                              color: AppColors.success.withOpacity(0.1),
-                              iconColor: AppColors.success,
-                              onTap: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (_) =>
-                                            const RedemptionHistoryScreen()));
-                              },
-                            ),
-                            const SizedBox(height: 24),
-                            const Text("Support",
-                                style: TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 10),
-                            _buildMenuTile(
-                              icon: Icons.help_outline,
-                              label: "Help Center",
-                              color: AppColors.primary.withOpacity(0.1),
-                              iconColor: AppColors.primary,
-                              onTap: () {},
-                            ),
-                            const SizedBox(height: 40),
-                            InkWell(
-                              onTap: () => _handleLogout(context, ref),
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
-                                decoration: BoxDecoration(
-                                    color: AppColors.error.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(12)),
-                                child: const Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.logout,
-                                          color: AppColors.error),
-                                      SizedBox(width: 8),
-                                      Text("Log Out",
-                                          style: TextStyle(
-                                              color: AppColors.error,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold))
-                                    ]),
-                              ),
-                            ),
-                            const SizedBox(
-                                height: 100), // Space for bottom sheets
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-
-                // -------------------------------------------
-                // LAYER 3: INTERACTIVE MODAL OVERLAY
+                // INTERACTIVE MODAL OVERLAY
                 // -------------------------------------------
                 AnimatedBuilder(
                   animation: _modalController,
@@ -393,23 +315,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         // Only render this if it's the PFP sheet (_showFocusedAvatar == true)
                         if (_showFocusedAvatar)
                           Positioned(
-                            top: topPadding,
+                            top: topPadding + 54, // Adjusted for layout alignment
                             left: 0,
                             right: 0,
-                            height: headerContentHeight,
                             child: Opacity(
                               opacity:
                                   _modalController.value, // Fade in with drag
                               child: Column(
                                 children: [
-                                  const SizedBox(height: 10),
-                                  // Invisible text to maintain exact layout alignment
-                                  const Text("Profile",
-                                      style: TextStyle(
-                                          color: Colors.transparent,
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold)),
-                                  const SizedBox(height: 30),
                                   // The Bright, Sharp Avatar
                                   buildAvatar(isInteractive: false),
                                 ],
@@ -455,62 +368,69 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   // --- Helper Widgets ---
 
   Widget _buildDivider() =>
-      const Divider(height: 32, color: AppColors.backgroundLight, thickness: 1);
+      const Divider(height: 24, color: AppColors.surface, thickness: 1);
 
   Widget _buildDetailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 2.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
               style: const TextStyle(
                   color: AppColors.textPrimary,
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600)),
-          Text(value,
-              style: const TextStyle(
-                  color: AppColors.textSecondary, fontSize: 14)),
+          Expanded(
+            child: Text(value,
+                textAlign: TextAlign.end,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    color: AppColors.textSecondary, fontSize: 14)),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildMenuTile(
-      {required IconData icon,
-      required String label,
-      required Color color,
-      required Color iconColor,
-      required VoidCallback onTap}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16)),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                    color: color, borderRadius: BorderRadius.circular(12)),
-                child: Icon(icon, color: iconColor, size: 22),
+  Widget _buildActionTile({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: 100, // Fixed width for square-ish look
+        height: 100,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: AppColors.primary, size: 28),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                  child: Text(label,
-                      style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600))),
-              const Icon(Icons.arrow_forward_ios,
-                  size: 16, color: AppColors.textSecondary),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

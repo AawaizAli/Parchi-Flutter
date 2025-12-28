@@ -187,24 +187,7 @@ class _RedemptionHistoryScreenState extends State<RedemptionHistoryScreen>
           ),
 
           // [LAYER 3] Custom Back Button at the very top
-          Positioned(
-            top: topPadding + 10,
-            left: 24,
-            child: GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                height: 40,
-                width: 40,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white.withOpacity(0.3)),
-                ),
-                child: const Icon(Icons.arrow_back_ios_new,
-                    size: 18, color: Colors.white),
-              ),
-            ),
-          ),
+          
 
           // Title next to back button
           Positioned(

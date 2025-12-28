@@ -153,12 +153,12 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
           physics: const BouncingScrollPhysics(
               parent: AlwaysScrollableScrollPhysics()),
           slivers: [
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
             // --- SECTION 1: TOP BRANDS (GRID) ---
             const SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                padding: EdgeInsets.symmetric(horizontal: 18.0),
                 child: Text(
                   "Top Brands",
                   style: TextStyle(
@@ -223,7 +223,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
             // --- SECTION 2: ACTIVE OFFERS (CAROUSEL) ---
             const SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
+                padding: EdgeInsets.fromLTRB(18, 24, 18, 12),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -292,7 +292,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
             // --- SECTION 3: ALL RESTAURANTS HEADER ---
             const SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
+                padding: EdgeInsets.fromLTRB(18, 24, 18, 8),
                 child: Text(
                   "All Restaurants",
                   style: TextStyle(

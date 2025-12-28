@@ -534,6 +534,9 @@ class CompactParchiHeader extends StatelessWidget {
   final String studentId;
   final String universityName; // [NEW]
   final bool isGolden;
+  final String? profilePicture; // [NEW]
+  final String studentInitials; // [NEW]
+  final VoidCallback onProfileTap; // [NEW]
   final double scrollProgress;
   final VoidCallback onNotificationTap;
 
@@ -545,6 +548,9 @@ class CompactParchiHeader extends StatelessWidget {
     this.isGolden = false,
     required this.scrollProgress,
     required this.onNotificationTap,
+    this.profilePicture, // [NEW]
+    required this.studentInitials, // [NEW]
+    required this.onProfileTap, // [NEW]
   });
 
   @override
@@ -625,12 +631,51 @@ class CompactParchiHeader extends StatelessWidget {
               children: [
                 // 1. Search Bar & Notification Row
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 4), // Increased top padding for taller feel
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0), // Removed bottom padding
                   child: Row(
                     children: [
+                      // [NEW] Profile Button (Left)
+                      GestureDetector(
+                        onTap: onProfileTap,
+                        child: Container(
+                          width: 35,
+                          height: 35,
+                          decoration: const BoxDecoration(
+                            color: AppColors.surfaceVariant,
+                            shape: BoxShape.circle,
+                          ),
+                          child: ClipOval(
+                            child: profilePicture != null
+                                ? Image.network(
+                                    profilePicture!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        Center(
+                                      child: Text(
+                                        studentInitials,
+                                        style: const TextStyle(
+                                          color: AppColors.textPrimary,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                : Center(
+                                    child: Text(
+                                      studentInitials,
+                                      style: const TextStyle(
+                                        color: AppColors.textPrimary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Container(
-                          height: 45,
+                          height: 35,
                           decoration: BoxDecoration(
                             color: AppColors.surfaceVariant,
                             borderRadius: BorderRadius.circular(25),
@@ -638,17 +683,21 @@ class CompactParchiHeader extends StatelessWidget {
                           child: const TextField(
                             decoration: InputDecoration(
                               hintText: "Search restaurants...",
-                              hintStyle: TextStyle(color: AppColors.textSecondary),
+                              hintStyle: TextStyle(
+                                  color: AppColors.textSecondary, fontSize: 13),
                               prefixIcon: Padding(
-                                padding: EdgeInsets.only(left: 12.0),
+                                padding: EdgeInsets.only(left: 8.0),
                                 child: Icon(
                                   Icons.search,
                                   color: AppColors.textSecondary,
+                                  size: 20,
                                 ),
                               ),
-                              prefixIconConstraints: BoxConstraints(minWidth: 45),
+                              prefixIconConstraints:
+                                  BoxConstraints(minWidth: 35),
                               border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(vertical: 12),
+                              contentPadding:
+                                  EdgeInsets.only(bottom: 17), // Lifted text further up
                             ),
                           ),
                         ),
@@ -656,8 +705,8 @@ class CompactParchiHeader extends StatelessWidget {
                       const SizedBox(width: 8),
                       // Smaller Notification Circle
                       Container(
-                        width: 40, // Fixed smaller width
-                        height: 40, // Fixed smaller height
+                        width: 35, // Fixed smaller width
+                        height: 35, // Fixed smaller height
                         decoration: const BoxDecoration(
                           color: AppColors.surfaceVariant,
                           shape: BoxShape.circle,
@@ -719,7 +768,7 @@ class CompactParchiHeader extends StatelessWidget {
                                     studentId,
                                     style: TextStyle(
                                       color: textColor,
-                                      fontSize: 24,
+                                      fontSize: 20,
                                       fontWeight: FontWeight.w900,
                                     ),
                                   ),

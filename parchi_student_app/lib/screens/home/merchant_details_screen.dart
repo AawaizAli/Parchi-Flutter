@@ -13,7 +13,7 @@ class MerchantDetailsScreen extends StatelessWidget {
       backgroundColor: AppColors.backgroundLight,
       body: CustomScrollView(
         slivers: [
-          // 1. Sliver App Bar with Merchant Header
+          // 1. Sliver App Bar with Banner
           SliverAppBar(
             expandedHeight: 200.0,
             floating: false,
@@ -23,54 +23,73 @@ class MerchantDetailsScreen extends StatelessWidget {
               icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
               onPressed: () => Navigator.pop(context),
             ),
-            flexibleSpace: FlexibleSpaceBar(
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Background Image (banner or placeholder)
-                  merchant.bannerUrl != null
-                      ? Image.network(
-                          merchant.bannerUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (ctx, err, stack) => Container(
+            flexibleSpace: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                // Calculate expansion percentage
+                // 200 is expandedHeight, kToolbarHeight is collapsed height (~56)
+                // t goes from 1.0 (fully expanded) to 0.0 (fully collapsed)
+                final double t = ((constraints.maxHeight - kToolbarHeight) /
+                        (200.0 - kToolbarHeight))
+                    .clamp(0.0, 1.0);
+
+                return Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // 1. Background Image
+                    merchant.bannerUrl != null
+                        ? Image.network(
+                            merchant.bannerUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (ctx, err, stack) => Container(
+                              color: AppColors.primary.withOpacity(0.1),
+                              child: const Icon(Icons.image_not_supported,
+                                  color: AppColors.textSecondary),
+                            ),
+                          )
+                        : Container(
                             color: AppColors.primary.withOpacity(0.1),
-                            child: const Icon(Icons.image_not_supported, color: AppColors.textSecondary),
+                            child: const Center(
+                              child: Icon(Icons.store,
+                                  color: AppColors.textSecondary, size: 64),
+                            ),
                           ),
-                        )
-                      : Container(
-                          color: AppColors.primary.withOpacity(0.1),
-                          child: const Center(
-                            child: Icon(Icons.store, color: AppColors.textSecondary, size: 64),
-                          ),
+
+                    // 2. Gradient Overlay (Bottom Fade)
+                    // Always present to make text readable when expanded
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.8),
+                          ],
+                          stops: const [0.6, 1.0],
                         ),
-                  // Gradient Overlay
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withOpacity(0.7),
-                        ],
                       ),
                     ),
-                  ),
-                  // Merchant Info
-                  Positioned(
-                    bottom: 16,
-                    left: 16,
-                    right: 16,
-                    child: Row(
-                      children: [
-                        // Logo
-                        Container(
+
+                    // 3. Dark Overlay on Scroll
+                    // Darkens the whole header as it collapses
+                    Container(
+                      color: Colors.black.withOpacity((1 - t) * 0.8),
+                    ),
+
+                    // 4. Logo (Fades out as t -> 0)
+                    Positioned(
+                      bottom: 16,
+                      left: 16,
+                      child: Opacity(
+                        opacity: t,
+                        child: Container(
                           width: 60,
                           height: 60,
                           decoration: BoxDecoration(
                             color: AppColors.surface,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.backgroundLight),
+                            border:
+                                Border.all(color: AppColors.backgroundLight),
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(12),
@@ -78,97 +97,48 @@ class MerchantDetailsScreen extends StatelessWidget {
                                 ? Image.network(
                                     merchant.logoPath!,
                                     fit: BoxFit.contain,
-                                    errorBuilder: (ctx, err, stack) => const Icon(Icons.store, color: AppColors.textSecondary),
+                                    errorBuilder: (ctx, err, stack) =>
+                                        const Icon(Icons.store,
+                                            color: AppColors.textSecondary),
                                   )
-                                : const Icon(Icons.store, color: AppColors.textSecondary),
+                                : const Icon(Icons.store,
+                                    color: AppColors.textSecondary),
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        // Name & Category
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                merchant.businessName,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                merchant.category ?? 'Category',
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // 2. Terms & Conditions Section
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Terms & Conditions",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.textSecondary.withOpacity(0.1)),
-                    ),
-                    child: Text(
-                      merchant.termsAndConditions ?? 'No terms and conditions available.',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                        height: 1.5,
                       ),
                     ),
-                  ),
-                ],
-              ),
+
+                    // 5. Title (Moves from Left -> Center)
+                    Align(
+                      alignment: Alignment.lerp(
+                        Alignment.bottomLeft,
+                        Alignment.center,
+                        1 - t,
+                      )!,
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          // When expanded (t=1), left padding is 92 (16 + 60 + 16)
+                          // When collapsed (t=0), left padding is 0 (centered)
+                          left: (16.0 + 60.0 + 16.0) * t,
+                          bottom: 30.0 * t, // Move up slightly when expanded
+                        ),
+                        child: Text(
+                          merchant.businessName,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16 + (4 * t), // 16 -> 20
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
 
-          // 3. Branches Header
-          const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Text(
-                "Branches",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ),
-          ),
-
-          // 4. Branches List
+          // 2. Branches List
           SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
@@ -186,6 +156,11 @@ class MerchantDetailsScreen extends StatelessWidget {
   }
 
   Widget _buildBranchItem(BranchModel branch) {
+    // Get Base Offer (First offer)
+    final String baseOffer = branch.offers.isNotEmpty
+        ? branch.offers.first.formattedDiscount
+        : "No Offers";
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
@@ -203,43 +178,46 @@ class MerchantDetailsScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Branch Name & Address
+          // Branch Name & Area
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Icon(Icons.location_on_outlined, color: AppColors.primary, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      branch.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      branch.address,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
+              Text(
+                branch.name,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              Text(
+                branch.address, // Using address as Area for now
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 8),
 
-          // Bonus Progress (if exists)
-          if (branch.bonusSettings != null) ...[
+          // Base Offer
+          Text(
+            baseOffer,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          ),
+
+          // Bonus Progress (if active)
+          if (branch.bonusSettings != null && branch.bonusSettings!.isActive) ...[
             const SizedBox(height: 16),
-            const Divider(height: 1, color: AppColors.backgroundLight),
+            const Divider(height: 1, color: AppColors.surfaceVariant),
             const SizedBox(height: 12),
+            
+            // Bonus Header & Progress Text
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -247,12 +225,12 @@ class MerchantDetailsScreen extends StatelessWidget {
                   "Bonus: ${branch.bonusSettings!.discountDescription}",
                   style: const TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.secondary,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 Text(
-                  "${branch.bonusSettings!.currentRedemptions ?? 0}/${branch.bonusSettings!.redemptionsRequired}",
+                  "${branch.bonusSettings!.currentRedemptions ?? 0}/${branch.bonusSettings!.nextGoal}",
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -262,123 +240,15 @@ class MerchantDetailsScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
+            
+            // Progress Bar
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
-                value: branch.bonusSettings!.progress,
-                backgroundColor: AppColors.backgroundLight,
-                color: AppColors.secondary,
+                value: branch.bonusSettings!.cycleProgress,
+                backgroundColor: AppColors.surfaceVariant,
+                color: AppColors.primary,
                 minHeight: 8,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              "Visit ${branch.bonusSettings!.redemptionsRequired - (branch.bonusSettings!.currentRedemptions ?? 0)} more times to unlock!",
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ],
-
-          // Offers Section
-          if (branch.offers.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            const Divider(height: 1, color: AppColors.backgroundLight),
-            const SizedBox(height: 12),
-            const Text(
-              "Available Offers",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 140,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: branch.offers.length,
-                itemBuilder: (context, offerIndex) {
-                  final offer = branch.offers[offerIndex];
-                  return Container(
-                    width: 120,
-                    margin: const EdgeInsets.only(right: 12),
-                    decoration: BoxDecoration(
-                      color: AppColors.backgroundLight,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppColors.textSecondary.withOpacity(0.1),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Offer Image
-                        ClipRRect(
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(12),
-                          ),
-                          child: offer.imageUrl != null
-                              ? Image.network(
-                                  offer.imageUrl!,
-                                  width: double.infinity,
-                                  height: 80,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (ctx, err, stack) => Container(
-                                    height: 80,
-                                    color: AppColors.surface,
-                                    child: const Icon(
-                                      Icons.image_not_supported,
-                                      color: AppColors.textSecondary,
-                                      size: 32,
-                                    ),
-                                  ),
-                                )
-                              : Container(
-                                  height: 80,
-                                  color: AppColors.surface,
-                                  child: const Icon(
-                                    Icons.local_offer,
-                                    color: AppColors.primary,
-                                    size: 32,
-                                  ),
-                                ),
-                        ),
-                        // Offer Details
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                offer.title,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                offer.formattedDiscount,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
               ),
             ),
           ],

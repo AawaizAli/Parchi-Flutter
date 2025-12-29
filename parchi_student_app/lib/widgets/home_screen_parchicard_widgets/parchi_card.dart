@@ -654,7 +654,7 @@ class CompactParchiHeader extends StatelessWidget {
                                       child: Text(
                                         studentInitials,
                                         style: const TextStyle(
-                                          color: AppColors.textPrimary,
+                                          color: AppColors.textSecondary,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -664,7 +664,7 @@ class CompactParchiHeader extends StatelessWidget {
                                     child: Text(
                                       studentInitials,
                                       style: const TextStyle(
-                                        color: AppColors.textPrimary,
+                                        color: AppColors.textSecondary,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),

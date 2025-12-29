@@ -138,8 +138,22 @@ class BonusSettingsModel {
     );
   }
 
-  double get progress {
-    if (currentRedemptions == null || redemptionsRequired == 0) return 0.0;
-    return (currentRedemptions! / redemptionsRequired).clamp(0.0, 1.0);
+  int get nextGoal {
+    if (redemptionsRequired == 0) return 0;
+    int current = currentRedemptions ?? 0;
+    // Calculate next multiple of redemptionsRequired strictly greater than current
+    // e.g. req=5, current=11 -> next=15
+    // e.g. req=5, current=5 -> next=10
+    // e.g. req=5, current=0 -> next=5
+    return ((current ~/ redemptionsRequired) + 1) * redemptionsRequired;
+  }
+
+  double get cycleProgress {
+    if (redemptionsRequired == 0) return 0.0;
+    int current = currentRedemptions ?? 0;
+    // Progress within the current cycle (0 to 1)
+    // e.g. req=5, current=11. Cycle started at 10. Progress = (11-10)/5 = 0.2
+    int cycleStart = nextGoal - redemptionsRequired;
+    return ((current - cycleStart) / redemptionsRequired).clamp(0.0, 1.0);
   }
 }

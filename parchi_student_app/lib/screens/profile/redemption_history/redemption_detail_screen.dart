@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../utils/colours.dart';
 import '../../../models/redemption_model.dart';
-// import '../../../widgets/custom_button.dart'; // Ensure this exists or use ElevatedButton
 
 class RedemptionDetailScreen extends StatelessWidget {
   final RedemptionModel redemption;
@@ -11,26 +10,22 @@ class RedemptionDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Formatters
-    final dateFormatter = DateFormat('MMMM d, yyyy');
-    final timeFormatter = DateFormat('h:mm a');
-
-    // Color logic based on status
-    Color statusColor;
-    IconData statusIcon;
-    switch (redemption.status.toUpperCase()) {
-      case 'APPROVED':
-        statusColor = AppColors.success;
-        statusIcon = Icons.check_circle;
-        break;
-      case 'REJECTED':
-        statusColor = AppColors.error;
-        statusIcon = Icons.cancel;
-        break;
-      default:
-        statusColor = AppColors.primary;
-        statusIcon = Icons.hourglass_top;
-    }
+    // Data Preparation
+    final merchantName =
+        redemption.offer?.merchant?.businessName ?? "Parchi Merchant";
+    final branchName = redemption.branchName ?? "Unknown Branch";
+    final logoUrl =
+        redemption.offer?.merchant?.logoPath ?? redemption.offer?.imageUrl;
+    
+    // Status Logic
+    final status = redemption.status.toUpperCase();
+    final isApproved = status == 'APPROVED';
+    final statusColor = isApproved
+        ? AppColors.success
+        : (status == 'REJECTED' ? AppColors.error : AppColors.primary);
+    final statusIcon = isApproved
+        ? Icons.check_circle
+        : (status == 'REJECTED' ? Icons.cancel : Icons.hourglass_top);
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
@@ -39,50 +34,116 @@ class RedemptionDetailScreen extends StatelessWidget {
             style: TextStyle(color: AppColors.textPrimary)),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        centerTitle: true,
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Status Banner
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-              decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: statusColor.withOpacity(0.3)),
-              ),
-              child: Row(
+            // 1. MERCHANT & BRANCH HEADER
+            Center(
+              child: Column(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    height: 80,
+                    width: 80,
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: AppColors.surfaceVariant,
                       shape: BoxShape.circle,
+                      image: logoUrl != null
+                          ? DecorationImage(
+                              image: NetworkImage(logoUrl), fit: BoxFit.cover)
+                          : null,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    child: Icon(statusIcon, color: statusColor, size: 32),
+                    child: logoUrl == null
+                        ? Icon(Icons.store, size: 40, color: AppColors.textSecondary)
+                        : null,
                   ),
-                  const SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(height: 16),
+                  Text(
+                    merchantName,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    branchName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: AppColors.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 32),
+
+            // 2. MAIN OFFER & STATUS
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Discount Display
+                  Text(
+                    "Discount Redeemed",
+                    style: TextStyle(
+                      color: AppColors.textSecondary.withOpacity(0.8),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    redemption.offer?.formattedDiscount ?? "Discount",
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Divider(height: 1),
+                  const SizedBox(height: 20),
+                  
+                  // Status Row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      Icon(statusIcon, color: statusColor, size: 20),
+                      const SizedBox(width: 8),
                       Text(
-                        redemption.status.toUpperCase(),
+                        status,
                         style: TextStyle(
                           color: statusColor,
-                          fontSize: 18,
                           fontWeight: FontWeight.bold,
+                          fontSize: 14,
                           letterSpacing: 1.0,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Transaction ID: ...${redemption.id.substring(redemption.id.length - 8)}',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
                         ),
                       ),
                     ],
@@ -91,168 +152,122 @@ class RedemptionDetailScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
 
-            // Offer Details Card
-            const Text("Offer Details",
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary)),
-            const SizedBox(height: 12),
-            Container(
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  )
-                ],
-              ),
-              child: Column(
-                children: [
-                  if (redemption.offer?.imageUrl != null)
-                    ClipRRect(
-                      borderRadius:
-                          const BorderRadius.vertical(top: Radius.circular(16)),
-                      child: Image.network(
-                        redemption.offer!.imageUrl!,
-                        height: 150,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            const SizedBox(height: 10),
-                      ),
+            // 3. BONUS SECTION (Distinct UI if Active)
+            if (redemption.isBonusApplied)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFFFFF9C4), // Light Yellow
+                      Color(0xFFFFF176), // Deeper Yellow
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.amber.withOpacity(0.2),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        const Icon(Icons.star, color: Color(0xFFF57F17), size: 20),
+                        const SizedBox(width: 8),
                         Text(
-                          redemption.offer?.title ?? "Unknown Offer",
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                          "BONUS UNLOCKED!",
+                          style: TextStyle(
+                            color: const Color(0xFFF57F17),
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.2,
+                            fontSize: 14,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(Icons.store,
-                                size: 16, color: AppColors.textSecondary),
-                            const SizedBox(width: 8),
-                            Text(
-                              redemption.branchName ??
-                                  redemption.offer?.merchant?.businessName ??
-                                  "Mergechant",
-                              style: const TextStyle(
-                                  color: AppColors.textSecondary),
-                            ),
-                          ],
-                        )
                       ],
                     ),
-                  )
-                ],
+                    const SizedBox(height: 12),
+                    // Bonus Type Logic
+                    // If bonus value > 0, shows as Monetary/Percent (inferred). 
+                    // If 0, shows as Additional Item/Freebie.
+                    Text(
+                      redemption.bonusDiscountApplied > 0 
+                          ? "Rs. ${redemption.bonusDiscountApplied} OFF" 
+                          : "Free Item / Reward",
+                      style: const TextStyle(
+                        color: Color(0xFFE65100), // Dark Orange
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      redemption.bonusDiscountApplied > 0 
+                          ? "Additional Cash Discount" 
+                          : "Special Item Reward",
+                      style: TextStyle(
+                        color: const Color(0xFFE65100).withOpacity(0.8),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
 
-            const SizedBox(height: 32),
+            if (redemption.isBonusApplied) const SizedBox(height: 24),
 
-            // Transaction Details
-            const Text("Transaction Details",
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary)),
-            const SizedBox(height: 12),
+            // 4. TRANSACTION DETAILS
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.circular(16),
-                border:
-                    Border.all(color: AppColors.textSecondary.withOpacity(0.1)),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.surfaceVariant),
               ),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildRow(
-                      "Date", dateFormatter.format(redemption.redeemedAt)),
-                  _buildDivider(),
-                  _buildRow(
-                      "Time", timeFormatter.format(redemption.redeemedAt)),
-                  _buildDivider(),
-                  if (redemption.verifiedBy != null)
-                    _buildRow("Verified By",
-                        "Staff"), // ID is not user friendly, show "Staff" or similar
-                  if (redemption.isBonusApplied) ...[
-                    _buildDivider(),
-                    _buildRow("Bonus Applied", "Yes",
-                        valueColor: AppColors.success),
-                    _buildDivider(),
-                    _buildRow("Extra Discount",
-                        "Rs. ${redemption.bonusDiscountApplied}",
-                        valueColor: AppColors.success),
+                  _buildDetailRow("Date", DateFormat('MMM d, yyyy').format(redemption.redeemedAt)),
+                  const Divider(height: 24),
+                  _buildDetailRow("Time", DateFormat('h:mm a').format(redemption.redeemedAt)),
+                  const Divider(height: 24),
+                  _buildDetailRow("Transaction ID", "...${redemption.id.substring(redemption.id.length - 8).toUpperCase()}"),
+                  if (redemption.verifiedBy != null) ...[
+                    const Divider(height: 24),
+                    _buildDetailRow("Verified By", "Staff Member"),
                   ],
+                  if (redemption.notes != null && redemption.notes!.isNotEmpty) ...[
+                     const Divider(height: 24),
+                     Text("Notes", style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                     const SizedBox(height: 4),
+                     Text(redemption.notes!, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w500)),
+                  ]
                 ],
               ),
             ),
-
-            if (redemption.notes != null && redemption.notes!.isNotEmpty) ...[
-              const SizedBox(height: 32),
-              const Text("Notes",
-                  style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary)),
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                      color: AppColors.textSecondary.withOpacity(0.1)),
-                ),
-                child: Text(
-                  redemption.notes!,
-                  style: const TextStyle(
-                      color: AppColors.textSecondary, height: 1.5),
-                ),
-              ),
-            ],
           ],
         ),
       ),
     );
   }
 
-  Widget _buildRow(String label, String value, {Color? valueColor}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label,
-              style: const TextStyle(
-                  color: AppColors.textSecondary, fontSize: 14)),
-          Text(value,
-              style: TextStyle(
-                color: valueColor ?? AppColors.textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              )),
-        ],
-      ),
+  Widget _buildDetailRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+        Text(value, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
+      ],
     );
   }
-
-  Widget _buildDivider() =>
-      Divider(height: 16, color: AppColors.textSecondary.withOpacity(0.1));
 }

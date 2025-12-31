@@ -6,6 +6,11 @@ final redemptionStatsProvider = FutureProvider<RedemptionStats>((ref) async {
   return await redemptionService.getStats();
 });
 
+final redemptionHistoryProvider =
+    FutureProvider<List<RedemptionModel>>((ref) async {
+  return await redemptionService.getRedemptions();
+});
+
 // We can add more specific providers if needed, e.g. recentRedemptions
 final recentRedemptionsProvider =
     FutureProvider.autoDispose<List<RedemptionModel>>((ref) async {

@@ -5,36 +5,33 @@ import '../../../models/redemption_model.dart';
 import '../../../services/redemption_service.dart';
 import 'redemption_detail_screen.dart';
 
-class RedemptionHistoryScreen extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../providers/redemption_provider.dart';
+
+class RedemptionHistoryScreen extends ConsumerStatefulWidget {
   const RedemptionHistoryScreen({super.key});
 
   @override
-  State<RedemptionHistoryScreen> createState() =>
+  ConsumerState<RedemptionHistoryScreen> createState() =>
       _RedemptionHistoryScreenState();
 }
 
-class _RedemptionHistoryScreenState extends State<RedemptionHistoryScreen>
+class _RedemptionHistoryScreenState extends ConsumerState<RedemptionHistoryScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   final DraggableScrollableController _sheetController =
       DraggableScrollableController();
   final ValueNotifier<double> _expandProgress = ValueNotifier(0.0);
 
-  bool _isLoading = true;
-  List<RedemptionModel> _allRedemptions = [];
-  RedemptionStats? _stats;
-  String? _error;
-
   // Sheet configuration
-  double _minSheetSize = 0.65;
-  double _maxSheetSize = 0.92;
+  final double _minSheetSize = 0.65;
+  final double _maxSheetSize = 0.92;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _sheetController.addListener(_onSheetChanged);
-    _loadData();
   }
 
   void _onSheetChanged() {
@@ -44,33 +41,9 @@ class _RedemptionHistoryScreenState extends State<RedemptionHistoryScreen>
     _expandProgress.value = progress.clamp(0.0, 1.0);
   }
 
-  Future<void> _loadData() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
-    try {
-      final results = await Future.wait([
-        redemptionService.getRedemptions(),
-        redemptionService.getStats(),
-      ]);
-
-      if (mounted) {
-        setState(() {
-          _allRedemptions = results[0] as List<RedemptionModel>;
-          _stats = results[1] as RedemptionStats;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString().replaceAll("Exception: ", "");
-          _isLoading = false;
-        });
-      }
-    }
+  Future<void> _refresh() async {
+     ref.refresh(redemptionStatsProvider);
+     ref.refresh(redemptionHistoryProvider);
   }
 
   @override
@@ -86,7 +59,10 @@ class _RedemptionHistoryScreenState extends State<RedemptionHistoryScreen>
     // Dynamic layout calculation
     final double screenHeight = MediaQuery.of(context).size.height;
     final double topPadding = MediaQuery.of(context).padding.top;
-    final double headerHeight = topPadding + 60; // Approximate header space
+    
+    // Watch providers
+    final statsAsync = ref.watch(redemptionStatsProvider);
+    final historyAsync = ref.watch(redemptionHistoryProvider);
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
@@ -165,20 +141,25 @@ class _RedemptionHistoryScreenState extends State<RedemptionHistoryScreen>
 
                     // Content
                     Expanded(
-                      child: _isLoading
-                          ? const Center(child: CircularProgressIndicator())
-                          : _error != null
-                              ? Center(
-                                  child: Text(_error!,
-                                      style: const TextStyle(
-                                          color: AppColors.error)))
-                              : TabBarView(
-                                  controller: _tabController,
-                                  children: [
-                                    _buildList(_allRedemptions),
-                                    _buildYearlyList(),
-                                  ],
-                                ),
+                      child: historyAsync.when(
+                        loading: () => const Center(child: CircularProgressIndicator()),
+                        error: (err, stack) => Center(
+                            child: Text(err.toString(),
+                                style: const TextStyle(color: AppColors.error))),
+                        data: (allRedemptions) => TabBarView(
+                          controller: _tabController,
+                          children: [
+                            RefreshIndicator(
+                              onRefresh: _refresh,
+                              child: _buildList(allRedemptions),
+                            ),
+                            RefreshIndicator(
+                              onRefresh: _refresh,
+                              child: _buildYearlyList(allRedemptions),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -210,6 +191,8 @@ class _RedemptionHistoryScreenState extends State<RedemptionHistoryScreen>
   }
 
   Widget _buildStatsBackground() {
+    final statsAsync = ref.watch(redemptionStatsProvider);
+    
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 100, 24, 24),
       decoration: const BoxDecoration(
@@ -230,12 +213,24 @@ class _RedemptionHistoryScreenState extends State<RedemptionHistoryScreen>
                   fontSize: 12,
                   fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-          Text(
-            _stats != null
-                ? "Rs. ${_stats!.totalSavings.toStringAsFixed(0)}"
-                : "...",
-            style: const TextStyle(
-                color: Colors.white, fontSize: 42, fontWeight: FontWeight.bold),
+          statsAsync.when(
+            data: (stats) => Text(
+              "Rs. ${stats.totalSavings.toStringAsFixed(0)}",
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 42,
+                  fontWeight: FontWeight.bold),
+            ),
+            loading: () => const Text("...",
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 42,
+                    fontWeight: FontWeight.bold)),
+            error: (_, __) => const Text("-",
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 42,
+                    fontWeight: FontWeight.bold)),
           ),
           const SizedBox(height: 20),
           Container(
@@ -250,10 +245,22 @@ class _RedemptionHistoryScreenState extends State<RedemptionHistoryScreen>
               children: [
                 const Icon(Icons.verified, color: Colors.white, size: 20),
                 const SizedBox(width: 8),
-                Text(
-                  "${_stats?.totalRedemptions ?? 0} Redemptions Verified",
-                  style: const TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.w600),
+                statsAsync.when(
+                  data: (stats) => Text(
+                    "${stats.totalRedemptions} Redemptions Verified",
+                    style: const TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.w600),
+                  ),
+                  loading: () => const Text(
+                    "... Redemptions Verified",
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.w600),
+                  ),
+                  error: (_, __) => const Text(
+                    "0 Redemptions Verified",
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.w600),
+                  ),
                 ),
               ],
             ),
@@ -279,14 +286,14 @@ class _RedemptionHistoryScreenState extends State<RedemptionHistoryScreen>
     );
   }
 
-  Widget _buildYearlyList() {
-    if (_allRedemptions.isEmpty) {
+  Widget _buildYearlyList(List<RedemptionModel> allRedemptions) {
+    if (allRedemptions.isEmpty) {
       return _buildEmptyState();
     }
 
     // 1. Group by Month
     final Map<String, List<RedemptionModel>> grouped = {};
-    for (var r in _allRedemptions) {
+    for (var r in allRedemptions) {
       final key = DateFormat('MMMM yyyy').format(r.redeemedAt);
       if (!grouped.containsKey(key)) {
         grouped[key] = [];

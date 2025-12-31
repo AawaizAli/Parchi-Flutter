@@ -9,6 +9,9 @@ class MerchantDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Filter branches that have at least one offer
+    final visibleBranches =
+        merchant.branches.where((b) => b.offers.isNotEmpty).toList();
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       body: CustomScrollView(
@@ -79,10 +82,10 @@ class MerchantDetailsScreen extends StatelessWidget {
           SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
-                final branch = merchant.branches[index];
+                final branch = visibleBranches[index];
                 return _buildBranchItem(branch);
               },
-              childCount: merchant.branches.length,
+              childCount: visibleBranches.length,
             ),
           ),
 
@@ -97,6 +100,11 @@ class MerchantDetailsScreen extends StatelessWidget {
     final String baseOffer = branch.offers.isNotEmpty
         ? branch.offers.first.formattedDiscount
         : "No Offers";
+
+    final bonus = branch.bonusSettings;
+    final int remaining = bonus != null 
+        ? (bonus.nextGoal - (bonus.currentRedemptions ?? 0)) 
+        : 0;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -159,12 +167,14 @@ class MerchantDetailsScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  "Bonus: ${branch.bonusSettings!.discountDescription}",
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                Expanded(
+                  child: Text(
+                    "Redeem $remaining more times to unlock ${branch.bonusSettings!.discountDescription}",
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
                 Text(

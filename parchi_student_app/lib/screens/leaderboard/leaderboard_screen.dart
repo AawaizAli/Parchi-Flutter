@@ -2,86 +2,41 @@ import 'package:flutter/material.dart';
 import '../../utils/colours.dart';
 import '../../services/leaderboard_service.dart';
 import '../../models/leaderboard_model.dart';
+import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
+import 'dart:math' as math;
 
-class LeaderboardScreen extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/leaderboard_provider.dart';
+
+class LeaderboardScreen extends ConsumerStatefulWidget {
   const LeaderboardScreen({super.key});
 
   @override
-  State<LeaderboardScreen> createState() => _LeaderboardScreenState();
+  ConsumerState<LeaderboardScreen> createState() => _LeaderboardScreenState();
 }
 
-class _LeaderboardScreenState extends State<LeaderboardScreen> {
-  final LeaderboardService _leaderboardService = leaderboardService;
-  List<LeaderboardItem> _leaderboardData = [];
-  bool _isLoading = true;
-  String? _errorMessage;
-  int _currentPage = 1;
-  final int _limit = 10;
-  bool _hasMore = true;
-  bool _isLoadingMore = false;
-
+class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
+    with AutomaticKeepAliveClientMixin {
   @override
   void initState() {
     super.initState();
-    _loadLeaderboard();
-  }
-
-  Future<void> _loadLeaderboard({bool loadMore = false}) async {
-    if (loadMore) {
-      if (!_hasMore || _isLoadingMore) return;
-      setState(() {
-        _isLoadingMore = true;
-        _currentPage++;
-      });
-    } else {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-        _currentPage = 1;
-        _hasMore = true;
-      });
-    }
-
-    try {
-      final response = await _leaderboardService.getLeaderboard(
-        page: _currentPage,
-        limit: _limit,
-      );
-
-      setState(() {
-        if (loadMore) {
-          _leaderboardData.addAll(response.items);
-        } else {
-          _leaderboardData = response.items;
-        }
-        _hasMore = response.pagination.hasNext;
-        _isLoading = false;
-        _isLoadingMore = false;
-      });
-    } catch (e) {
-      setState(() {
-        _errorMessage = e.toString().replaceAll('Exception: ', '');
-        _isLoading = false;
-        _isLoadingMore = false;
-        if (loadMore) {
-          _currentPage--; // Revert page increment on error
-        }
-      });
-    }
+    // Data loading is handled by the provider's constructor init
   }
 
   Future<void> _loadMore() async {
-    if (_hasMore && !_isLoadingMore) {
-      await _loadLeaderboard(loadMore: true);
-    }
+    ref.read(leaderboardProvider.notifier).loadMore();
   }
 
   Future<void> _refresh() async {
-    await _loadLeaderboard();
+    await ref.read(leaderboardProvider.notifier).refresh();
   }
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(
@@ -102,13 +57,15 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   Widget _buildBody() {
-    if (_isLoading && _leaderboardData.isEmpty) {
+    final state = ref.watch(leaderboardProvider);
+
+    if (state.isLoading && state.items.isEmpty) {
       return const Center(
         child: CircularProgressIndicator(),
       );
     }
 
-    if (_errorMessage != null && _leaderboardData.isEmpty) {
+    if (state.error != null && state.items.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -120,7 +77,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              _errorMessage!,
+              state.error!,
               style: const TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 16,
@@ -137,7 +94,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       );
     }
 
-    if (_leaderboardData.isEmpty) {
+    if (state.items.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -160,14 +117,45 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       );
     }
 
-    return RefreshIndicator(
+    const double indicatorSize = 100.0;
+    return CustomRefreshIndicator(
       onRefresh: _refresh,
+      offsetToArmed: indicatorSize,
+      builder: (BuildContext context, Widget child,
+          IndicatorController controller) {
+        return Stack(
+          children: <Widget>[
+            // 1. The Animated Custom Loader (Stays at the top)
+            AnimatedBuilder(
+              animation: controller,
+              builder: (context, _) {
+                return SizedBox(
+                  height: controller.value * indicatorSize,
+                  width: double.infinity,
+                  child: Center(
+                    child: ParchiLoader(
+                      isLoading: controller.isLoading,
+                      progress: controller.value,
+                    ),
+                  ),
+                );
+              },
+            ),
+
+            // 2. The Main Content (Pushes down as you drag)
+            Transform.translate(
+              offset: Offset(0.0, controller.value * indicatorSize),
+              child: child,
+            ),
+          ],
+        );
+      },
       child: ListView.separated(
         padding: EdgeInsets.zero,
-        itemCount: _leaderboardData.length + (_hasMore ? 1 : 0),
+        itemCount: state.items.length + (state.hasMore ? 1 : 0),
         separatorBuilder: (context, index) {
-          if (index < _leaderboardData.length - 1 ||
-              (index == _leaderboardData.length - 1 && !_hasMore)) {
+          if (index < state.items.length - 1 ||
+              (index == state.items.length - 1 && !state.hasMore)) {
             return const Divider(
               height: 1,
               thickness: 1.0,
@@ -177,12 +165,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           return const SizedBox.shrink();
         },
         itemBuilder: (context, index) {
-          if (index == _leaderboardData.length) {
+          if (index == state.items.length) {
             // Load more indicator
             return _buildLoadMoreIndicator();
           }
 
-          final item = _leaderboardData[index];
+          final item = state.items[index];
           return _buildLeaderboardItem(
             rank: item.rank,
             name: item.name,
@@ -195,12 +183,13 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   Widget _buildLoadMoreIndicator() {
-    if (!_hasMore) return const SizedBox.shrink();
+    final state = ref.watch(leaderboardProvider);
+    if (!state.hasMore) return const SizedBox.shrink();
 
     return Container(
       padding: const EdgeInsets.all(16),
       alignment: Alignment.center,
-      child: _isLoadingMore
+      child: state.isLoadingMore
           ? const CircularProgressIndicator()
           : GestureDetector(
               onTap: _loadMore,
@@ -287,6 +276,72 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+// --- CUSTOM LOADER WIDGET ---
+class ParchiLoader extends StatefulWidget {
+  final bool isLoading;
+  final double progress;
+
+  const ParchiLoader(
+      {super.key, required this.isLoading, required this.progress});
+
+  @override
+  State<ParchiLoader> createState() => _ParchiLoaderState();
+}
+
+class _ParchiLoaderState extends State<ParchiLoader>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 1), // Adjust speed here if needed
+      vsync: this,
+    );
+  }
+
+  @override
+  void didUpdateWidget(ParchiLoader oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isLoading && !_controller.isAnimating) {
+      _controller.repeat();
+    } else if (!widget.isLoading && _controller.isAnimating) {
+      _controller.stop();
+      _controller.reset();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        // Rotation Logic:
+        // Spin continuously if loading, or rotate based on pull distance
+        final double rotationValue = widget.isLoading
+            ? _controller.value * 2 * math.pi
+            : widget.progress * 2 * math.pi;
+
+        return Transform.rotate(
+          angle: rotationValue,
+          child: Image.asset(
+            'assets/parchi-icon.png',
+            width: 120,
+            height: 120,
+          ),
+        );
+      },
     );
   }
 }

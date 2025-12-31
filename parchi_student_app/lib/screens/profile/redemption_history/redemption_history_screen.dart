@@ -206,7 +206,7 @@ class _RedemptionHistoryScreenState extends ConsumerState<RedemptionHistoryScree
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          const Text("TOTAL SAVINGS",
+          const Text("TOTAL REDEMPTIONS",
               style: TextStyle(
                   color: Colors.white70,
                   letterSpacing: 1.5,
@@ -215,59 +215,68 @@ class _RedemptionHistoryScreenState extends ConsumerState<RedemptionHistoryScree
           const SizedBox(height: 10),
           statsAsync.when(
             data: (stats) => Text(
-              "Rs. ${stats.totalSavings.toStringAsFixed(0)}",
+              "${stats.totalRedemptions}",
               style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 42,
+                  fontSize: 56, // Larger for emphasis
                   fontWeight: FontWeight.bold),
             ),
             loading: () => const Text("...",
                 style: TextStyle(
                     color: Colors.white,
-                    fontSize: 42,
+                    fontSize: 56,
                     fontWeight: FontWeight.bold)),
             error: (_, __) => const Text("-",
                 style: TextStyle(
                     color: Colors.white,
-                    fontSize: 42,
+                    fontSize: 56,
                     fontWeight: FontWeight.bold)),
           ),
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white24),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.verified, color: Colors.white, size: 20),
-                const SizedBox(width: 8),
-                statsAsync.when(
-                  data: (stats) => Text(
-                    "${stats.totalRedemptions} Redemptions Verified",
-                    style: const TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w600),
-                  ),
-                  loading: () => const Text(
-                    "... Redemptions Verified",
-                    style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w600),
-                  ),
-                  error: (_, __) => const Text(
-                    "0 Redemptions Verified",
-                    style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ],
-            ),
-          )
+          const SizedBox(height: 24),
+          // Secondary Stats Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildHeaderStatItem(
+                label: "Bonuses",
+                value: statsAsync.value?.bonusesUnlocked.toString() ?? "-",
+                icon: Icons.card_giftcard,
+              ),
+              const SizedBox(width: 24), // Spacing
+              Container(width: 1, height: 30, color: Colors.white24), // Vertical Divider
+              const SizedBox(width: 24), // Spacing
+              _buildHeaderStatItem(
+                label: "Rank",
+                value: (statsAsync.value?.leaderboardPosition ?? 0) > 0 
+                  ? "#${statsAsync.value!.leaderboardPosition}" 
+                  : "-",
+                icon: Icons.leaderboard,
+              ),
+            ],
+          ),
         ],
       ),
     );
+  }
+
+  Widget _buildHeaderStatItem({required String label, required String value, required IconData icon}) {
+     return Row(
+       children: [
+         Icon(icon, color: Colors.white70, size: 16),
+         const SizedBox(width: 8),
+         Column(
+           crossAxisAlignment: CrossAxisAlignment.start,
+           children: [
+             Text(value, 
+               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)
+             ),
+             Text(label.toUpperCase(),
+               style: const TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold)
+             ),
+           ],
+         )
+       ],
+     );
   }
 
   // Reuse existing list builders but adapt formatting if needed

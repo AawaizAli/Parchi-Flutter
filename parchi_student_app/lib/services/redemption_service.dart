@@ -59,7 +59,9 @@ class RedemptionService {
   Future<RedemptionStats> getStats() async {
     final token = await getToken();
     if (token == null)
-      return RedemptionStats(totalRedemptions: 0, totalSavings: 0);
+      return RedemptionStats(
+          totalRedemptions: 0, bonusesUnlocked: 0, leaderboardPosition: 0);
+
 
     try {
       final response = await http.get(
@@ -79,7 +81,8 @@ class RedemptionService {
       }
     } catch (e) {
       // Return zero stats on error rather than breaking UI
-      return RedemptionStats(totalRedemptions: 0, totalSavings: 0);
+      return RedemptionStats(
+          totalRedemptions: 0, bonusesUnlocked: 0, leaderboardPosition: 0);
     }
   }
 

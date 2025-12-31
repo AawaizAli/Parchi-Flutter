@@ -1,7 +1,6 @@
 // lib/providers/home_providers.dart
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/home_models.dart';
 
 // --- 1. MOCK API SERVICE (Simulates network calls) ---
 class MockApiService {

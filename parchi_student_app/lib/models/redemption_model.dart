@@ -51,18 +51,22 @@ class RedemptionModel {
 
 class RedemptionStats {
   final int totalRedemptions;
-  final num totalSavings;
+  final int bonusesUnlocked;
+  final int leaderboardPosition;
 
   RedemptionStats({
     required this.totalRedemptions,
-    required this.totalSavings,
+    required this.bonusesUnlocked,
+    required this.leaderboardPosition,
   });
 
   factory RedemptionStats.fromJson(Map<String, dynamic> json) {
     return RedemptionStats(
       totalRedemptions:
           json['totalRedemptions'] ?? json['redemption_count'] ?? 0,
-      totalSavings: json['totalSavings'] ?? json['total_savings'] ?? 0,
+      bonusesUnlocked: json['bonusesUnlocked'] ?? json['bonuses_unlocked'] ?? 0,
+      leaderboardPosition:
+          json['leaderboardPosition'] ?? json['leaderboard_position'] ?? 0,
     );
   }
 }

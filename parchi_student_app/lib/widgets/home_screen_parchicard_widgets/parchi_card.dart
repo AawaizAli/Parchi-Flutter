@@ -5,6 +5,7 @@ import 'dart:math';
 import '../../utils/colours.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/redemption_provider.dart';
+import '../../models/redemption_model.dart';
 
 // =========================================================
 // 1. ENTRY POINT
@@ -314,7 +315,7 @@ class _ParchiCardDetailState extends ConsumerState<ParchiCardDetail>
     // [SILENT REFRESH LOGIC]
     if (statsAsync.hasValue) {
       final stats = statsAsync.value!;
-      return _buildStatsContent(stats.totalRedemptions, stats.totalSavings);
+      return _buildStatsContent(stats);
     } else if (statsAsync.isLoading) {
       return const Center(
           child: CircularProgressIndicator(color: AppColors.secondary));
@@ -327,85 +328,100 @@ class _ParchiCardDetailState extends ConsumerState<ParchiCardDetail>
     }
   }
 
-  Widget _buildStatsContent(int usedCount, num totalSavedNum) {
-    // totalCount removed as it was dummy data
-    final String totalSaved = "PKR ${totalSavedNum.toStringAsFixed(0)}";
-    // Progress bar removed as it depended on dummy limit
+  Widget _buildStatsContent(RedemptionStats stats) {
+    // Dynamic divider color based on card mode
+    final dividerColor = widget.isGolden
+        ? AppColors.textPrimary.withOpacity(0.1)
+        : Colors.white.withOpacity(0.2);
 
     return Center(
-      child: Column(
-        key: const ValueKey("CurrentMonth"),
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Expanded(
-                flex: 4,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SizedBox(
-                      height: 100,
-                      width: 100,
-                      child: CircularProgressIndicator(
-                        value: 1.0,
-                        // Just a full circle for aesthetic, or remove entirely.
-                        // Let's keep a subtle ring for design consistency but no progress.
-                        color: Colors.white.withOpacity(0.1),
-                        strokeWidth: 8,
-                      ),
-                    ),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text("$usedCount",
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold)),
-                        const Text("Used",
-                            style: TextStyle(
-                                color: Color(0xFFE3E935), fontSize: 10)),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 15),
-              Expanded(
-                flex: 6,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text("THIS MONTH",
-                        style: TextStyle(
-                            color: Color(0xFFE3E935),
-                            fontSize: 10,
-                            letterSpacing: 1)),
-                    const Divider(color: Colors.white24),
-                    const SizedBox(height: 5),
-                    Text("Discounts Used: $usedCount",
-                        style: const TextStyle(
-                            color: Colors.white, fontSize: 16)),
-                    const SizedBox(height: 5),
-                    const Text("Total Saved:",
-                        style: TextStyle(
-                            color: Color(0xFFE3E935), fontSize: 12)),
-                    Text(totalSaved,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
+      child: IntrinsicHeight( // Ensures dividers match the height of the content
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // 1. Total Visits
+            _buildSingleStat(
+              value: "${stats.totalRedemptions}",
+              label: "Visits",
+              subLabel: "Lifetime",
+            ),
+            
+            // Vertical Divider
+            VerticalDivider(color: dividerColor, indent: 10, endIndent: 10, width: 1),
+
+            // 2. Rewards
+            _buildSingleStat(
+              value: "${stats.bonusesUnlocked}",
+              label: "Rewards",
+              subLabel: "Earned",
+            ),
+
+            // Vertical Divider
+            VerticalDivider(color: dividerColor, indent: 10, endIndent: 10, width: 1),
+
+            // 3. Leaderboard
+            _buildSingleStat(
+              value: stats.leaderboardPosition > 0 ? "#${stats.leaderboardPosition}" : "-",
+              label: "Rank",
+              subLabel: "Global",
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildSingleStat({
+    required String value,
+    required String label,
+    required String subLabel,
+  }) {
+    // Smart Color Logic: Dark text for Gold card, White text for Standard
+    final valueColor = widget.isGolden ? AppColors.textPrimary : Colors.white;
+    final labelColor = widget.isGolden ? AppColors.primary : const Color(0xFFE3E935);
+    // Made sublabel subtle (opacity) so it doesn't compete with the main label
+    final subLabelColor = widget.isGolden 
+        ? AppColors.textPrimary.withOpacity(0.5) 
+        : Colors.white.withOpacity(0.6);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // 1. The Big Number
+        Text(
+          value,
+          style: TextStyle(
+            color: valueColor,
+            fontSize: 32, 
+            fontWeight: FontWeight.w900, // Extra Bold
+            height: 1.0, 
+          ),
+        ),
+        const SizedBox(height: 6),
+        
+        // 2. The Category Label
+        Text(
+          label.toUpperCase(),
+          style: TextStyle(
+            color: labelColor,
+            fontSize: 11, 
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.2, // Wide spacing for clean look
+          ),
+        ),
+        const SizedBox(height: 2),
+        
+        // 3. The Context Label
+        Text(
+          subLabel,
+          style: TextStyle(
+            color: subLabelColor,
+            fontSize: 10, 
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 }

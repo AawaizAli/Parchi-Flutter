@@ -3,12 +3,16 @@ class LeaderboardItem {
   final String name;
   final String university;
   final int redemptions;
+  final String? userId; // Optional: ID if available
+  final String? parchiId; // Optional: Parchi ID if available
 
   LeaderboardItem({
     required this.rank,
     required this.name,
     required this.university,
     required this.redemptions,
+    this.userId,
+    this.parchiId,
   });
 
   factory LeaderboardItem.fromJson(Map<String, dynamic> json) {
@@ -17,6 +21,8 @@ class LeaderboardItem {
       name: json['name'] ?? '',
       university: json['university'] ?? '',
       redemptions: json['redemptions'] ?? 0,
+      userId: json['userId'] ?? json['user_id'],
+      parchiId: json['parchiId'] ?? json['parchi_id'],
     );
   }
 }

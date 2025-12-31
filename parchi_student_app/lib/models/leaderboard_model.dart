@@ -1,0 +1,76 @@
+class LeaderboardItem {
+  final int rank;
+  final String name;
+  final String university;
+  final int redemptions;
+
+  LeaderboardItem({
+    required this.rank,
+    required this.name,
+    required this.university,
+    required this.redemptions,
+  });
+
+  factory LeaderboardItem.fromJson(Map<String, dynamic> json) {
+    return LeaderboardItem(
+      rank: json['rank'] ?? 0,
+      name: json['name'] ?? '',
+      university: json['university'] ?? '',
+      redemptions: json['redemptions'] ?? 0,
+    );
+  }
+}
+
+class LeaderboardPagination {
+  final int page;
+  final int limit;
+  final int total;
+  final int pages;
+  final bool hasNext;
+  final bool hasPrev;
+
+  LeaderboardPagination({
+    required this.page,
+    required this.limit,
+    required this.total,
+    required this.pages,
+    required this.hasNext,
+    required this.hasPrev,
+  });
+
+  factory LeaderboardPagination.fromJson(Map<String, dynamic> json) {
+    return LeaderboardPagination(
+      page: json['page'] ?? 1,
+      limit: json['limit'] ?? 10,
+      total: json['total'] ?? 0,
+      pages: json['pages'] ?? 0,
+      hasNext: json['hasNext'] ?? false,
+      hasPrev: json['hasPrev'] ?? false,
+    );
+  }
+}
+
+class LeaderboardResponse {
+  final List<LeaderboardItem> items;
+  final LeaderboardPagination pagination;
+
+  LeaderboardResponse({
+    required this.items,
+    required this.pagination,
+  });
+
+  factory LeaderboardResponse.fromJson(Map<String, dynamic> json) {
+    final data = json['data'] as Map<String, dynamic>;
+    final itemsList = data['items'] as List<dynamic>;
+    
+    return LeaderboardResponse(
+      items: itemsList
+          .map((item) => LeaderboardItem.fromJson(item as Map<String, dynamic>))
+          .toList(),
+      pagination: LeaderboardPagination.fromJson(
+        data['pagination'] as Map<String, dynamic>,
+      ),
+    );
+  }
+}
+

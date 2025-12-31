@@ -32,4 +32,7 @@ class ApiConfig {
   static String get redemptionStatsEndpoint => '$baseUrl/redemptions/stats';
   static String redemptionDetailsEndpoint(String id) =>
       '$baseUrl/redemptions/$id';
+
+  // Leaderboard Endpoints
+  static String get leaderboardEndpoint => '$baseUrl/students/leaderboard';
 }

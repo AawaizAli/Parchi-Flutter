@@ -44,8 +44,9 @@ class _RedemptionHistoryScreenState extends ConsumerState<RedemptionHistoryScree
   }
 
   Future<void> _refresh() async {
-     ref.refresh(redemptionStatsProvider);
-     ref.refresh(redemptionHistoryProvider);
+    final statsFuture = ref.refresh(redemptionStatsProvider.future);
+    final historyFuture = ref.refresh(redemptionHistoryProvider.future);
+    await Future.wait([statsFuture, historyFuture]);
   }
 
   @override

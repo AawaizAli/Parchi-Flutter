@@ -440,16 +440,35 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.logout, color: AppColors.primary),
+            SizedBox(width: 10),
+            Text('Logout',
+                style: TextStyle(
+                    color: AppColors.primary, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text('Are you sure you want to logout?',
+            style: TextStyle(color: AppColors.textPrimary, fontSize: 16)),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(context).pop(false),
+              style: TextButton.styleFrom(
+                  foregroundColor: AppColors.textSecondary),
               child: const Text('Cancel')),
-          TextButton(
+          ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.parchiGold, // Parchi Yellow
+                  foregroundColor: AppColors.primary, // Dark Text on Yellow
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10))),
               child: const Text('Logout',
-                  style: TextStyle(color: AppColors.error))),
+                  style: TextStyle(fontWeight: FontWeight.bold))),
         ],
       ),
     );

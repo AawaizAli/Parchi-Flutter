@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../widgets/common/spinning_loader.dart';
 import '../../../../utils/colours.dart';
 import '../../../../services/auth_service.dart';
 
@@ -169,22 +170,14 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _handleForgotPassword,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.textPrimary,
+                  backgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
                   elevation: 0,
                 ),
                 child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                              AppColors.textOnPrimary),
-                        ),
-                      )
+                    ? const SpinningLoader(size: 30)
                     : const Text(
                         "Send Reset Link",
                         style: TextStyle(

@@ -487,6 +487,8 @@ class CardFrontContent extends StatelessWidget {
                   SvgPicture.asset(
                     'assets/ParchiFullTextYellow.svg',
                     height: 30,
+                    colorFilter: const ColorFilter.mode(
+                        Color(0xFFE3E935), BlendMode.srcIn),
                   ),
                 ],
               ),

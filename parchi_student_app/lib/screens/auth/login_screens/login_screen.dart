@@ -96,7 +96,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           AnimatedPositioned(
             duration: const Duration(milliseconds: 600),
             curve: Curves.easeInOutQuart,
-            top: 0, 
+            top: _currentPage == 2
+                ? -screenHeight * 0.15
+                : 0, // Moves up when form expands
             left: 0, right: 0,
             height: screenHeight * 0.45,
             child: SafeArea(
@@ -104,10 +106,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 duration: const Duration(milliseconds: 400),
                 opacity: 1.0, 
                 child: Center(
-                  child: SvgPicture.asset(
-                    'assets/ParchiFullTextYellow.svg',
-                    // Use a reasonable width/height, e.g., 60% of screen width or fixed width
-                    width: MediaQuery.of(context).size.width * 0.6,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 600),
+                    curve: Curves.easeInOutQuart,
+                    width: MediaQuery.of(context).size.width *
+                        (_currentPage == 2 ? 0.4 : 0.6),
+                    child: SvgPicture.asset(
+                      'assets/ParchiFullTextYellow.svg',
+                      colorFilter: const ColorFilter.mode(
+                          Color(0xFFE3E935), BlendMode.srcIn),
+                    ),
                   ),
                 ),
               ),

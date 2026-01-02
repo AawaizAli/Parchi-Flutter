@@ -120,7 +120,7 @@ class _SignupFormState extends State<SignupForm> {
                 onPressed: _handleNext,
                 style: ElevatedButton.styleFrom(
                   backgroundColor:
-                      AppColors.textPrimary, // Matching Login Button
+                      AppColors.primary, // Matching Login Button
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30)),
                 ),

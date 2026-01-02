@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../common/spinning_loader.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../utils/colours.dart';
 import '../../main.dart';
@@ -135,13 +136,12 @@ class _LoginFormState extends ConsumerState<LoginForm> {
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _handleLogin,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.textPrimary,
+                  backgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30)),
                 ),
                 child: _isLoading
-                    ? const CircularProgressIndicator(
-                        color: AppColors.textOnPrimary)
+                    ? const SpinningLoader(size: 30)
                     : const Text("Sign In",
                         style: TextStyle(
                             color: AppColors.textOnPrimary,

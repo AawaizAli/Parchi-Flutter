@@ -5,6 +5,8 @@ import '../../../models/redemption_model.dart';
 import '../../../services/redemption_service.dart';
 import 'redemption_detail_screen.dart';
 
+import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
+import '../../../widgets/common/parchi_refresh_loader.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/redemption_provider.dart';
 
@@ -136,14 +138,45 @@ class _RedemptionHistoryScreenState extends ConsumerState<RedemptionHistoryScree
                   return ClipRRect(
                     borderRadius:
                         const BorderRadius.vertical(top: Radius.circular(30)),
-                    child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      itemCount: items.length,
-                      separatorBuilder: (context, index) => const Divider(
-                          height: 1, color: AppColors.surfaceVariant),
-                      itemBuilder: (context, index) {
-                        return _buildRedemptionNotificationItem(items[index]);
+                    child: CustomRefreshIndicator(
+                      onRefresh: _refresh,
+                      offsetToArmed: 100.0,
+                      builder: (BuildContext context, Widget child,
+                          IndicatorController controller) {
+                        return Stack(
+                          children: <Widget>[
+                            AnimatedBuilder(
+                              animation: controller,
+                              builder: (context, _) {
+                                return SizedBox(
+                                  height: controller.value * 100.0,
+                                  width: double.infinity,
+                                  child: Center(
+                                    child: ParchiLoader(
+                                      isLoading: controller.isLoading,
+                                      progress: controller.value,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            Transform.translate(
+                              offset: Offset(0.0, controller.value * 100.0),
+                              child: child,
+                            ),
+                          ],
+                        );
                       },
+                      child: ListView.separated(
+                        physics: const AlwaysScrollableScrollPhysics(), // Ensure scrolling even if short
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        itemCount: items.length,
+                        separatorBuilder: (context, index) => const Divider(
+                            height: 1, color: AppColors.surfaceVariant),
+                        itemBuilder: (context, index) {
+                          return _buildRedemptionNotificationItem(items[index]);
+                        },
+                      ),
                     ),
                   );
                 },

@@ -1,96 +1,135 @@
 import 'package:flutter/material.dart';
 import '../../models/merchant_detail_model.dart';
 import '../../utils/colours.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
+import '../../widgets/common/parchi_refresh_loader.dart';
+import '../../providers/merchants_provider.dart';
 
-class MerchantDetailsScreen extends StatelessWidget {
+class MerchantDetailsScreen extends ConsumerWidget {
   final MerchantDetailModel merchant;
 
   const MerchantDetailsScreen({super.key, required this.merchant});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // Filter branches that have at least one offer
     final visibleBranches =
         merchant.branches.where((b) => b.offers.isNotEmpty).toList();
+    Future<void> refresh() async {
+      return ref.refresh(merchantDetailsProvider(merchant.id).future);
+    }
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
-      body: CustomScrollView(
-        slivers: [
-          // 1. Sticky Header with Stacked Logo & Title
-          SliverAppBar(
-            surfaceTintColor: AppColors.surface,
-            pinned: true,
-            floating: false,
-            backgroundColor: AppColors.surface,
-            elevation: 0,
-            // [UPDATED] Increased height to fit stacked content
-            toolbarHeight: 100, 
-            centerTitle: true, // Centers the column horizontally
-            leading: Container(
-              alignment: Alignment.topLeft, // Keeps back button at top-left
-              margin: const EdgeInsets.only(top: 8, left: 8),
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-                onPressed: () => Navigator.pop(context),
+      body: CustomRefreshIndicator(
+        onRefresh: refresh,
+        offsetToArmed: 100.0,
+        builder: (BuildContext context, Widget child,
+            IndicatorController controller) {
+          return Stack(
+            children: <Widget>[
+              AnimatedBuilder(
+                animation: controller,
+                builder: (context, _) {
+                  return SizedBox(
+                    height: controller.value * 100.0,
+                    width: double.infinity,
+                    child: Center(
+                      child: ParchiLoader(
+                        isLoading: controller.isLoading,
+                        progress: controller.value,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              Transform.translate(
+                offset: Offset(0.0, controller.value * 100.0),
+                child: child,
+              ),
+            ],
+          );
+        },
+        child: CustomScrollView(
+          slivers: [
+            // 1. Sticky Header with Stacked Logo & Title
+            SliverAppBar(
+              surfaceTintColor: AppColors.surface,
+              pinned: true,
+              floating: false,
+              backgroundColor: AppColors.surface,
+              elevation: 0,
+              // [UPDATED] Increased height to fit stacked content
+              toolbarHeight: 100,
+              centerTitle: true, // Centers the column horizontally
+              leading: Container(
+                alignment: Alignment.topLeft, // Keeps back button at top-left
+                margin: const EdgeInsets.only(top: 8, left: 8),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back,
+                      color: AppColors.textPrimary),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+              // [UPDATED] Changed Row to Column for stacking
+              title: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // 1. Logo on Top
+                  Container(
+                    width: 45,
+                    height: 45,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.surfaceVariant),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: merchant.logoPath != null
+                          ? Image.network(
+                              merchant.logoPath!,
+                              fit: BoxFit.contain,
+                              errorBuilder: (ctx, err, stack) => const Icon(
+                                  Icons.store,
+                                  size: 24,
+                                  color: AppColors.textSecondary),
+                            )
+                          : const Icon(Icons.store,
+                              size: 24, color: AppColors.textSecondary),
+                    ),
+                  ),
+                  const SizedBox(height: 8), // Vertical spacing
+                  // 2. Heading Below
+                  Text(
+                    merchant.businessName,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
-            // [UPDATED] Changed Row to Column for stacking
-            title: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // 1. Logo on Top
-                Container(
-                  width: 45,
-                  height: 45,
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.surfaceVariant),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: merchant.logoPath != null
-                        ? Image.network(
-                            merchant.logoPath!,
-                            fit: BoxFit.contain,
-                            errorBuilder: (ctx, err, stack) => const Icon(
-                                Icons.store,
-                                size: 24,
-                                color: AppColors.textSecondary),
-                          )
-                        : const Icon(Icons.store,
-                            size: 24, color: AppColors.textSecondary),
-                  ),
-                ),
-                const SizedBox(height: 8), // Vertical spacing
-                // 2. Heading Below
-                Text(
-                  merchant.businessName,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
 
-          // 2. Branches List
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final branch = visibleBranches[index];
-                return _buildBranchItem(branch);
-              },
-              childCount: visibleBranches.length,
+            // 2. Branches List
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final branch = visibleBranches[index];
+                  return _buildBranchItem(branch);
+                },
+                childCount: visibleBranches.length,
+              ),
             ),
-          ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 40)),
-        ],
+            const SliverToBoxAdapter(child: SizedBox(height: 40)),
+          ],
+        ),
       ),
     );
   }

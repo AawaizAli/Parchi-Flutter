@@ -223,7 +223,9 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
                             const Spacer(),
                             SvgPicture.asset(
                               'assets/ParchiFullTextYellow.svg',
-                              height: 24,
+                              height: 14,
+                              colorFilter: const ColorFilter.mode(
+                                  Color(0xFFE3E935), BlendMode.srcIn),
                             ),
                           ],
                         ),

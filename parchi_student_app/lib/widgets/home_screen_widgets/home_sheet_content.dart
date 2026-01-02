@@ -589,23 +589,7 @@ class _MerchantDetailsScreenWrapper extends ConsumerWidget {
 
     return merchantAsync.when(
       data: (merchant) => MerchantDetailsScreen(merchant: merchant),
-      loading: () => Scaffold(
-        backgroundColor: AppColors.backgroundLight,
-        appBar: AppBar(
-          backgroundColor: AppColors.surface,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: const Text(
-            'Loading...',
-            style: TextStyle(color: AppColors.textPrimary),
-          ),
-        ),
-        body: const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
-      ),
+      loading: () => const MerchantDetailsSkeleton(),
       error: (error, stack) => Scaffold(
         backgroundColor: AppColors.backgroundLight,
         appBar: AppBar(

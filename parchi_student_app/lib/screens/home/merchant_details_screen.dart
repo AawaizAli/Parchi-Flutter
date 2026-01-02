@@ -4,6 +4,7 @@ import '../../utils/colours.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
 import '../../widgets/common/parchi_refresh_loader.dart';
+import '../../widgets/common/blinking_skeleton.dart';
 import '../../providers/merchants_provider.dart';
 
 class MerchantDetailsScreen extends ConsumerWidget {
@@ -229,6 +230,116 @@ class MerchantDetailsScreen extends ConsumerWidget {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+}
+
+class MerchantDetailsSkeleton extends StatelessWidget {
+  const MerchantDetailsSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
+      appBar: AppBar(
+        surfaceTintColor: AppColors.surface,
+        backgroundColor: AppColors.surface,
+        elevation: 0,
+        toolbarHeight: 100,
+        centerTitle: true,
+        leading: Container(
+          alignment: Alignment.topLeft,
+          margin: const EdgeInsets.only(top: 8, left: 8),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        title: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Skeleton Logo
+            BlinkingSkeleton(
+              width: 45,
+              height: 45,
+              borderRadius: 10,
+              baseColor: Colors.grey.withOpacity(0.2),
+            ),
+            const SizedBox(height: 8),
+            // Skeleton Name
+            BlinkingSkeleton(
+              width: 150,
+              height: 16,
+              baseColor: Colors.grey.withOpacity(0.2),
+            ),
+          ],
+        ),
+      ),
+      body: ListView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        itemCount: 4,
+        itemBuilder: (context, index) => _buildSkeletonItem(),
+      ),
+    );
+  }
+
+  Widget _buildSkeletonItem() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textPrimary.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              BlinkingSkeleton(
+                  width: 120, height: 16, baseColor: Colors.grey.withOpacity(0.1)),
+              BlinkingSkeleton(
+                  width: 80, height: 14, baseColor: Colors.grey.withOpacity(0.1)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          BlinkingSkeleton(
+              width: 100, height: 14, baseColor: Colors.grey.withOpacity(0.1)),
+          const SizedBox(height: 16),
+          const Divider(height: 1, color: AppColors.surfaceVariant),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: BlinkingSkeleton(
+                    width: double.infinity,
+                    height: 14,
+                    baseColor: Colors.grey.withOpacity(0.1)),
+              ),
+              const SizedBox(width: 16),
+              BlinkingSkeleton(
+                  width: 30, height: 12, baseColor: Colors.grey.withOpacity(0.1)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          BlinkingSkeleton(
+              width: double.infinity,
+              height: 8,
+              borderRadius: 4,
+              baseColor: Colors.grey.withOpacity(0.1)),
         ],
       ),
     );

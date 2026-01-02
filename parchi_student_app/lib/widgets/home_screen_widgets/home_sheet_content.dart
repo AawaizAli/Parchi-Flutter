@@ -10,7 +10,7 @@ import '../../providers/merchants_provider.dart';
 import 'package:parchi_student_app/widgets/home_screen_restraunts_widgets/brand_card.dart';
 import '../home_screen_restraunts_widgets/restaurant_big_card.dart';
 import '../home_screen_restraunts_widgets/restaurant_medium_card.dart';
-import '../../screens/home/offers/offer_details_screen.dart';
+
 import '../../screens/home/merchant_details_screen.dart';
 import '../../models/merchant_detail_model.dart';
 import '../../models/student_merchant_model.dart';
@@ -48,14 +48,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
   }
 
   // --- NAVIGATION LOGIC ---
-  void _onOfferTap(BuildContext context, String offerId) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => OfferDetailsScreen(offerId: offerId),
-      ),
-    );
-  }
+
 
   void _onMerchantTap(BuildContext context, String merchantId) {
     // Navigate to merchant details screen which will fetch data using the provider
@@ -232,7 +225,11 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                             "https://placehold.co/600x300/png?text=No+Image";
 
                         return GestureDetector(
-                          onTap: () => _onOfferTap(context, offer.id),
+                          onTap: () {
+                            if (offer.merchant != null) {
+                              _onMerchantTap(context, offer.merchant!.id);
+                            }
+                          },
                           child: RestaurantMediumCard(
                             name: offer.title,
                             image: displayImage,

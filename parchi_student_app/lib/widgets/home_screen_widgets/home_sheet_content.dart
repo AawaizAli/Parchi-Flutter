@@ -187,14 +187,13 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      "Active Offers",
+                      "Featured Offers",
                       style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary),
                     ),
-                    Icon(Icons.arrow_forward_ios,
-                        size: 16, color: AppColors.primary)
+                    
                   ],
                 ),
               ),

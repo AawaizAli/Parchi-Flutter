@@ -181,7 +181,7 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
             left: 0,
             right: 0,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
               child: Container(
                 decoration: BoxDecoration(
                   color: AppColors.backgroundLight,

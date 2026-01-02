@@ -23,6 +23,7 @@ class _SignupFormState extends State<SignupForm> {
   String? _selectedUniversity;
   bool _isPasswordVisible = false;
   bool _isLoading = false;
+  String? _errorMessage;
 
   final List<String> _universities = [
     "FAST NUCES",
@@ -34,15 +35,27 @@ class _SignupFormState extends State<SignupForm> {
   ];
 
   Future<void> _handleNext() async {
-    if (_formKey.currentState!.validate()) {
-      if (_selectedUniversity == null) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text("Select University"),
-            backgroundColor: AppColors.error));
-        return;
-      }
+    // 1. Manual Validation (No Layout Shift)
+    if (_firstNameController.text.trim().isEmpty ||
+        _lastNameController.text.trim().isEmpty ||
+        _emailController.text.trim().isEmpty ||
+        _passwordController.text.isEmpty ||
+        _confirmPasswordController.text.isEmpty ||
+        _selectedUniversity == null) {
+      setState(() => _errorMessage = "Please Fill Out All The Fields");
+      return;
+    }
 
-      setState(() => _isLoading = true);
+    if (_passwordController.text != _confirmPasswordController.text) {
+      setState(() => _errorMessage = "Passwords Don't Match");
+      return;
+    }
+
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null; // Clear previous errors
+      });
       await Future.delayed(const Duration(milliseconds: 500));
 
       if (!mounted) return;
@@ -69,7 +82,7 @@ class _SignupFormState extends State<SignupForm> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
       child: Form(
         key: _formKey,
         child: Column(
@@ -119,7 +132,13 @@ class _SignupFormState extends State<SignupForm> {
             const SizedBox(height: 12),
             _buildUniversityDropdown(),
 
-            const SizedBox(height: 30),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 12),
+              Text(_errorMessage!,
+                  style: const TextStyle(color: AppColors.error, fontSize: 12)),
+            ],
+
+            const SizedBox(height: 18), // Adjusted from 30 to account for error space
 
             // Signup Button (Matched to Login Button Style)
             SizedBox(

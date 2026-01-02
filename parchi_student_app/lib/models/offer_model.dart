@@ -9,6 +9,8 @@ class OfferModel {
   final Merchant? merchant;
   final double? distance;
   final String? branchName;
+  final int? featuredOrder;
+  final List<FeaturedBranch>? branches;
 
   OfferModel({
     required this.id,
@@ -21,6 +23,8 @@ class OfferModel {
     this.merchant,
     this.distance,
     this.branchName,
+    this.featuredOrder,
+    this.branches,
   });
 
   factory OfferModel.fromJson(Map<String, dynamic> json) {
@@ -36,6 +40,10 @@ class OfferModel {
       merchant: json['merchant'] != null ? Merchant.fromJson(json['merchant']) : null,
       distance: json['distance'] != null ? (json['distance'] as num).toDouble() : null,
       branchName: json['branchName'],
+      featuredOrder: json['featuredOrder'],
+      branches: (json['branches'] as List<dynamic>?)
+          ?.map((b) => FeaturedBranch.fromJson(b))
+          .toList(),
     );
   }
 
@@ -49,17 +57,35 @@ class OfferModel {
   }
 }
 
+class FeaturedBranch {
+  final String branchId;
+  final String branchName;
+  final bool isActive;
+
+  FeaturedBranch({required this.branchId, required this.branchName, required this.isActive});
+
+  factory FeaturedBranch.fromJson(Map<String, dynamic> json) {
+    return FeaturedBranch(
+      branchId: json['branchId'] ?? '',
+      branchName: json['branchName'] ?? '',
+      isActive: json['isActive'] ?? true,
+    );
+  }
+}
+
 class Merchant {
   final String id;
   final String businessName;
   final String? logoPath;
   final String? category;
+  final String? bannerUrl;
 
   Merchant({
     required this.id,
     required this.businessName,
     this.logoPath,
     this.category,
+    this.bannerUrl,
   });
 
   factory Merchant.fromJson(Map<String, dynamic> json) {
@@ -68,6 +94,7 @@ class Merchant {
       businessName: json['businessName'] ?? 'Unknown',
       logoPath: json['logoPath'],
       category: json['category'],
+      bannerUrl: json['bannerUrl'],
     );
   }
 }

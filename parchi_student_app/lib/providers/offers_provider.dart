@@ -8,3 +8,7 @@ final activeOffersProvider = FutureProvider<List<OfferModel>>((ref) async {
   // We use the singleton instance we created in the service file
   return offersService.getActiveOffers();
 });
+
+final featuredOffersProvider = FutureProvider<List<OfferModel>>((ref) async {
+  return offersService.getFeaturedOffers();
+});

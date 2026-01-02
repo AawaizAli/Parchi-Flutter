@@ -55,6 +55,37 @@ class OffersService {
     }
   }
 
+  // Get Featured Offers
+  Future<List<OfferModel>> getFeaturedOffers() async {
+    final token = await getToken();
+    if (token == null) return [];
+
+    try {
+      final response = await http.get(
+        Uri.parse(ApiConfig.featuredOffersEndpoint),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (responseData['data'] != null) {
+          final List<dynamic> offersJson = responseData['data'];
+          return offersJson.map((json) => OfferModel.fromJson(json)).toList();
+        }
+        return [];
+      } else {
+        throw _handleError(response.statusCode, responseData);
+      }
+    } catch (e) {
+      if (e is Exception) rethrow;
+      throw Exception('Failed to fetch featured offers: ${e.toString()}');
+    }
+  }
+
   // Get Offer Details
   Future<OfferModel> getOfferDetails(String id) async {
     final token = await getToken();

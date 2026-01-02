@@ -39,9 +39,7 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
   bool _isUploading = false;
   final AuthService _authService = AuthService();
 
-  // ... (Keep existing _showImageSourceDialog logic) ...
   void _showImageSourceDialog(int imageType) {
-    // imageType: 0 = studentId, 1 = studentIdBack, 2 = selfie
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -85,7 +83,6 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
     } catch (e) {/* Error handling */}
   }
 
-  // ... (Keep _showError, _validateForm, _handleSubmit EXACTLY as they were) ...
   void _showError(String message) {
     if (mounted)
       ScaffoldMessenger.of(context).showSnackBar(
@@ -113,12 +110,10 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
     if (!_validateForm()) return;
     setState(() => _isUploading = true);
 
-    // Create temp ID for file path
     final String tempUserId =
         widget.email.replaceAll('@', '_').replaceAll('.', '_');
 
     try {
-      // 1. Upload Images
       final imageUrls = await _storageService.uploadKycImages(
         studentIdImage: _studentIdImage!,
         studentIdBackImage: _studentIdBackImage!,
@@ -126,7 +121,6 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
         userId: tempUserId,
       );
 
-      // 2. Submit Signup Data
       final signupResponse = await _authService.studentSignup(
         firstName: widget.firstName,
         lastName: widget.lastName,
@@ -139,7 +133,6 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
         selfieImageUrl: imageUrls['selfieUrl']!,
       );
 
-      // 3. Navigate
       if (mounted)
         Navigator.pushReplacement(
             context,
@@ -157,9 +150,11 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Ensure resizeToAvoidBottomInset is true (default) so keyboard pushes it up if needed
+      resizeToAvoidBottomInset: true, 
       body: Stack(
         children: [
-          // --- 1. DARK GRADIENT BACKGROUND (Matching Theme) ---
+          // --- 1. DARK GRADIENT BACKGROUND ---
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -174,18 +169,19 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
             ),
           ),
 
-          // --- 2. WHITE CONTAINER (Consistency) ---
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 20,
-            bottom: 0,
-            left: 0,
-            right: 0,
+          // --- 2. WHITE CONTAINER (Bottom Aligned, Hugs Content) ---
+          Align(
+            alignment: Alignment.bottomCenter, // Anchor to bottom
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
               child: Container(
+                // Max height constraint to allow scrolling on small screens
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.9,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.backgroundLight,
-                  borderRadius: BorderRadius.circular(40),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(40)), // Only top corners
                   boxShadow: [
                     BoxShadow(
                         color: Colors.black.withOpacity(0.2),
@@ -194,8 +190,9 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
                   ],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(40),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min, // THIS IS KEY: Shrinks to fit content
                     children: [
                       // Header
                       Padding(
@@ -221,17 +218,21 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.textPrimary)),
                             const Spacer(),
-                            SvgPicture.asset(
-                              'assets/ParchiFullTextYellow.svg',
-                              height: 14,
-                              colorFilter: const ColorFilter.mode(
-                                  Color(0xFFE3E935), BlendMode.srcIn),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 15.0),
+                              child: SvgPicture.asset(
+                                'assets/ParchiFullTextYellow.svg',
+                                height: 12,
+                                colorFilter: const ColorFilter.mode(
+                                    Color(0xFFE3E935), BlendMode.srcIn),
+                              ),
                             ),
                           ],
                         ),
                       ),
 
-                      Expanded(
+                      // Content (Flexible allows it to scroll if needed, but shrink if possible)
+                      Flexible(
                         child: SingleChildScrollView(
                           padding: const EdgeInsets.all(24.0),
                           child: Column(
@@ -278,7 +279,7 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
                                       _isUploading ? null : _handleSubmit,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor:
-                                        AppColors.textPrimary, // Match Theme
+                                        AppColors.textPrimary,
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
                                             BorderRadius.circular(30)),
@@ -293,6 +294,8 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
                                               fontWeight: FontWeight.bold)),
                                 ),
                               ),
+                              // Bottom Padding
+                              const SizedBox(height: 20),
                             ],
                           ),
                         ),

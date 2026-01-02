@@ -39,7 +39,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
   Future<void> _refreshData() async {
     try {
       // Load fresh data
-      await ref.refresh(activeOffersProvider.future);
+      await ref.refresh(featuredOffersProvider.future);
       await ref.refresh(brandsProvider.future);
       await ref.refresh(studentMerchantsProvider.future);
     } catch (e) {
@@ -62,7 +62,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
 
   @override
   Widget build(BuildContext context) {
-    final offersAsync = ref.watch(activeOffersProvider);
+    final offersAsync = ref.watch(featuredOffersProvider);
     final studentMerchantsAsync = ref.watch(studentMerchantsProvider);
     const double indicatorSize = 100.0; // Total height area for the loader
 
@@ -221,8 +221,13 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                       itemCount: offers.length,
                       itemBuilder: (context, index) {
                         final offer = offers[index];
-                        final String displayImage = offer.imageUrl ??
+                        final String displayImage = offer.merchant?.bannerUrl ??
+                            offer.imageUrl ??
                             "https://placehold.co/600x300/png?text=No+Image";
+
+                        final branchNames = offer.branches != null && offer.branches!.isNotEmpty
+                            ? offer.branches!.map((b) => b.branchName).join(', ')
+                            : (offer.branchName ?? "All Branches");
 
                         return GestureDetector(
                           onTap: () {
@@ -234,7 +239,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                             name: offer.title,
                             image: displayImage,
                             discount: offer.formattedDiscount,
-                            branchName: offer.branchName ?? "All Branches",
+                            branchName: branchNames,
                           ),
                         );
                       },

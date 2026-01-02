@@ -127,8 +127,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final double topPadding = MediaQuery.of(context).padding.top;
 
     final double collapsedHeaderHeight = topPadding + 5.0 + 60.0;
-    // Add extra height for the expanded student info part (~80px)
-    final double expandedHeaderHeight = collapsedHeaderHeight + 80.0;
+    // Add extra height for the expanded student info part (~70px)
+    final double expandedHeaderHeight = collapsedHeaderHeight + 70.0;
     
     final double cardHeight = 200.0;
 

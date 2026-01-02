@@ -745,7 +745,7 @@ class CompactParchiHeader extends StatelessWidget {
                     child: Opacity(
                       opacity: scrollProgress,
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16), // Increased vertical padding
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20), // Reverted to original
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -759,6 +759,7 @@ class CompactParchiHeader extends StatelessWidget {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
+                                      const SizedBox(height: 5),
                                       Text(
                                         studentName,
                                         style: TextStyle(

@@ -19,6 +19,7 @@ class ApiConfig {
       '$baseUrl/auth/student/profile-picture';
   // Offers Endpoints
   static String get activeOffersEndpoint => '$baseUrl/offers/active';
+  static String get featuredOffersEndpoint => '$baseUrl/offers/featured';
   static String offerDetailsEndpoint(String id) =>
       '$baseUrl/offers/$id/details';
   static String merchantOffersEndpoint(String merchantId) =>

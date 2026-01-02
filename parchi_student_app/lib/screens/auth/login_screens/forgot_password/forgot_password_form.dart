@@ -171,6 +171,7 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
                 onPressed: _isLoading ? null : _handleForgotPassword,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
+                  disabledBackgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),

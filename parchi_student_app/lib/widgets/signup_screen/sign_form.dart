@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../utils/colours.dart';
+import '../common/spinning_loader.dart';
 import '../../screens/auth/sign_up_screens/signup_screen_two.dart'; // We still navigate to upload screen
 
 class SignupForm extends StatefulWidget {
@@ -21,6 +22,7 @@ class _SignupFormState extends State<SignupForm> {
   final _phoneController = TextEditingController();
   String? _selectedUniversity;
   bool _isPasswordVisible = false;
+  bool _isLoading = false;
 
   final List<String> _universities = [
     "FAST NUCES",
@@ -31,7 +33,7 @@ class _SignupFormState extends State<SignupForm> {
     "Szabist"
   ];
 
-  void _handleNext() {
+  Future<void> _handleNext() async {
     if (_formKey.currentState!.validate()) {
       if (_selectedUniversity == null) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -40,8 +42,13 @@ class _SignupFormState extends State<SignupForm> {
         return;
       }
 
+      setState(() => _isLoading = true);
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      if (!mounted) return;
+
       // Navigate to the Image Upload screen (Phase 2)
-      Navigator.push(
+      await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => SignupScreenTwo(
@@ -54,6 +61,8 @@ class _SignupFormState extends State<SignupForm> {
           ),
         ),
       );
+
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -117,26 +126,28 @@ class _SignupFormState extends State<SignupForm> {
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: _handleNext,
+                onPressed: _isLoading ? null : _handleNext,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      AppColors.primary, // Matching Login Button
+                  backgroundColor: AppColors.primary, // Matching Login Button
+                  disabledBackgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30)),
                 ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text("Next Step",
-                        style: TextStyle(
-                            color: AppColors.textOnPrimary,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold)),
-                    SizedBox(width: 8),
-                    Icon(Icons.arrow_forward,
-                        color: AppColors.textOnPrimary, size: 20),
-                  ],
-                ),
+                child: _isLoading
+                    ? const SpinningLoader(size: 30)
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text("Next Step",
+                              style: TextStyle(
+                                  color: AppColors.textOnPrimary,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold)),
+                          SizedBox(width: 8),
+                          Icon(Icons.arrow_forward,
+                              color: AppColors.textOnPrimary, size: 20),
+                        ],
+                      ),
               ),
             ),
           ],

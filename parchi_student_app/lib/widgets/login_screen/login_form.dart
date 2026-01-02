@@ -137,6 +137,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                 onPressed: _isLoading ? null : _handleLogin,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
+                  disabledBackgroundColor: AppColors.primary, // Keep Blue on Loading
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30)),
                 ),

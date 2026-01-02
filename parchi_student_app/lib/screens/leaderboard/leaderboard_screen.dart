@@ -4,6 +4,7 @@ import '../../services/leaderboard_service.dart';
 import '../../models/leaderboard_model.dart';
 import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
 import 'dart:math' as math;
+import '../../widgets/common/blinking_skeleton.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -88,7 +89,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
       children: [
         // --- MAIN LIST CONTENT ---
         if (isLoading)
-          const Center(child: CircularProgressIndicator())
+          _buildLeaderboardListSkeleton()
         else if (hasError)
           _buildErrorView(state.error!)
         else if (isEmpty)
@@ -244,10 +245,10 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
                 ),
                 textAlign: TextAlign.center,
               ),
-              loading: () => const SizedBox(
-                width: 16, height: 16, 
-                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-              ),
+              loading: () => BlinkingSkeleton(
+                  width: 30,
+                  height: 20,
+                  baseColor: Colors.white.withOpacity(0.3)),
               error: (_, __) => const Text("-", style: TextStyle(color: Colors.white)),
             ),
           ),
@@ -289,10 +290,10 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
                   "${stats.totalRedemptions}",
                   style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                loading: () => const SizedBox(
-                  width: 16, height: 16, 
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                ),
+                loading: () => BlinkingSkeleton(
+                    width: 30,
+                    height: 20,
+                    baseColor: Colors.white.withOpacity(0.3)),
                 error: (_,__) => const Text("-", style: TextStyle(color: Colors.white)),
               ),
               const Text(
@@ -403,6 +404,69 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+
+  Widget _buildLeaderboardListSkeleton() {
+    return ListView.separated(
+      padding: const EdgeInsets.only(bottom: 100),
+      itemCount: 15, // Show plenty of items
+      physics: const NeverScrollableScrollPhysics(), // Or allow scrolling? Usually static for skeleton
+      separatorBuilder: (context, index) => const Divider(
+        height: 1,
+        thickness: 1.0,
+        color: AppColors.surfaceVariant,
+      ),
+      itemBuilder: (context, index) => _buildLeaderboardItemSkeleton(),
+    );
+  }
+
+  Widget _buildLeaderboardItemSkeleton() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Rank
+          BlinkingSkeleton(
+              width: 30,
+              height: 20,
+              baseColor: AppColors.primary.withOpacity(0.1)),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                BlinkingSkeleton(
+                    width: 120,
+                    height: 16,
+                    baseColor: AppColors.textPrimary.withOpacity(0.1)),
+                const SizedBox(height: 6),
+                BlinkingSkeleton(
+                    width: 80,
+                    height: 14,
+                    baseColor: AppColors.textSecondary.withOpacity(0.1)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              BlinkingSkeleton(
+                  width: 30,
+                  height: 20,
+                  baseColor: AppColors.primary.withOpacity(0.1)),
+              const SizedBox(height: 4),
+              BlinkingSkeleton(
+                  width: 50,
+                  height: 10,
+                  baseColor: AppColors.textSecondary.withOpacity(0.1)),
+            ],
+          )
         ],
       ),
     );

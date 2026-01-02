@@ -9,6 +9,7 @@ import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
 import '../../../widgets/common/parchi_refresh_loader.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/redemption_provider.dart';
+import '../../../widgets/common/blinking_skeleton.dart';
 
 class RedemptionHistoryScreen extends ConsumerStatefulWidget {
   const RedemptionHistoryScreen({super.key});
@@ -115,8 +116,7 @@ class _RedemptionHistoryScreenState extends ConsumerState<RedemptionHistoryScree
                   ),
                 ],
               ),
-              loading: () => const Center(
-                  child: CircularProgressIndicator(color: Colors.white)),
+              loading: () => _buildHeaderSkeleton(),
               error: (_, __) => const SizedBox.shrink(),
             ),
           ),
@@ -129,8 +129,7 @@ class _RedemptionHistoryScreenState extends ConsumerState<RedemptionHistoryScree
                 borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
               ),
               child: historyAsync.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
+                loading: () => _buildListSkeleton(),
                 error: (err, stack) => Center(
                     child: Text('Error: $err',
                         style: const TextStyle(color: AppColors.error))),
@@ -331,6 +330,90 @@ class _RedemptionHistoryScreenState extends ConsumerState<RedemptionHistoryScree
           const SizedBox(height: 16),
           const Text("No redemption history yet",
               style: TextStyle(color: AppColors.textSecondary)),
+        ],
+      ),
+    );
+  }
+
+
+  // --- SKELETON HELPERS ---
+  Widget _buildHeaderSkeleton() {
+    return Column(
+      children: [
+        BlinkingSkeleton(width: 120, height: 12, baseColor: Colors.white24),
+        const SizedBox(height: 8),
+        BlinkingSkeleton(width: 80, height: 48, baseColor: Colors.white24),
+        const SizedBox(height: 24),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildStatSkeleton(),
+            Container(width: 1, height: 24, color: Colors.white24),
+            _buildStatSkeleton(),
+          ],
+        )
+      ],
+    );
+  }
+
+  Widget _buildStatSkeleton() {
+    return Column(
+      children: [
+        BlinkingSkeleton(width: 30, height: 20, baseColor: Colors.white24),
+        const SizedBox(height: 4),
+        BlinkingSkeleton(width: 50, height: 10, baseColor: Colors.white24),
+      ],
+    );
+  }
+
+  Widget _buildListSkeleton() {
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      itemCount: 8,
+      physics: const NeverScrollableScrollPhysics(),
+      separatorBuilder: (c, i) =>
+          const Divider(height: 1, color: AppColors.surfaceVariant),
+      itemBuilder: (c, i) => _buildListItemSkeleton(),
+    );
+  }
+
+  Widget _buildListItemSkeleton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          BlinkingSkeleton(
+              width: 50,
+              height: 50,
+              borderRadius: 25,
+              baseColor: Colors.black.withOpacity(0.05)),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                BlinkingSkeleton(
+                    width: 150,
+                    height: 16,
+                    baseColor: Colors.black.withOpacity(0.05)),
+                const SizedBox(height: 10),
+                BlinkingSkeleton(
+                    width: 100,
+                    height: 14,
+                    baseColor: Colors.black.withOpacity(0.05)),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              BlinkingSkeleton(
+                  width: 40,
+                  height: 12,
+                  baseColor: Colors.black.withOpacity(0.05)),
+            ],
+          )
         ],
       ),
     );

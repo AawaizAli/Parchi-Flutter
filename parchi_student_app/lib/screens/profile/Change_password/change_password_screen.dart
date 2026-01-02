@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../utils/colours.dart';
 import '../../../services/auth_service.dart';
+import '../../../widgets/common/spinning_loader.dart';
 
 class ChangePasswordSheet extends StatefulWidget {
   // Callback to let the parent ProfileScreen handle the closing animation
@@ -139,21 +140,22 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
                       const SizedBox(height: 40),
                       SizedBox(
                         width: double.infinity,
-                        height: 50,
+                        height: 56,
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _handleChangePassword,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.textPrimary,
-                            foregroundColor: AppColors.textOnPrimary,
+                            backgroundColor: AppColors.primary,
+                            disabledBackgroundColor: AppColors.primary,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(30)),
                           ),
                           child: _isLoading
-                              ? const CircularProgressIndicator(
-                                  color: AppColors.textOnPrimary)
+                              ? const SpinningLoader(size: 30)
                               : const Text("Update Password",
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold)),
+                                  style: TextStyle(
+                                      color: AppColors.textOnPrimary,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold)),
                         ),
                       ),
                     ],

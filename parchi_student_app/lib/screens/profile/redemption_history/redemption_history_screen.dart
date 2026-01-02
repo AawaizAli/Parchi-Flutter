@@ -100,8 +100,7 @@ class _RedemptionHistoryScreenState extends ConsumerState<RedemptionHistoryScree
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _buildHeaderStat("Visited", "${stats.totalRedemptions}"),
-                      Container(width: 1, height: 24, color: Colors.white24),
+
                       _buildHeaderStat("Rewards", "${stats.bonusesUnlocked}"),
                       Container(width: 1, height: 24, color: Colors.white24),
                       _buildHeaderStat(
@@ -264,22 +263,23 @@ class _RedemptionHistoryScreenState extends ConsumerState<RedemptionHistoryScree
                   ),
                 ),
                 const SizedBox(height: 6),
-                // Small Status Dot or Text
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    item.status.toLowerCase(), // e.g. approved
-                    style: TextStyle(
-                      color: statusColor,
-                      fontSize: 10, 
-                      fontWeight: FontWeight.bold
+                // Bonus Indicator (Only show if bonus is applied)
+                if (item.isBonusApplied)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.bonus, // Solid orange background
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  ),
-                )
+                    child: const Text(
+                      "BONUS",
+                      style: TextStyle(
+                        color: Colors.white, // White text
+                        fontSize: 10, 
+                        fontWeight: FontWeight.bold
+                      ),
+                    ),
+                  )
               ],
             )
           ],

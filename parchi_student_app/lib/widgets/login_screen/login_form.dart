@@ -35,10 +35,15 @@ class _LoginFormState extends ConsumerState<LoginForm> {
   }
 
   Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate()) return;
+    // 1. Manual Validation (No Layout Shift)
+    if (_emailController.text.trim().isEmpty || _passwordController.text.isEmpty) {
+      setState(() => _errorMessage = "Please Fill Out All The Fields");
+      return;
+    }
+
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
+      _errorMessage = null; // Clear previous errors
     });
 
     try {
@@ -161,7 +166,6 @@ class _LoginFormState extends ConsumerState<LoginForm> {
       child: TextFormField(
         controller: controller,
         obscureText: isPassword && !_isPasswordVisible,
-        validator: (val) => val!.isEmpty ? "Required" : null,
         decoration: InputDecoration(
           hintText: hint,
           prefixIcon: Icon(icon, color: AppColors.textSecondary),

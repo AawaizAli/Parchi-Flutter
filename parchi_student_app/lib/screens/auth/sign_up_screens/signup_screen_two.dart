@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../utils/colours.dart';
 import '../../../services/supabase_storage_service.dart';
@@ -219,6 +220,15 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
                                     fontSize: 24,
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.textPrimary)),
+                            const Spacer(),
+                            SvgPicture.asset(
+                              'assets/ParchiFullTextNewBlue.svg',
+                              height: 24,
+                              colorFilter: const ColorFilter.mode(
+                                AppColors.textSecondary, 
+                                BlendMode.srcIn,
+                              ),
+                            ),
                           ],
                         ),
                       ),

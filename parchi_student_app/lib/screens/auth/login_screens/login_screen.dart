@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../utils/colours.dart';
 import '../../../widgets/login_screen/login_form.dart';
 import '../../../widgets/signup_screen/sign_form.dart';
@@ -86,17 +87,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         children: [
           // 1. BACKGROUND
           Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  AppColors.authGradientStart,
-                  AppColors.authGradientMid,
-                  AppColors.authGradientEnd
-                ],
-              ),
-            ),
+            color: AppColors.primary,
           ),
 
           // 2. LOGO & TEXT
@@ -105,46 +96,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           AnimatedPositioned(
             duration: const Duration(milliseconds: 600),
             curve: Curves.easeInOutQuart,
-            top:
-                _currentPage == 2 ? -150 : 0, // Move off screen only for Signup
+            top: 0, 
             left: 0, right: 0,
             height: screenHeight * 0.45,
             child: SafeArea(
               child: AnimatedOpacity(
                 duration: const Duration(milliseconds: 400),
-                opacity:
-                    _currentPage == 2 ? 0.0 : 1.0, // Fade out only for Signup
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    AnimatedBuilder(
-                      animation: _glowAnimation,
-                      builder: (_, __) => Container(
-                        height: 80,
-                        width: 80,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                                color: AppColors.primary.withOpacity(0.8),
-                                blurRadius: 15),
-                            BoxShadow(
-                                color: AppColors.primary.withOpacity(0.4),
-                                blurRadius: _glowAnimation.value * 2),
-                          ],
-                        ),
-                        child: const Icon(Icons.school,
-                            size: 40, color: AppColors.textOnPrimary),
-                      ),
+                opacity: 1.0, 
+                child: Center(
+                  child: SvgPicture.asset(
+                    'assets/ParchiFullTextNewBlue.svg',
+                    // Use a reasonable width/height, e.g., 60% of screen width or fixed width
+                    width: MediaQuery.of(context).size.width * 0.6,
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.textSecondary, // Changed to textSecondary
+                      BlendMode.srcIn,
                     ),
-                    const SizedBox(height: 20),
-                    const Text("Parchi",
-                        style: TextStyle(
-                            color: AppColors.textOnPrimary,
-                            fontSize: 36,
-                            fontWeight: FontWeight.w900)),
-                  ],
+                  ),
                 ),
               ),
             ),

@@ -25,6 +25,7 @@ class AppColors {
   // - "Total Saved" green text (home_sheet_content.dart)
   // - Redemption History Icon Background (profile_screen.dart)
   static const Color accent = Color(0xFF34C759); // A bright green
+  static const Color bonus = Color(0xFFFF6A39); // Bonus Orange
 
   // --- Background/Surface Colors ---
   // Used for:

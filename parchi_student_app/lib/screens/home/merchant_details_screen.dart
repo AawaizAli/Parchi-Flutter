@@ -22,6 +22,65 @@ class MerchantDetailsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
+      // 1. Fixed AppBar (Header) that stays on top
+      appBar: AppBar(
+        surfaceTintColor: AppColors.surface,
+        backgroundColor: AppColors.surface,
+        elevation: 0,
+        toolbarHeight: 100, // Matches previous height
+        centerTitle: true,
+        leading: Container(
+          alignment: Alignment.topLeft,
+          margin: const EdgeInsets.only(top: 8, left: 8),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        title: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Logo
+            Container(
+              width: 45,
+              height: 45,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.surfaceVariant),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: merchant.logoPath != null
+                    ? Image.network(
+                        merchant.logoPath!,
+                        fit: BoxFit.contain,
+                        errorBuilder: (ctx, err, stack) => const Icon(
+                            Icons.store,
+                            size: 24,
+                            color: AppColors.textSecondary),
+                      )
+                    : const Icon(Icons.store,
+                        size: 24, color: AppColors.textSecondary),
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Heading
+            Text(
+              merchant.businessName,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+
+      // 2. Refreshable List Body
       body: CustomRefreshIndicator(
         onRefresh: refresh,
         offsetToArmed: 100.0,
@@ -51,84 +110,15 @@ class MerchantDetailsScreen extends ConsumerWidget {
             ],
           );
         },
-        child: CustomScrollView(
-          slivers: [
-            // 1. Sticky Header with Stacked Logo & Title
-            SliverAppBar(
-              surfaceTintColor: AppColors.surface,
-              pinned: true,
-              floating: false,
-              backgroundColor: AppColors.surface,
-              elevation: 0,
-              // [UPDATED] Increased height to fit stacked content
-              toolbarHeight: 100,
-              centerTitle: true, // Centers the column horizontally
-              leading: Container(
-                alignment: Alignment.topLeft, // Keeps back button at top-left
-                margin: const EdgeInsets.only(top: 8, left: 8),
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back,
-                      color: AppColors.textPrimary),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ),
-              // [UPDATED] Changed Row to Column for stacking
-              title: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // 1. Logo on Top
-                  Container(
-                    width: 45,
-                    height: 45,
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.surfaceVariant),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: merchant.logoPath != null
-                          ? Image.network(
-                              merchant.logoPath!,
-                              fit: BoxFit.contain,
-                              errorBuilder: (ctx, err, stack) => const Icon(
-                                  Icons.store,
-                                  size: 24,
-                                  color: AppColors.textSecondary),
-                            )
-                          : const Icon(Icons.store,
-                              size: 24, color: AppColors.textSecondary),
-                    ),
-                  ),
-                  const SizedBox(height: 8), // Vertical spacing
-                  // 2. Heading Below
-                  Text(
-                    merchant.businessName,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-
-            // 2. Branches List
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final branch = visibleBranches[index];
-                  return _buildBranchItem(branch);
-                },
-                childCount: visibleBranches.length,
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 40)),
-          ],
+        child: ListView.builder(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.only(bottom: 40),
+          itemCount: visibleBranches.length,
+          itemBuilder: (context, index) {
+            final branch = visibleBranches[index];
+            // Ensure container margin acts nicely in list view
+            return _buildBranchItem(branch);
+          },
         ),
       ),
     );

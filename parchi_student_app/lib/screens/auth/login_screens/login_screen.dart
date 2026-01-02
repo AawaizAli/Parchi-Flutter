@@ -105,13 +105,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 opacity: 1.0, 
                 child: Center(
                   child: SvgPicture.asset(
-                    'assets/ParchiFullTextNewBlue.svg',
+                    'assets/ParchiFullTextYellow.svg',
                     // Use a reasonable width/height, e.g., 60% of screen width or fixed width
                     width: MediaQuery.of(context).size.width * 0.6,
-                    colorFilter: const ColorFilter.mode(
-                      AppColors.textSecondary, // Changed to textSecondary
-                      BlendMode.srcIn,
-                    ),
                   ),
                 ),
               ),

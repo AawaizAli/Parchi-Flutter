@@ -45,6 +45,7 @@ flutter:
     - assets/parchi-icon.png
     - assets/ParchiFullText.svg
     - assets/parchi-icon.svg
+    - assets/Parchi-Icon-with-new-blue.png
 
 flutter_launcher_icons:
   android: true

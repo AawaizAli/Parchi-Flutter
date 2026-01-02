@@ -485,12 +485,8 @@ class CardFrontContent extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   SvgPicture.asset(
-                    'assets/ParchiFullText.svg',
+                    'assets/ParchiFullTextYellow.svg',
                     height: 30,
-                    colorFilter: const ColorFilter.mode(
-                      Color(0xFFE3E935),
-                      BlendMode.srcIn,
-                    ),
                   ),
                 ],
               ),

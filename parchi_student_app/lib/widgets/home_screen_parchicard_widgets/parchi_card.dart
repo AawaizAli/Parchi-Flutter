@@ -6,6 +6,7 @@ import '../../utils/colours.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/redemption_provider.dart';
 import '../../models/redemption_model.dart';
+import '../common/blinking_skeleton.dart';
 
 // =========================================================
 // 1. ENTRY POINT
@@ -15,6 +16,7 @@ class ParchiCard extends StatelessWidget {
   final String studentId;
   final String universityName; // [NEW]
   final bool isGolden; // [NEW] Gold Mode Flag
+  final bool isLoading; // [NEW]
 
   const ParchiCard({
     super.key,
@@ -22,6 +24,7 @@ class ParchiCard extends StatelessWidget {
     this.studentId = "", // Empty default instead of dummy ID
     this.universityName = "", // [NEW]
     this.isGolden = false, // Default is standard
+    this.isLoading = false, // [NEW]
   });
 
   @override
@@ -94,6 +97,7 @@ class ParchiCard extends StatelessWidget {
                 studentId: studentId,
                 universityName: universityName, // [NEW]
                 isGolden: isGolden,
+                isLoading: isLoading, // [NEW]
               ),
             ),
           ),
@@ -317,8 +321,7 @@ class _ParchiCardDetailState extends ConsumerState<ParchiCardDetail>
       final stats = statsAsync.value!;
       return _buildStatsContent(stats);
     } else if (statsAsync.isLoading) {
-      return const Center(
-          child: CircularProgressIndicator(color: AppColors.secondary));
+      return _buildLoadingStats();
     } else if (statsAsync.hasError) {
       return Center(
           child: Text("Error loading stats",
@@ -424,6 +427,47 @@ class _ParchiCardDetailState extends ConsumerState<ParchiCardDetail>
       ],
     );
   }
+
+  Widget _buildLoadingStats() {
+    // Dynamic colors for skeletons
+    final dividerColor = widget.isGolden
+        ? AppColors.textPrimary.withOpacity(0.1)
+        : Colors.white.withOpacity(0.2);
+    final skeletonBaseColor = widget.isGolden
+        ? Colors.black.withOpacity(0.1)
+        : Colors.white.withOpacity(0.3);
+
+    return Center(
+      child: IntrinsicHeight(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _buildSkeletonColumn(skeletonBaseColor),
+            VerticalDivider(
+                color: dividerColor, indent: 10, endIndent: 10, width: 1),
+            _buildSkeletonColumn(skeletonBaseColor),
+            VerticalDivider(
+                color: dividerColor, indent: 10, endIndent: 10, width: 1),
+            _buildSkeletonColumn(skeletonBaseColor),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkeletonColumn(Color baseColor) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        BlinkingSkeleton(width: 40, height: 32, baseColor: baseColor),
+        const SizedBox(height: 6),
+        BlinkingSkeleton(width: 50, height: 11, baseColor: baseColor),
+        const SizedBox(height: 2),
+        BlinkingSkeleton(width: 30, height: 10, baseColor: baseColor),
+      ],
+    );
+  }
 }
 
 // =========================================================
@@ -433,14 +477,16 @@ class CardFrontContent extends StatelessWidget {
   final String studentName;
   final String studentId;
   final String universityName; // [NEW]
-  final bool isGolden; // [NEW]
+  final bool isGolden;
+  final bool isLoading; // [NEW]
 
   const CardFrontContent({
     super.key,
     required this.studentName,
     required this.studentId,
     required this.universityName, // [NEW]
-    this.isGolden = false,
+    required this.isGolden,
+    this.isLoading = false, // [NEW]
   });
 
   @override
@@ -498,38 +544,57 @@ class CardFrontContent extends StatelessWidget {
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       // 2. Student Name
-                      Text(
-                        studentName,
-                        style: TextStyle(
+                      isLoading
+                          ? BlinkingSkeleton(
+                              width: 150,
+                              height: 24,
+                              baseColor: Colors.white.withOpacity(0.3),
+                            )
+                          : Text(
+                              studentName,
+                              style: TextStyle(
                             color: textColor,
                             fontSize: 14,
                             fontWeight: FontWeight.bold, // Bold
                             letterSpacing: 0.1),
-                      ),
+                            ),
                       const SizedBox(height: 2),
 
                       // 3. University Name
-                      Text(
-                        universityName.toUpperCase(),
-                        style: TextStyle(
-                            color: secondaryTextColor,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600, // Semi-bold
-                            letterSpacing: 0.1),
-                      ),
+                      isLoading
+                          ? BlinkingSkeleton(
+                              width: 100,
+                              height: 10,
+                              baseColor: Colors.white.withOpacity(0.3),
+                            )
+                          : Text(
+                              universityName.toUpperCase(),
+                              style: TextStyle(
+                                  color: secondaryTextColor,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600, // Semi-bold
+                                  letterSpacing: 0.1),
+                            ),
                     ],
                   ),
                   // 1. Parchi ID (Most Important)
-                  Text(
-                    studentId,
-                    style: TextStyle(
-                        color: textColor,
-                        fontSize: 24, // Larger
-                        fontWeight: FontWeight.w900, // Boldest
-                        letterSpacing: 1.0),
-                  ),
+                  isLoading
+                      ? BlinkingSkeleton(
+                          width: 80,
+                          height: 24,
+                          baseColor: Colors.white.withOpacity(0.3),
+                        )
+                      : Text(
+                          studentId,
+                          style: TextStyle(
+                              color: textColor,
+                              fontSize: 24, // Larger
+                              fontWeight: FontWeight.w900, // Boldest
+                              letterSpacing: 1.0),
+                        ),
                 ],
               ),
             ],
@@ -794,7 +859,6 @@ class CompactParchiHeader extends StatelessWidget {
                             // The mini icon was previously here. I will keep it as it wasn't explicitly asked to be removed, but the "background icon" request might supersede it.
                             // Actually, usually "just like the big one" implies the background decoration. 
                             // The mini icon on the right might be redundant if the big one is there, but let's keep it for now as a logo unless it looks cluttered. 
-                            // Wait, the user said "parchi-icon.svg to be in the compact card just like the big one... placed behind the search bar".
                             // This refers to the background decoration.
                             // I will keep the mini icon for now as it serves as a logo.
                            

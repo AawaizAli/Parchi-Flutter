@@ -175,7 +175,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       );
                     },
                     loading: () => const ParchiCard(
-                        studentName: "LOADING...", studentId: "PK-...."),
+                        studentName: "",
+                        studentId: "",
+                        universityName: "",
+                        isLoading: true),
                     error: (err, stack) => const ParchiCard(
                         studentName: "OFFLINE", studentId: "ERROR"),
                   ),

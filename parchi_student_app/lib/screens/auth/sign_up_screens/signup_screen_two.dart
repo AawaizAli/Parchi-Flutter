@@ -219,7 +219,7 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
                                     color: AppColors.textPrimary)),
                             const Spacer(),
                             Padding(
-                              padding: const EdgeInsets.only(top: 15.0),
+                              padding: const EdgeInsets.only(top: 5.0),
                               child: SvgPicture.asset(
                                 'assets/ParchiFullTextYellow.svg',
                                 height: 12,

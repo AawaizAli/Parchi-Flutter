@@ -10,6 +10,7 @@ import '../../providers/merchants_provider.dart';
 import 'package:parchi_student_app/widgets/home_screen_restraunts_widgets/brand_card.dart';
 import '../home_screen_restraunts_widgets/restaurant_big_card.dart';
 import '../home_screen_restraunts_widgets/restaurant_medium_card.dart';
+import '../common/blinking_skeleton.dart';
 
 import '../../screens/home/merchant_details_screen.dart';
 import '../../models/merchant_detail_model.dart';
@@ -49,6 +50,108 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
 
   // --- NAVIGATION LOGIC ---
 
+
+
+
+  // --- SKELETON LOADERS ---
+  Widget _buildBrandSkeleton() {
+    return Column(
+      children: [
+        BlinkingSkeleton(
+          width: 70,
+          height: 70,
+          borderRadius: 35, // Circle
+          baseColor: Colors.grey.withOpacity(0.15),
+        ),
+        const SizedBox(height: 8),
+        BlinkingSkeleton(
+            width: 50, height: 10, baseColor: Colors.grey.withOpacity(0.15)),
+      ],
+    );
+  }
+
+  Widget _buildOfferSkeleton() {
+    return Container(
+      width: 260,
+      margin: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.withOpacity(0.1))),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          BlinkingSkeleton(
+              width: double.infinity,
+              height: 100, // Reduced slightly to fit
+              borderRadius: 12,
+              baseColor: Colors.grey.withOpacity(0.15)),
+          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: BlinkingSkeleton(
+                width: 140, height: 16, baseColor: Colors.grey.withOpacity(0.15)),
+          ),
+          const SizedBox(height: 6),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: BlinkingSkeleton(
+                width: 80, height: 10, baseColor: Colors.grey.withOpacity(0.15)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRestaurantListItemSkeleton() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4))
+          ]),
+      child: Column(
+        children: [
+          BlinkingSkeleton(
+              width: double.infinity,
+              height: 160,
+              borderRadius: 20,
+              baseColor: Colors.grey.withOpacity(0.15)),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    BlinkingSkeleton(
+                        width: 150,
+                        height: 20,
+                        baseColor: Colors.grey.withOpacity(0.15)),
+                    BlinkingSkeleton(
+                        width: 60,
+                        height: 24,
+                        borderRadius: 12,
+                        baseColor: Colors.grey.withOpacity(0.15)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                BlinkingSkeleton(
+                    width: 100, height: 12, baseColor: Colors.grey.withOpacity(0.15)),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
 
   void _onMerchantTap(BuildContext context, String merchantId) {
     // Navigate to merchant details screen which will fetch data using the provider
@@ -129,9 +232,21 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
               child: SizedBox(
                 height: 290, // Height for 2 rows of items
                 child: ref.watch(brandsProvider).when(
-                      loading: () => const Center(
-                          child: CircularProgressIndicator(
-                              color: AppColors.primary)),
+                      loading: () => GridView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          childAspectRatio: 0.85,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                        ),
+                        itemCount: 6,
+                        itemBuilder: (context, index) {
+                          return _buildBrandSkeleton();
+                        },
+                      ),
                       error: (err, stack) => Center(child: Text('Error: $err')),
                       data: (brands) {
                         if (brands.isEmpty) {
@@ -196,8 +311,13 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
               child: SizedBox(
                 height: 180,
                 child: offersAsync.when(
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(color: AppColors.primary),
+                  loading: () => ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: 3,
+                    itemBuilder: (context, index) {
+                      return _buildOfferSkeleton();
+                    },
                   ),
                   error: (err, stack) => Center(
                     child: Text(
@@ -265,11 +385,14 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
 
             // --- ALL RESTAURANTS LIST ---
             studentMerchantsAsync.when(
-              loading: () => const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.all(20.0),
-                  child: Center(
-                    child: CircularProgressIndicator(color: AppColors.primary),
+              loading: () => SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      return _buildRestaurantListItemSkeleton();
+                    },
+                    childCount: 4,
                   ),
                 ),
               ),

@@ -12,6 +12,13 @@ final merchantDetailsProvider = FutureProvider.family<MerchantDetailModel, Strin
 
 final studentMerchantsProvider = FutureProvider<List<StudentMerchantModel>>((ref) async {
   // Fetching first page with 10 items for the home screen list
-  return merchantsService.getStudentMerchants(page: 1, limit: 10);
+  final now = DateTime.now();
+  final currentMonth = "${now.year}-${now.month.toString().padLeft(2, '0')}";
+  
+  return merchantsService.getStudentMerchants(
+    page: 1, 
+    limit: 10, 
+    month: currentMonth,
+  );
 });
 

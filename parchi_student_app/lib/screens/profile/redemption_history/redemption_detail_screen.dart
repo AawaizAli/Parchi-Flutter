@@ -12,10 +12,10 @@ class RedemptionDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Data Preparation
     final merchantName =
-        redemption.offer?.merchant?.businessName ?? "Parchi Merchant";
+        redemption.merchant?.businessName ?? redemption.offer?.merchant?.businessName ?? "Parchi Merchant";
     final branchName = redemption.branchName ?? "Unknown Branch";
     final logoUrl =
-        redemption.offer?.merchant?.logoPath ?? redemption.offer?.imageUrl;
+        redemption.merchant?.logoPath ?? redemption.offer?.merchant?.logoPath ?? redemption.offer?.imageUrl;
     
     // Status Logic
     final status = redemption.status.toUpperCase();

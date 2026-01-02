@@ -183,9 +183,9 @@ class _RedemptionHistoryScreenState extends ConsumerState<RedemptionHistoryScree
   // --- List Item (Notification Style) ---
   Widget _buildRedemptionNotificationItem(RedemptionModel item) {
     // Data extraction
-    final merchantName = item.offer?.merchant?.businessName ?? "Parchi Merchant";
+    final merchantName = item.merchant?.businessName ?? item.offer?.merchant?.businessName ?? "Parchi Merchant";
     final branchName = item.branchName ?? "Unknown Branch";
-    final logoUrl = item.offer?.merchant?.logoPath ?? item.offer?.imageUrl;
+    final logoUrl = item.merchant?.logoPath ?? item.offer?.merchant?.logoPath ?? item.offer?.imageUrl;
     final timeStr = DateFormat('MMM d').format(item.redeemedAt); // e.g. Oct 24
     
     // Status Logic

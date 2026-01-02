@@ -12,6 +12,7 @@ class RedemptionModel {
   final String? notes;
   final String status;
   final String? branchName; // Often returned by join
+  final Merchant? merchant;
 
   RedemptionModel({
     required this.id,
@@ -24,6 +25,7 @@ class RedemptionModel {
     this.notes,
     required this.status,
     this.branchName,
+    this.merchant,
   });
 
   factory RedemptionModel.fromJson(Map<String, dynamic> json) {
@@ -45,6 +47,7 @@ class RedemptionModel {
       branchName: json['branch']?['branch_name'] ??
           json['branch']?['branchName'] ??
           'Unknown Branch',
+      merchant: json['merchant'] != null ? Merchant.fromJson(json['merchant']) : null,
     );
   }
 }

@@ -26,6 +26,8 @@ class ApiConfig {
   static String get allBrandsEndpoint => '$baseUrl/merchants/brands';
   static String merchantDetailsEndpoint(String merchantId) =>
       '$baseUrl/merchants/$merchantId/details';
+  static String get studentMerchantListEndpoint =>
+      '$baseUrl/merchants/student/list';
 
   // Redemption Endpoints
   static String get redemptionHistoryEndpoint => '$baseUrl/redemptions';

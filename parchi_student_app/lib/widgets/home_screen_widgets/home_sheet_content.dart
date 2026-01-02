@@ -13,6 +13,7 @@ import '../home_screen_restraunts_widgets/restaurant_medium_card.dart';
 import '../../screens/home/offers/offer_details_screen.dart';
 import '../../screens/home/merchant_details_screen.dart';
 import '../../models/merchant_detail_model.dart';
+import '../../models/student_merchant_model.dart';
 
 class HomeSheetContent extends ConsumerStatefulWidget {
   final ScrollController scrollController;
@@ -32,13 +33,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
 
   // --- DUMMY DATA FOR ALL RESTAURANTS (MERCHANTS) ---
   // --- DUMMY DATA FOR ALL RESTAURANTS (MERCHANTS) ---
-  List<Map<String, String>> get allRestaurants => List.generate(
-      8,
-      (index) => {
-            "name": "Restaurant ${index + 1}",
-            "image": "https://placehold.co/600x300/png?text=Food${index + 1}",
-            "category": "Cuisine ${index + 1}",
-          });
+  // --- DUMMY DATA REMOVED ---
 
   // --- REFRESH LOGIC ---
   Future<void> _refreshData() async {
@@ -46,6 +41,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
       // Load fresh data
       await ref.refresh(activeOffersProvider.future);
       await ref.refresh(brandsProvider.future);
+      await ref.refresh(studentMerchantsProvider.future);
     } catch (e) {
       debugPrint("Refresh failed: $e");
     }
@@ -74,6 +70,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
   @override
   Widget build(BuildContext context) {
     final offersAsync = ref.watch(activeOffersProvider);
+    final studentMerchantsAsync = ref.watch(studentMerchantsProvider);
     const double indicatorSize = 100.0; // Total height area for the loader
 
     return Container(
@@ -266,33 +263,62 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
             ),
 
             // --- ALL RESTAURANTS LIST ---
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final rest = allRestaurants[index];
-                    return GestureDetector(
-                      onTap: () {
-                        // Note: "All Restaurants" section uses dummy data
-                        // This would need to be updated if you have a real API for all restaurants
-                        // For now, we'll show a message or skip navigation
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Restaurant details coming soon!"),
+            studentMerchantsAsync.when(
+              loading: () => const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.all(20.0),
+                  child: Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  ),
+                ),
+              ),
+              error: (err, stack) => SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Center(
+                    child: Text(
+                      "Error loading restaurants",
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                  ),
+                ),
+              ),
+              data: (merchants) {
+                if (merchants.isEmpty) {
+                  return const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: Center(
+                        child: Text(
+                          "No restaurants available yet.",
+                          style: TextStyle(color: AppColors.textSecondary),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                return SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final merchant = merchants[index];
+                        return GestureDetector(
+                          onTap: () => _onMerchantTap(context, merchant.id),
+                          child: RestaurantBigCard(
+                            name: merchant.businessName,
+                            image: merchant.bannerUrl ??
+                                "https://placehold.co/600x300/png?text=No+Image",
+                            category: merchant.category ?? "General",
                           ),
                         );
                       },
-                      child: RestaurantBigCard(
-                        name: rest["name"]!,
-                        image: rest["image"]!,
-                        category: rest["category"]!,
-                      ),
-                    );
-                  },
-                  childCount: allRestaurants.length,
-                ),
-              ),
+                      childCount: merchants.length,
+                    ),
+                  ),
+                );
+              },
             ),
 
             const SliverToBoxAdapter(child: SizedBox(height: 20)),

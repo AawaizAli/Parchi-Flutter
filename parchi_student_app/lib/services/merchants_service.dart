@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../models/merchant_detail_model.dart';
+import '../models/student_merchant_model.dart';
 
 class MerchantsService {
   static const String _accessTokenKey = 'access_token';
@@ -43,6 +44,56 @@ class MerchantsService {
         rethrow;
       }
       throw Exception('Failed to fetch merchant details: ${e.toString()}');
+    }
+  }
+
+  Future<List<StudentMerchantModel>> getStudentMerchants({
+    int page = 1,
+    int limit = 10,
+    String? month,
+  }) async {
+    final token = await getToken();
+    if (token == null) {
+      throw Exception('No authentication token found.');
+    }
+
+    final queryParameters = {
+      'page': page.toString(),
+      'limit': limit.toString(),
+      if (month != null) 'month': month,
+    };
+
+    final uri = Uri.parse(ApiConfig.studentMerchantListEndpoint)
+        .replace(queryParameters: queryParameters);
+
+    try {
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (responseData['data'] != null &&
+            responseData['data']['items'] != null) {
+          final List<dynamic> items = responseData['data']['items'];
+          return items
+              .map((item) => StudentMerchantModel.fromJson(item))
+              .toList();
+        }
+        return [];
+      } else {
+        throw _handleError(response.statusCode, responseData);
+      }
+    } catch (e) {
+      if (e is Exception) {
+        rethrow;
+      }
+      throw Exception('Failed to fetch student merchants: ${e.toString()}');
     }
   }
 

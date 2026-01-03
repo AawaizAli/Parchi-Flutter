@@ -14,9 +14,8 @@ class MerchantDetailsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final visibleBranches = merchant.branches; 
-    // removed .where((b) => b.offers.isNotEmpty) filter to show all branches as requested "every detail" 
-    // usually users want to see branches even if no active offers, but maybe they have bonus settings.
+    final visibleBranches =
+        merchant.branches.where((b) => b.offers.isNotEmpty).toList();
 
     Future<void> refresh() async {
       return ref.refresh(merchantDetailsProvider(merchant.id).future);

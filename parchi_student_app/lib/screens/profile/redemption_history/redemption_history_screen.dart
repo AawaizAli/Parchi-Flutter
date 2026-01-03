@@ -19,7 +19,8 @@ class RedemptionHistoryScreen extends ConsumerStatefulWidget {
       _RedemptionHistoryScreenState();
 }
 
-class _RedemptionHistoryScreenState extends ConsumerState<RedemptionHistoryScreen>
+class _RedemptionHistoryScreenState
+    extends ConsumerState<RedemptionHistoryScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   final DraggableScrollableController _sheetController =
@@ -65,7 +66,7 @@ class _RedemptionHistoryScreenState extends ConsumerState<RedemptionHistoryScree
     final historyAsync = ref.watch(redemptionHistoryProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.primary, // Matches top section
+      backgroundColor: AppColors.primary,
       appBar: AppBar(
         title: const Text('Redemption History',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -73,117 +74,119 @@ class _RedemptionHistoryScreenState extends ConsumerState<RedemptionHistoryScree
         elevation: 0,
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          // 1. STATS HEADER (Primary Background)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 10, 24, 30),
-            child: statsAsync.when(
-              data: (stats) => Column(
-                children: [
-                   const Text(
-                    "TOTAL REDEMPTIONS",
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "${stats.totalRedemptions}",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 48,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Stats Row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-
-                      _buildHeaderStat("Rewards", "${stats.bonusesUnlocked}"),
-                      Container(width: 1, height: 24, color: Colors.white24),
-                      _buildHeaderStat(
-                          "Rank",
-                          stats.leaderboardPosition > 0
-                              ? "#${stats.leaderboardPosition}"
-                              : "-"),
-                    ],
-                  ),
-                ],
-              ),
-              loading: () => _buildHeaderSkeleton(),
-              error: (_, __) => const SizedBox.shrink(),
-            ),
-          ),
-
-          // 2. LIST BODY (White Surface)
-          Expanded(
-            child: Container(
-              decoration: const BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-              ),
-              child: historyAsync.when(
-                loading: () => _buildListSkeleton(),
-                error: (err, stack) => Center(
-                    child: Text('Error: $err',
-                        style: const TextStyle(color: AppColors.error))),
-                data: (items) {
-                  if (items.isEmpty) return _buildEmptyState();
-                  return ClipRRect(
-                    borderRadius:
-                        const BorderRadius.vertical(top: Radius.circular(30)),
-                    child: CustomRefreshIndicator(
-                      onRefresh: _refresh,
-                      offsetToArmed: 100.0,
-                      builder: (BuildContext context, Widget child,
-                          IndicatorController controller) {
-                        return Stack(
-                          children: <Widget>[
-                            AnimatedBuilder(
-                              animation: controller,
-                              builder: (context, _) {
-                                return SizedBox(
-                                  height: controller.value * 100.0,
-                                  width: double.infinity,
-                                  child: Center(
-                                    child: ParchiLoader(
-                                      isLoading: controller.isLoading,
-                                      progress: controller.value,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                            Transform.translate(
-                              offset: Offset(0.0, controller.value * 100.0),
-                              child: child,
-                            ),
-                          ],
-                        );
-                      },
-                      child: ListView.separated(
-                        physics: const AlwaysScrollableScrollPhysics(), // Ensure scrolling even if short
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        itemCount: items.length,
-                        separatorBuilder: (context, index) => const Divider(
-                            height: 1, color: AppColors.surfaceVariant),
-                        itemBuilder: (context, index) {
-                          return _buildRedemptionNotificationItem(items[index]);
-                        },
+      body: CustomRefreshIndicator(
+        onRefresh: _refresh,
+        offsetToArmed: 100.0,
+        builder: (BuildContext context, Widget child,
+            IndicatorController controller) {
+          return Stack(
+            children: <Widget>[
+              AnimatedBuilder(
+                animation: controller,
+                builder: (context, _) {
+                  return SizedBox(
+                    height: controller.value * 100.0,
+                    width: double.infinity,
+                    child: Center(
+                      child: ParchiLoader(
+                        isLoading: controller.isLoading,
+                        progress: controller.value,
                       ),
                     ),
                   );
                 },
               ),
+              Transform.translate(
+                offset: Offset(0.0, controller.value * 100.0),
+                child: child,
+              ),
+            ],
+          );
+        },
+        child: NestedScrollView(
+          headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+            return <Widget>[
+              // 1. STATS HEADER (Primary Background) - Now in Sliver
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 10, 24, 30),
+                  child: statsAsync.when(
+                    data: (stats) => Column(
+                      children: [
+                        const Text(
+                          "TOTAL REDEMPTIONS",
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "${stats.totalRedemptions}",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 48,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        // Stats Row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildHeaderStat(
+                                "Rewards", "${stats.bonusesUnlocked}"),
+                            Container(
+                                width: 1, height: 24, color: Colors.white24),
+                            _buildHeaderStat(
+                                "Rank",
+                                stats.leaderboardPosition > 0
+                                    ? "#${stats.leaderboardPosition}"
+                                    : "-"),
+                          ],
+                        ),
+                      ],
+                    ),
+                    loading: () => _buildHeaderSkeleton(),
+                    error: (_, __) => const SizedBox.shrink(),
+                  ),
+                ),
+              ),
+            ];
+          },
+          // 2. LIST BODY (White Surface)
+          body: Container(
+            decoration: const BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+            ),
+            child: historyAsync.when(
+              loading: () => _buildListSkeleton(),
+              error: (err, stack) => Center(
+                  child: Text('Error: $err',
+                      style: const TextStyle(color: AppColors.error))),
+              data: (items) {
+                if (items.isEmpty) return _buildEmptyState();
+                return ClipRRect(
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(30)),
+                  child: ListView.separated(
+                    // Important: padding top to ensure content doesn't get cut off by corner radius immediately
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    itemCount: items.length,
+                    separatorBuilder: (context, index) => const Divider(
+                        height: 1, color: AppColors.surfaceVariant),
+                    itemBuilder: (context, index) {
+                      return _buildRedemptionNotificationItem(items[index]);
+                    },
+                  ),
+                );
+              },
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -215,11 +218,15 @@ class _RedemptionHistoryScreenState extends ConsumerState<RedemptionHistoryScree
   // --- List Item (Notification Style) ---
   Widget _buildRedemptionNotificationItem(RedemptionModel item) {
     // Data extraction
-    final merchantName = item.merchant?.businessName ?? item.offer?.merchant?.businessName ?? "Parchi Merchant";
+    final merchantName = item.merchant?.businessName ??
+        item.offer?.merchant?.businessName ??
+        "Parchi Merchant";
     final branchName = item.branchName ?? "Unknown Branch";
-    final logoUrl = item.merchant?.logoPath ?? item.offer?.merchant?.logoPath ?? item.offer?.imageUrl;
+    final logoUrl = item.merchant?.logoPath ??
+        item.offer?.merchant?.logoPath ??
+        item.offer?.imageUrl;
     final timeStr = DateFormat('MMM d').format(item.redeemedAt); // e.g. Oct 24
-    
+
     // Status Logic
     final isApproved = item.status == 'APPROVED';
     final statusColor = isApproved
@@ -256,7 +263,7 @@ class _RedemptionHistoryScreenState extends ConsumerState<RedemptionHistoryScree
                   : null,
             ),
             const SizedBox(width: 16),
-            
+
             // 2. Info Column
             Expanded(
               child: Column(
@@ -283,7 +290,7 @@ class _RedemptionHistoryScreenState extends ConsumerState<RedemptionHistoryScree
                 ],
               ),
             ),
-            
+
             // 3. Trailing Info (Time & Status)
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -299,7 +306,8 @@ class _RedemptionHistoryScreenState extends ConsumerState<RedemptionHistoryScree
                 // Bonus Indicator (Only show if bonus is applied)
                 if (item.isBonusApplied)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: AppColors.bonus, // Solid orange background
                       borderRadius: BorderRadius.circular(12),
@@ -307,10 +315,9 @@ class _RedemptionHistoryScreenState extends ConsumerState<RedemptionHistoryScree
                     child: const Text(
                       "BONUS",
                       style: TextStyle(
-                        color: Colors.white, // White text
-                        fontSize: 10, 
-                        fontWeight: FontWeight.bold
-                      ),
+                          color: Colors.white, // White text
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold),
                     ),
                   )
               ],
@@ -326,7 +333,8 @@ class _RedemptionHistoryScreenState extends ConsumerState<RedemptionHistoryScree
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.history, size: 64, color: AppColors.textSecondary.withOpacity(0.5)),
+          Icon(Icons.history,
+              size: 64, color: AppColors.textSecondary.withOpacity(0.5)),
           const SizedBox(height: 16),
           const Text("No redemption history yet",
               style: TextStyle(color: AppColors.textSecondary)),
@@ -334,7 +342,6 @@ class _RedemptionHistoryScreenState extends ConsumerState<RedemptionHistoryScree
       ),
     );
   }
-
 
   // --- SKELETON HELPERS ---
   Widget _buildHeaderSkeleton() {

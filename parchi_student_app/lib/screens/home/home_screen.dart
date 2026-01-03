@@ -130,7 +130,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Add extra height for the expanded student info part (~70px)
     final double expandedHeaderHeight = collapsedHeaderHeight + 70.0;
     
-    final double cardHeight = 200.0;
+    final double cardHeight = 180.0;
 
     const double initialGap = 66.0;
     const double expandedGap = 0.0; // Removed gap to eliminate white padding

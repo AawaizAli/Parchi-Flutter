@@ -230,7 +230,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
 
             SliverToBoxAdapter(
               child: SizedBox(
-                height: 290, // Height for 2 rows of items
+                height: 240, // Height for 2 rows of items
                 child: ref.watch(brandsProvider).when(
                       loading: () => GridView.builder(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -238,7 +238,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 3,
-                          childAspectRatio: 0.85,
+                          childAspectRatio: 1.05,
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 12,
                         ),
@@ -262,7 +262,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 3,
-                            childAspectRatio: 0.85,
+                            childAspectRatio: 1.05,
                             crossAxisSpacing: 12,
                             mainAxisSpacing: 12,
                           ),
@@ -309,7 +309,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
 
             SliverToBoxAdapter(
               child: SizedBox(
-                height: 180,
+                height: 158,
                 child: offersAsync.when(
                   loading: () => ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16),

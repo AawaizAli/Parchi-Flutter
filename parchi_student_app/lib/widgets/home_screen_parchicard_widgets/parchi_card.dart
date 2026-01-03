@@ -81,16 +81,16 @@ class ParchiCard extends StatelessWidget {
                 color: isGolden ? null : AppColors.primary,
                 gradient: isGolden ? goldGradient : null,
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: isGolden
-                        ? AppColors.goldShadow.withOpacity(0.6)
-                        : AppColors.primary.withOpacity(0.3),
-                    blurRadius: isGolden ? 20 : 10,
-                    spreadRadius: isGolden ? 2 : 0,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
+                boxShadow: isGolden
+                    ? [
+                        BoxShadow(
+                          color: AppColors.goldShadow.withOpacity(0.6),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                          offset: const Offset(0, 5),
+                        ),
+                      ]
+                    : null,
               ),
               child: CardFrontContent(
                 studentName: studentName,

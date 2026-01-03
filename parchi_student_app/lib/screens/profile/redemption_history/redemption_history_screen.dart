@@ -74,106 +74,105 @@ class _RedemptionHistoryScreenState
         elevation: 0,
         centerTitle: true,
       ),
-      body: CustomRefreshIndicator(
-        onRefresh: _refresh,
-        offsetToArmed: 100.0,
-        builder: (BuildContext context, Widget child,
-            IndicatorController controller) {
-          return Stack(
-            children: <Widget>[
-              AnimatedBuilder(
-                animation: controller,
-                builder: (context, _) {
-                  return SizedBox(
-                    height: controller.value * 100.0,
-                    width: double.infinity,
-                    child: Center(
-                      child: ParchiLoader(
-                        isLoading: controller.isLoading,
-                        progress: controller.value,
+      body: NestedScrollView(
+        headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+          return <Widget>[
+            // 1. STATS HEADER (Primary Background) - Now in Sliver
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 10, 24, 30),
+                child: statsAsync.when(
+                  data: (stats) => Column(
+                    children: [
+                      const Text(
+                        "TOTAL REDEMPTIONS",
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                        ),
                       ),
-                    ),
-                  );
-                },
-              ),
-              Transform.translate(
-                offset: Offset(0.0, controller.value * 100.0),
-                child: child,
-              ),
-            ],
-          );
-        },
-        child: NestedScrollView(
-          headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
-            return <Widget>[
-              // 1. STATS HEADER (Primary Background) - Now in Sliver
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 10, 24, 30),
-                  child: statsAsync.when(
-                    data: (stats) => Column(
-                      children: [
-                        const Text(
-                          "TOTAL REDEMPTIONS",
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.5,
-                          ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "${stats.totalRedemptions}",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 48,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "${stats.totalRedemptions}",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 48,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        // Stats Row
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _buildHeaderStat(
-                                "Rewards", "${stats.bonusesUnlocked}"),
-                            Container(
-                                width: 1, height: 24, color: Colors.white24),
-                            _buildHeaderStat(
-                                "Rank",
-                                stats.leaderboardPosition > 0
-                                    ? "#${stats.leaderboardPosition}"
-                                    : "-"),
-                          ],
-                        ),
-                      ],
-                    ),
-                    loading: () => _buildHeaderSkeleton(),
-                    error: (_, __) => const SizedBox.shrink(),
+                      ),
+                      const SizedBox(height: 24),
+                      // Stats Row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildHeaderStat(
+                              "Rewards", "${stats.bonusesUnlocked}"),
+                          Container(
+                              width: 1, height: 24, color: Colors.white24),
+                          _buildHeaderStat(
+                              "Rank",
+                              stats.leaderboardPosition > 0
+                                  ? "#${stats.leaderboardPosition}"
+                                  : "-"),
+                        ],
+                      ),
+                    ],
                   ),
+                  loading: () => _buildHeaderSkeleton(),
+                  error: (_, __) => const SizedBox.shrink(),
                 ),
               ),
-            ];
-          },
-          // 2. LIST BODY (White Surface)
-          body: Container(
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
             ),
-            child: historyAsync.when(
-              loading: () => _buildListSkeleton(),
-              error: (err, stack) => Center(
-                  child: Text('Error: $err',
-                      style: const TextStyle(color: AppColors.error))),
-              data: (items) {
-                if (items.isEmpty) return _buildEmptyState();
-                return ClipRRect(
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(30)),
+          ];
+        },
+        // 2. LIST BODY (White Surface)
+        body: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+          ),
+          child: historyAsync.when(
+            loading: () => _buildListSkeleton(),
+            error: (err, stack) => Center(
+                child: Text('Error: $err',
+                    style: const TextStyle(color: AppColors.error))),
+            data: (items) {
+              if (items.isEmpty) return _buildEmptyState();
+              return ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(30)),
+                child: CustomRefreshIndicator(
+                  onRefresh: _refresh,
+                  offsetToArmed: 100.0,
+                  builder: (BuildContext context, Widget child,
+                      IndicatorController controller) {
+                    return Stack(
+                      children: <Widget>[
+                        AnimatedBuilder(
+                          animation: controller,
+                          builder: (context, _) {
+                            return SizedBox(
+                              height: controller.value * 100.0,
+                              width: double.infinity,
+                              child: Center(
+                                child: ParchiLoader(
+                                  isLoading: controller.isLoading,
+                                  progress: controller.value,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        Transform.translate(
+                          offset: Offset(0.0, controller.value * 100.0),
+                          child: child,
+                        ),
+                      ],
+                    );
+                  },
                   child: ListView.separated(
-                    // Important: padding top to ensure content doesn't get cut off by corner radius immediately
                     padding: const EdgeInsets.symmetric(vertical: 20),
                     itemCount: items.length,
                     separatorBuilder: (context, index) => const Divider(
@@ -182,9 +181,9 @@ class _RedemptionHistoryScreenState
                       return _buildRedemptionNotificationItem(items[index]);
                     },
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
         ),
       ),

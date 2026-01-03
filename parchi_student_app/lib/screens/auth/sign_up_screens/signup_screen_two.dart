@@ -279,7 +279,7 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
                                       _isUploading ? null : _handleSubmit,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor:
-                                        AppColors.textPrimary,
+                                        AppColors.primary,
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
                                             BorderRadius.circular(30)),

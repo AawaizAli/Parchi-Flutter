@@ -76,7 +76,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     // Forgot Password (0): 55% (Similar to login)
     double containerHeight;
     if (_currentPage == 2) {
-      containerHeight = screenHeight * 0.85;
+      containerHeight = screenHeight * 0.75;
     } else {
       containerHeight = screenHeight * 0.55;
     }
@@ -97,7 +97,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             duration: const Duration(milliseconds: 600),
             curve: Curves.easeInOutQuart,
             top: _currentPage == 2
-                ? -screenHeight * 0.15
+                ? -screenHeight * 0.10
                 : 0, // Moves up when form expands
             left: 0, right: 0,
             height: screenHeight * 0.45,
@@ -110,7 +110,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     duration: const Duration(milliseconds: 600),
                     curve: Curves.easeInOutQuart,
                     width: MediaQuery.of(context).size.width *
-                        (_currentPage == 2 ? 0.4 : 0.6),
+                        (_currentPage == 2 ? 0.5 : 0.6),
                     child: SvgPicture.asset(
                       'assets/ParchiFullTextYellow.svg',
                       colorFilter: const ColorFilter.mode(
@@ -129,7 +129,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             bottom: 0, left: 0, right: 0,
             height: containerHeight, // [ANIMATED HEIGHT]
             child: Container(
-              margin: const EdgeInsets.fromLTRB(12, 0, 12, 24),
+              margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               decoration: BoxDecoration(
                 color: AppColors.backgroundLight,
                 borderRadius: BorderRadius.circular(40),

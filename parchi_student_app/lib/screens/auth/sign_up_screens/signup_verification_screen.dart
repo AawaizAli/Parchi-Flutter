@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../utils/colours.dart';
 import '../login_screens/login_screen.dart';
 
@@ -44,153 +45,215 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final containerHeight = screenHeight * 0.75; // Same as SignupScreenTwo
+
     return Scaffold(
       body: Stack(
         children: [
-          // Full Screen Gradient
+          // 1. BACKGROUND (Solid Primary)
           Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.verificationGradientStart,
-                  AppColors.verificationGradientEnd
-                ],
+            color: AppColors.primary,
+          ),
+
+          // 2. LOGO (Positioned at top)
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeInOutQuart,
+            top: -screenHeight * 0.10, // Moves up same as SignupScreenTwo
+            left: 0, right: 0,
+            height: screenHeight * 0.45,
+            child: SafeArea(
+              child: Center(
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.5,
+                  child: SvgPicture.asset(
+                    'assets/ParchiFullTextYellow.svg',
+                    colorFilter: const ColorFilter.mode(
+                        Color(0xFFE3E935), BlendMode.srcIn),
+                  ),
+                ),
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Spacer(),
 
-                // Animated Tick (Green Circle)
-                ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: Container(
-                    height: 160,
-                    width: 160,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.backgroundLight,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withOpacity(0.2),
-                          blurRadius: 30,
-                          offset: const Offset(0, 15),
-                        ),
-                      ],
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.check_circle_rounded,
-                        size: 100,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 48),
-
-                const Text(
-                  "You're all set!",
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  widget.parchiId != null
-                      ? "Your Parchi ID: ${widget.parchiId}\n\nYour documents have been submitted.\nVerification takes 24-48 hours."
-                      : "Your documents have been submitted.\nVerification takes 24-48 hours.",
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: AppColors.textSecondary,
-                    height: 1.5,
-                  ),
-                ),
-                if (widget.parchiId != null) ...[
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: AppColors.primary.withOpacity(0.3),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        const Text(
-                          "Your Parchi ID",
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          widget.parchiId!,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+          // 3. WHITE CONTAINER (Floating)
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeInOutQuart,
+            bottom: 0, left: 0, right: 0,
+            height: containerHeight,
+            child: Container(
+              margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              decoration: BoxDecoration(
+                color: AppColors.backgroundLight,
+                borderRadius: BorderRadius.circular(40),
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 20,
+                      offset: const Offset(0, -5))
                 ],
-
-                const Spacer(),
-
-                // Back to Login (Outlined in Black/Grey for sleekness)
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const LoginScreen()),
-                        (route) => false,
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(
-                          color: AppColors.textSecondary.withOpacity(0.3),
-                          width: 1.5),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      backgroundColor: Colors.transparent,
-                    ),
-                    child: const Text(
-                      "Back to Login",
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(40),
+                child: Column(
+                  children: [
+                    // --- HEADER ---
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 10),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 8), // Spacer since no back button or maybe home button
+                          const Text("Verification",
+                              style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary)),
+                        ],
                       ),
                     ),
-                  ),
+
+                    // --- CONTENT ---
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                             const SizedBox(height: 20),
+
+                            // Animated Tick
+                            ScaleTransition(
+                              scale: _scaleAnimation,
+                              child: Container(
+                                height: 140,
+                                width: 140,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppColors.surface,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color:
+                                          AppColors.primary.withOpacity(0.15),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 10),
+                                    ),
+                                  ],
+                                ),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.check_circle_rounded,
+                                    size: 90,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 32),
+
+                            const Text(
+                              "You're all set!",
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              "Your documents have been submitted.\nVerification usually takes 24-48 hours.",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: AppColors.textSecondary.withOpacity(0.8),
+                                height: 1.5,
+                              ),
+                            ),
+
+                            if (widget.parchiId != null) ...[
+                              const SizedBox(height: 32),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 24, vertical: 20),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withOpacity(0.05),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: AppColors.primary.withOpacity(0.2),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    const Text(
+                                      "YOUR PARCHI ID",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.textSecondary,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.0,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      widget.parchiId!,
+                                      style: const TextStyle(
+                                        fontSize: 28,
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 2.0,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+
+                            const SizedBox(height: 40),
+
+                            // Back to Login Button
+                            SizedBox(
+                              width: double.infinity,
+                              height: 56,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pushAndRemoveUntil(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const LoginScreen()),
+                                    (route) => false,
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                ),
+                                child: const Text(
+                                  "Back to Login",
+                                  style: TextStyle(
+                                    color: AppColors.textOnPrimary,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 20),
-              ],
+              ),
             ),
           ),
         ],

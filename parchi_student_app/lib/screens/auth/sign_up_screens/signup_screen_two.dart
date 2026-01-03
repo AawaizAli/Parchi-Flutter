@@ -6,6 +6,7 @@ import '../../../utils/colours.dart';
 import '../../../services/supabase_storage_service.dart';
 import '../../../services/auth_service.dart';
 import 'signup_verification_screen.dart';
+import '../../../widgets/common/spinning_loader.dart';
 
 class SignupScreenTwo extends StatefulWidget {
   final String firstName;
@@ -149,159 +150,156 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final containerHeight = screenHeight * 0.75; // Matching LoginScreen signup state
+
     return Scaffold(
-      // Ensure resizeToAvoidBottomInset is true (default) so keyboard pushes it up if needed
-      resizeToAvoidBottomInset: true, 
+      resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
-          // --- 1. DARK GRADIENT BACKGROUND ---
+          // 1. BACKGROUND (Solid color like LoginScreen)
           Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  AppColors.authGradientStart,
-                  AppColors.authGradientMid,
-                  AppColors.authGradientEnd
-                ],
+            color: AppColors.primary,
+          ),
+
+          // 2. LOGO & TEXT (Positioned like LoginScreen signup state)
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeInOutQuart,
+            top: -screenHeight * 0.10, // Moves up same as LoginScreen
+            left: 0, right: 0,
+            height: screenHeight * 0.45,
+            child: SafeArea(
+              child: Center(
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.5, // 0.5 width
+                  child: SvgPicture.asset(
+                    'assets/ParchiFullTextYellow.svg',
+                    colorFilter: const ColorFilter.mode(
+                        Color(0xFFE3E935), BlendMode.srcIn),
+                  ),
+                ),
               ),
             ),
           ),
 
-          // --- 2. WHITE CONTAINER (Bottom Aligned, Hugs Content) ---
-          Align(
-            alignment: Alignment.bottomCenter, // Anchor to bottom
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-              child: Container(
-                // Max height constraint to allow scrolling on small screens
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.9,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.backgroundLight,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(40)), // Only top corners
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 20,
-                        offset: const Offset(0, -5))
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min, // THIS IS KEY: Shrinks to fit content
-                    children: [
-                      // Header
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 24, 24, 10),
-                        child: Row(
+          // 3. THE WHITE CONTAINER (Floating Bubble Style)
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeInOutQuart,
+            bottom: 0, left: 0, right: 0,
+            height: containerHeight,
+            child: Container(
+              margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              decoration: BoxDecoration(
+                color: AppColors.backgroundLight,
+                borderRadius: BorderRadius.circular(40),
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 20,
+                      offset: const Offset(0, -5))
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(40),
+                child: Column(
+                  children: [
+                    // --- HEADER ---
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 10),
+                      child: Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                  color: AppColors.textSecondary.withOpacity(0.1),
+                                  shape: BoxShape.circle),
+                              child: const Icon(Icons.arrow_back,
+                                  size: 20, color: AppColors.textPrimary),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          const Text("Verify Student",
+                              style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold, // Bold to match "Create Account"
+                                  color: AppColors.textPrimary)),
+                        ],
+                      ),
+                    ),
+
+                    // --- CONTENT SCROLLABLE AREA ---
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        physics: const ClampingScrollPhysics(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            GestureDetector(
-                              onTap: () => Navigator.pop(context),
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                    color: AppColors.textSecondary
-                                        .withOpacity(0.1),
-                                    shape: BoxShape.circle),
-                                child: const Icon(Icons.arrow_back,
-                                    size: 20, color: AppColors.textPrimary),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            const Text("Verify Student",
+                            const SizedBox(height: 10),
+                            const Text(
+                                "Upload your student ID (front & back) and a selfie.",
                                 style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.textPrimary)),
-                            const Spacer(),
-                            Padding(
-                              padding: const EdgeInsets.only(top: 5.0),
-                              child: SvgPicture.asset(
-                                'assets/ParchiFullTextYellow.svg',
-                                height: 12,
-                                colorFilter: const ColorFilter.mode(
-                                    Color(0xFFE3E935), BlendMode.srcIn),
+                                    fontSize: 16,
+                                    color: AppColors.textSecondary)),
+                            const SizedBox(height: 30),
+                            _buildInputLabel("Student ID Front *"),
+                            _buildUploadBox(
+                                "Upload ID Front",
+                                _studentIdImage != null,
+                                () => _showImageSourceDialog(0),
+                                image: _studentIdImage),
+                            const SizedBox(height: 24),
+                            _buildInputLabel("Student ID Back *"),
+                            _buildUploadBox(
+                                "Upload ID Back",
+                                _studentIdBackImage != null,
+                                () => _showImageSourceDialog(1),
+                                image: _studentIdBackImage),
+                            const SizedBox(height: 24),
+                            _buildInputLabel("Selfie Image *"),
+                            _buildUploadBox(
+                                "Upload Selfie",
+                                _selfieImage != null,
+                                () => _showImageSourceDialog(2),
+                                image: _selfieImage),
+                            if (_validationError != null) ...[
+                              const SizedBox(height: 16),
+                              Text(_validationError!,
+                                  style: const TextStyle(
+                                      color: AppColors.error)),
+                            ],
+                            const SizedBox(height: 30),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 56,
+                              child: ElevatedButton(
+                                onPressed: _isUploading ? null : _handleSubmit,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  disabledBackgroundColor: AppColors.primary, // Keep it blue when disabled/loading
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30)),
+                                ),
+                                child: _isUploading
+                                    ? const SpinningLoader(size: 30) // Use SpinningLoader
+                                    : const Text("Submit Verification",
+                                        style: TextStyle(
+                                            color: AppColors.textOnPrimary,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold)),
                               ),
                             ),
+                            // Bottom Padding
+                            const SizedBox(height: 24),
                           ],
                         ),
                       ),
-
-                      // Content (Flexible allows it to scroll if needed, but shrink if possible)
-                      Flexible(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.all(24.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                  "Upload your student ID (front & back) and a selfie.",
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      color: AppColors.textSecondary)),
-                              const SizedBox(height: 40),
-                              _buildInputLabel("Student ID Front *"),
-                              _buildUploadBox(
-                                  "Upload ID Front",
-                                  _studentIdImage != null,
-                                  () => _showImageSourceDialog(0),
-                                  image: _studentIdImage),
-                              const SizedBox(height: 24),
-                              _buildInputLabel("Student ID Back *"),
-                              _buildUploadBox(
-                                  "Upload ID Back",
-                                  _studentIdBackImage != null,
-                                  () => _showImageSourceDialog(1),
-                                  image: _studentIdBackImage),
-                              const SizedBox(height: 24),
-                              _buildInputLabel("Selfie Image *"),
-                              _buildUploadBox(
-                                  "Upload Selfie",
-                                  _selfieImage != null,
-                                  () => _showImageSourceDialog(2),
-                                  image: _selfieImage),
-                              if (_validationError != null) ...[
-                                const SizedBox(height: 16),
-                                Text(_validationError!,
-                                    style: const TextStyle(
-                                        color: AppColors.error)),
-                              ],
-                              const SizedBox(height: 40),
-                              SizedBox(
-                                width: double.infinity,
-                                height: 56,
-                                child: ElevatedButton(
-                                  onPressed:
-                                      _isUploading ? null : _handleSubmit,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        AppColors.primary,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(30)),
-                                  ),
-                                  child: _isUploading
-                                      ? const CircularProgressIndicator(
-                                          color: AppColors.textOnPrimary)
-                                      : const Text("Submit Verification",
-                                          style: TextStyle(
-                                              color: AppColors.textOnPrimary,
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold)),
-                                ),
-                              ),
-                              // Bottom Padding
-                              const SizedBox(height: 20),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -331,7 +329,7 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
         decoration: BoxDecoration(
           color: isUploaded
               ? AppColors.textSecondary.withOpacity(0.1)
-              : AppColors.backgroundLight,
+              : AppColors.textSecondary.withOpacity(0.05), // Lighter bg for empty
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
               color: isUploaded

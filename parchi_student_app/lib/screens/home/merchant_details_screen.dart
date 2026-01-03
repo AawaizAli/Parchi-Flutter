@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../models/merchant_detail_model.dart';
-import '../../utils/colours.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
+import '../../models/merchant_detail_model.dart';
+import '../../utils/colours.dart';
 import '../../widgets/common/parchi_refresh_loader.dart';
 import '../../widgets/common/blinking_skeleton.dart';
 import '../../providers/merchants_provider.dart';
@@ -14,74 +14,16 @@ class MerchantDetailsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Filter branches that have at least one offer
-    final visibleBranches =
-        merchant.branches.where((b) => b.offers.isNotEmpty).toList();
+    final visibleBranches = merchant.branches; 
+    // removed .where((b) => b.offers.isNotEmpty) filter to show all branches as requested "every detail" 
+    // usually users want to see branches even if no active offers, but maybe they have bonus settings.
+
     Future<void> refresh() async {
       return ref.refresh(merchantDetailsProvider(merchant.id).future);
     }
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
-      // 1. Fixed AppBar (Header) that stays on top
-      appBar: AppBar(
-        surfaceTintColor: AppColors.surface,
-        backgroundColor: AppColors.surface,
-        elevation: 0,
-        toolbarHeight: 100, // Matches previous height
-        centerTitle: true,
-        leading: Container(
-          alignment: Alignment.topLeft,
-          margin: const EdgeInsets.only(top: 8, left: 8),
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
-        title: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Logo
-            Container(
-              width: 45,
-              height: 45,
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.surfaceVariant),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: merchant.logoPath != null
-                    ? Image.network(
-                        merchant.logoPath!,
-                        fit: BoxFit.contain,
-                        errorBuilder: (ctx, err, stack) => const Icon(
-                            Icons.store,
-                            size: 24,
-                            color: AppColors.textSecondary),
-                      )
-                    : const Icon(Icons.store,
-                        size: 24, color: AppColors.textSecondary),
-              ),
-            ),
-            const SizedBox(height: 8),
-            // Heading
-            Text(
-              merchant.businessName,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-
-      // 2. Refreshable List Body
       body: CustomRefreshIndicator(
         onRefresh: refresh,
         offsetToArmed: 100.0,
@@ -111,122 +53,372 @@ class MerchantDetailsScreen extends ConsumerWidget {
             ],
           );
         },
-        child: ListView.builder(
+        child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.only(bottom: 40),
-          itemCount: visibleBranches.length,
-          itemBuilder: (context, index) {
-            final branch = visibleBranches[index];
-            // Ensure container margin acts nicely in list view
-            return _buildBranchItem(branch);
-          },
+          slivers: [
+            // --- 1. SLIVER APP BAR WITH BANNER ---
+            SliverAppBar(
+              expandedHeight: 200.0,
+              floating: false,
+              pinned: true,
+              backgroundColor: AppColors.surface,
+              surfaceTintColor: AppColors.surface,
+              leading: Container(
+                margin: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.surface.withOpacity(0.8),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon:
+                      const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                  onPressed: () => Navigator.pop(context),
+                  tooltip: 'Back',
+                ),
+              ),
+              flexibleSpace: FlexibleSpaceBar(
+                background: merchant.bannerUrl != null
+                    ? Image.network(
+                        merchant.bannerUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            Container(color: AppColors.surfaceVariant),
+                      )
+                    : Container(color: AppColors.surfaceVariant),
+              ),
+            ),
+
+            // --- 2. MERCHANT INFO HEADER ---
+            SliverToBoxAdapter(
+              child: Container(
+                color: AppColors.surface,
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Logo
+                        Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                                color: AppColors.surfaceVariant.withOpacity(0.5)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: merchant.logoPath != null
+                                ? Image.network(
+                                    merchant.logoPath!,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (ctx, err, stack) => const Icon(
+                                        Icons.store,
+                                        size: 30,
+                                        color: AppColors.textSecondary),
+                                  )
+                                : const Icon(Icons.store,
+                                    size: 30, color: AppColors.textSecondary),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        // Name & Category
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                merchant.businessName,
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              if (merchant.category != null) ...[
+                                const SizedBox(height: 4),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    merchant.category!,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Terms & Conditions
+                    if (merchant.termsAndConditions != null &&
+                        merchant.termsAndConditions!.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      const Text(
+                        "Terms & Conditions",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        merchant.termsAndConditions!,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textSecondary,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+
+            // --- 3. SPACER ---
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+            // --- 4. BRANCHES & OFFERS LIST ---
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final branch = visibleBranches[index];
+                    return _buildBranchItem(branch);
+                  },
+                  childCount: visibleBranches.length,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildBranchItem(BranchModel branch) {
-    // Get Base Offer (First offer)
-    final String baseOffer = branch.offers.isNotEmpty
-        ? branch.offers.first.formattedDiscount
-        : "No Offers";
-
     final bonus = branch.bonusSettings;
-    final int remaining = bonus != null 
-        ? (bonus.nextGoal - (bonus.currentRedemptions ?? 0)) 
-        : 0;
+    final int remaining =
+        bonus != null ? (bonus.nextGoal - (bonus.currentRedemptions ?? 0)) : 0;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.textPrimary.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Branch Name & Area
+          // Branch Name & Location
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                branch.name,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      branch.name,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "${branch.address}${branch.city != null ? ', ${branch.city}' : ''}",
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Text(
-                branch.address, 
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
+              // Contact button if phone exists
+              if (branch.contactPhone != null &&
+                  branch.contactPhone!.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.05),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.phone,
+                    size: 20,
+                    color: AppColors.primary,
+                  ),
                 ),
-              ),
             ],
           ),
-          const SizedBox(height: 8),
+          
+          const SizedBox(height: 20),
+          const Divider(height: 1, color: AppColors.surfaceVariant),
+          const SizedBox(height: 16),
 
-          // Base Offer
-          Text(
-            baseOffer,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
+          // --- OFFERS SECTION ---
+          if (branch.offers.isNotEmpty) ...[
+            const Text(
+              "AVAILABLE OFFERS",
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textSecondary,
+                letterSpacing: 1.0,
+              ),
             ),
-          ),
+            const SizedBox(height: 12),
+            ...branch.offers.map((offer) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: Row(
+                    children: [
+                      Container(
+                         padding: const EdgeInsets.all(6),
+                         decoration: BoxDecoration(
+                           color: AppColors.primary.withOpacity(0.1),
+                           borderRadius: BorderRadius.circular(8),
+                         ),
+                         child: const Icon(Icons.local_offer_outlined, 
+                            size: 18, color: AppColors.primary),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              offer.formattedDiscount,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                            if (offer.title.isNotEmpty)
+                              Text(
+                                offer.title,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+          ] else
+            const Text(
+              "No active offers at this branch.",
+              style: TextStyle(fontStyle: FontStyle.italic, color: AppColors.textSecondary),
+            ),
 
-          // Bonus Progress (if active)
+          // --- BONUS SECTION ---
           if (branch.bonusSettings != null &&
               branch.bonusSettings!.isActive) ...[
-            const SizedBox(height: 16),
-            const Divider(height: 1, color: AppColors.surfaceVariant),
-            const SizedBox(height: 12),
-
-            // Bonus Header & Progress Text
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    "Redeem $remaining more times to unlock ${branch.bonusSettings!.discountDescription}",
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceVariant.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.surfaceVariant),
+              ),
+              child: Column(
+                children: [
+                   Row(
+                    children: [
+                      const Icon(Icons.star_rounded, color: Colors.amber, size: 24),
+                      const SizedBox(width: 8),
+                      Text(
+                        "LOYALTY BONUS",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.amber[800],
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ],
+                   ),
+                   const SizedBox(height: 12),
+                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          "Redeem $remaining more times to unlock ${branch.bonusSettings!.discountDescription}",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          "${branch.bonusSettings!.currentRedemptions ?? 0}/${branch.bonusSettings!.nextGoal}",
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: branch.bonusSettings!.cycleProgress,
+                      backgroundColor: Colors.white,
+                      color: Colors.amber,
+                      minHeight: 8,
                     ),
                   ),
-                ),
-                Text(
-                  "${branch.bonusSettings!.currentRedemptions ?? 0}/${branch.bonusSettings!.nextGoal}",
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-
-            // Progress Bar
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: branch.bonusSettings!.cycleProgress,
-                backgroundColor: AppColors.surfaceVariant,
-                color: AppColors.primary,
-                minHeight: 8,
+                ],
               ),
             ),
           ],
@@ -234,9 +426,9 @@ class MerchantDetailsScreen extends ConsumerWidget {
       ),
     );
   }
-
 }
 
+// Keeping Skeleton simple but functional for now
 class MerchantDetailsSkeleton extends StatelessWidget {
   const MerchantDetailsSkeleton({super.key});
 
@@ -244,102 +436,43 @@ class MerchantDetailsSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
-      appBar: AppBar(
-        surfaceTintColor: AppColors.surface,
-        backgroundColor: AppColors.surface,
-        elevation: 0,
-        toolbarHeight: 100,
-        centerTitle: true,
-        leading: Container(
-          alignment: Alignment.topLeft,
-          margin: const EdgeInsets.only(top: 8, left: 8),
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
-        title: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Skeleton Logo
-            BlinkingSkeleton(
-              width: 45,
-              height: 45,
-              borderRadius: 10,
-              baseColor: Colors.grey.withOpacity(0.2),
-            ),
-            const SizedBox(height: 8),
-            // Skeleton Name
-            BlinkingSkeleton(
-              width: 150,
-              height: 16,
-              baseColor: Colors.grey.withOpacity(0.2),
-            ),
-          ],
-        ),
-      ),
-      body: ListView.builder(
+      body: CustomScrollView(
         physics: const NeverScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        itemCount: 4,
-        itemBuilder: (context, index) => _buildSkeletonItem(),
-      ),
-    );
-  }
-
-  Widget _buildSkeletonItem() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textPrimary.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 200,
+            backgroundColor: AppColors.surface,
+            leading: const SizedBox(), 
+            flexibleSpace: FlexibleSpaceBar(
+               background: Container(color: Colors.grey.withOpacity(0.1)),
+            ),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              BlinkingSkeleton(
-                  width: 120, height: 16, baseColor: Colors.grey.withOpacity(0.1)),
-              BlinkingSkeleton(
-                  width: 80, height: 14, baseColor: Colors.grey.withOpacity(0.1)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          BlinkingSkeleton(
-              width: 100, height: 14, baseColor: Colors.grey.withOpacity(0.1)),
-          const SizedBox(height: 16),
-          const Divider(height: 1, color: AppColors.surfaceVariant),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: BlinkingSkeleton(
-                    width: double.infinity,
-                    height: 14,
-                    baseColor: Colors.grey.withOpacity(0.1)),
-              ),
-              const SizedBox(width: 16),
-              BlinkingSkeleton(
-                  width: 30, height: 12, baseColor: Colors.grey.withOpacity(0.1)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          BlinkingSkeleton(
-              width: double.infinity,
-              height: 8,
-              borderRadius: 4,
-              baseColor: Colors.grey.withOpacity(0.1)),
+          SliverPadding(
+            padding: const EdgeInsets.all(20),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                 Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    BlinkingSkeleton(width: 60, height: 60, borderRadius: 12, baseColor: Colors.grey.withOpacity(0.2)),
+                    const SizedBox(width: 16),
+                    Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                       BlinkingSkeleton(width: 200, height: 24, baseColor: Colors.grey.withOpacity(0.2)),
+                       const SizedBox(height: 8),
+                       BlinkingSkeleton(width: 100, height: 16, baseColor: Colors.grey.withOpacity(0.2)),
+                    ])
+                 ]),
+                 const SizedBox(height: 24),
+                 BlinkingSkeleton(width: 150, height: 16, baseColor: Colors.grey.withOpacity(0.2)),
+                 const SizedBox(height: 8),
+                  BlinkingSkeleton(width: double.infinity, height: 12, baseColor: Colors.grey.withOpacity(0.2)),
+                  const SizedBox(height: 8),
+                  BlinkingSkeleton(width: 250, height: 12, baseColor: Colors.grey.withOpacity(0.2)),
+                 const SizedBox(height: 32),
+                 BlinkingSkeleton(width: double.infinity, height: 200, borderRadius: 16, baseColor: Colors.grey.withOpacity(0.2)),
+                 const SizedBox(height: 16),
+                  BlinkingSkeleton(width: double.infinity, height: 200, borderRadius: 16, baseColor: Colors.grey.withOpacity(0.2)),
+              ]),
+            ),
+          )
         ],
       ),
     );

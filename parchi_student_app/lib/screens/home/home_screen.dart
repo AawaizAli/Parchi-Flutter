@@ -121,6 +121,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  // State for search
+  String _searchQuery = "";
+
   @override
   Widget build(BuildContext context) {
     final double screenHeight = MediaQuery.of(context).size.height;
@@ -194,7 +197,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 snap: true,
                 builder:
                     (BuildContext context, ScrollController scrollController) {
-                  return HomeSheetContent(scrollController: scrollController);
+                  return HomeSheetContent(
+                    scrollController: scrollController,
+                    searchQuery: _searchQuery, // Pass search query
+                  );
                 },
               ),
 
@@ -223,6 +229,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       profilePicture: user?.profilePicture,
                       studentInitials: initials.toUpperCase(),
                       onProfileTap: _navigateToProfile,
+                      onSearchChanged: (val) {
+                        setState(() {
+                          _searchQuery = val;
+                        });
+                      },
                     );
                   },
                   loading: () => CompactParchiHeader(

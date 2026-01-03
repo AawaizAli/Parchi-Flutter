@@ -18,10 +18,12 @@ import '../../models/student_merchant_model.dart';
 
 class HomeSheetContent extends ConsumerStatefulWidget {
   final ScrollController scrollController;
+  final String searchQuery; // [NEW]
 
   const HomeSheetContent({
     super.key,
     required this.scrollController,
+    this.searchQuery = "", // [NEW] Default empty
   });
 
   @override
@@ -84,7 +86,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
         children: [
           BlinkingSkeleton(
               width: double.infinity,
-              height: 100, // Reduced slightly to fit
+              height: 80, // Reduced to prevent overflow (100 -> 80)
               borderRadius: 12,
               baseColor: Colors.grey.withOpacity(0.15)),
           const SizedBox(height: 10),
@@ -169,6 +171,9 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
     final studentMerchantsAsync = ref.watch(studentMerchantsProvider);
     const double indicatorSize = 100.0; // Total height area for the loader
 
+    // [Filter Logic]
+    final isSearching = widget.searchQuery.isNotEmpty;
+
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.backgroundLight,
@@ -213,6 +218,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
             const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
             // --- SECTION 1: TOP BRANDS (GRID) ---
+            if (!isSearching)
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 18.0),
@@ -226,8 +232,9 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+            if (!isSearching) const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
+            if (!isSearching)
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 240, // Height for 2 rows of items
@@ -288,6 +295,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
             ),
 
             // --- SECTION 2: ACTIVE OFFERS (CAROUSEL) ---
+            if (!isSearching)
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(18, 24, 18, 12),
@@ -307,6 +315,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
               ),
             ),
 
+            if (!isSearching)
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 158,
@@ -408,14 +417,26 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                 ),
               ),
               data: (merchants) {
-                if (merchants.isEmpty) {
-                  return const SliverToBoxAdapter(
+                // [FILTERING LOGIC]
+                final filteredMerchants = widget.searchQuery.isEmpty
+                    ? merchants
+                    : merchants.where((m) {
+                        final query = widget.searchQuery.toLowerCase();
+                        final name = (m.businessName ?? "").toLowerCase();
+                        final cat = (m.category ?? "").toLowerCase();
+                        return name.contains(query) || cat.contains(query);
+                      }).toList();
+
+                if (filteredMerchants.isEmpty) {
+                  return SliverToBoxAdapter(
                     child: Padding(
-                      padding: EdgeInsets.all(20.0),
+                      padding: const EdgeInsets.all(20.0),
                       child: Center(
                         child: Text(
-                          "No restaurants available yet.",
-                          style: TextStyle(color: AppColors.textSecondary),
+                          widget.searchQuery.isNotEmpty
+                              ? "No results found for '${widget.searchQuery}'"
+                              : "No restaurants available yet.",
+                          style: const TextStyle(color: AppColors.textSecondary),
                         ),
                       ),
                     ),
@@ -427,7 +448,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        final merchant = merchants[index];
+                        final merchant = filteredMerchants[index];
                         return GestureDetector(
                           onTap: () => _onMerchantTap(context, merchant.id),
                           child: RestaurantBigCard(
@@ -438,7 +459,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                           ),
                         );
                       },
-                      childCount: merchants.length,
+                      childCount: filteredMerchants.length,
                     ),
                   ),
                 );

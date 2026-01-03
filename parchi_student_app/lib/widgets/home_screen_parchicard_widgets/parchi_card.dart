@@ -616,6 +616,7 @@ class CompactParchiHeader extends StatelessWidget {
   final String? profilePicture; // [NEW]
   final String studentInitials; // [NEW]
   final VoidCallback onProfileTap; // [NEW]
+  final ValueChanged<String>? onSearchChanged; // [NEW]
   final double scrollProgress;
   final VoidCallback onNotificationTap;
 
@@ -630,6 +631,7 @@ class CompactParchiHeader extends StatelessWidget {
     this.profilePicture, // [NEW]
     required this.studentInitials, // [NEW]
     required this.onProfileTap, // [NEW]
+    this.onSearchChanged, // [NEW]
   });
 
   @override
@@ -759,7 +761,8 @@ class CompactParchiHeader extends StatelessWidget {
                             color: AppColors.surfaceVariant,
                             borderRadius: BorderRadius.circular(25),
                           ),
-                          child: const TextField(
+                          child: TextField(
+                            onChanged: onSearchChanged,
                             decoration: InputDecoration(
                               hintText: "Search restaurants...",
                               hintStyle: TextStyle(

@@ -45,6 +45,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
       backgroundColor: AppColors.surface,
       appBar: AppBar(
         backgroundColor: AppColors.surface,
+        scrolledUnderElevation: 0,
         elevation: 0,
         centerTitle: true,
         title: const Text(
@@ -71,16 +72,18 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
     // 2. Determine Current User Info
     final userState = ref.watch(userProfileProvider);
     final user = userState.value;
-    
+
     // 3. Check if user is in the list
     bool isUserInList = false;
     if (user != null) {
       isUserInList = state.items.any((item) {
         // Match by ID, Parchi ID, or Name fallback
         if (item.userId != null && item.userId == user.id) return true;
-        if (item.parchiId != null && item.parchiId == user.parchiId) return true;
+        if (item.parchiId != null && item.parchiId == user.parchiId)
+          return true;
         // Basic name fallback if IDs missing
-        if (user.firstName != null && item.name.contains(user.firstName!)) return true;
+        if (user.firstName != null && item.name.contains(user.firstName!))
+          return true;
         return false;
       });
     }
@@ -126,7 +129,9 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
             },
             child: ListView.separated(
               padding: EdgeInsets.only(
-                  bottom: !isUserInList && user != null ? 100 : 0), // Pad for sticky bar
+                  bottom: !isUserInList && user != null
+                      ? 100
+                      : 0), // Pad for sticky bar
               itemCount: state.items.length + (state.hasMore ? 1 : 0),
               separatorBuilder: (context, index) {
                 if (index < state.items.length - 1 ||
@@ -174,7 +179,8 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
     if (user == null) return false;
     if (item.userId != null && item.userId == user.id) return true;
     if (item.parchiId != null && item.parchiId == user.parchiId) return true;
-    if (user.firstName != null && item.name.contains(user.firstName!)) return true;
+    if (user.firstName != null && item.name.contains(user.firstName!))
+      return true;
     return false;
   }
 
@@ -183,11 +189,13 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 64, color: AppColors.textSecondary),
+          const Icon(Icons.error_outline,
+              size: 64, color: AppColors.textSecondary),
           const SizedBox(height: 16),
           Text(
             error,
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 16),
+            style:
+                const TextStyle(color: AppColors.textSecondary, fontSize: 16),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -215,29 +223,31 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
   }
 
   Widget _buildStickyUserBar(dynamic user) {
-     final statsAsync = ref.watch(redemptionStatsProvider);
-     
-     return Container(
-       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-       decoration: BoxDecoration(
-         color: AppColors.primary,
-         borderRadius: BorderRadius.circular(16),
-         boxShadow: [
-           BoxShadow(
-             color: AppColors.primary.withOpacity(0.3),
-             blurRadius: 12,
-             offset: const Offset(0, 4),
-           )
-         ],
-       ),
-       child: Row(
+    final statsAsync = ref.watch(redemptionStatsProvider);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Row(
         children: [
-           // Rank Placeholder
+          // Rank Placeholder
           SizedBox(
             width: 40,
             child: statsAsync.when(
               data: (stats) => Text(
-                stats.leaderboardPosition > 0 ? "#${stats.leaderboardPosition}" : "-",
+                stats.leaderboardPosition > 0
+                    ? "#${stats.leaderboardPosition}"
+                    : "-",
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -249,11 +259,12 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
                   width: 30,
                   height: 20,
                   baseColor: Colors.white.withOpacity(0.3)),
-              error: (_, __) => const Text("-", style: TextStyle(color: Colors.white)),
+              error: (_, __) =>
+                  const Text("-", style: TextStyle(color: Colors.white)),
             ),
           ),
           const SizedBox(width: 8),
-          
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -267,38 +278,42 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                 Text(
+                Text(
                   user.university ?? "Your University",
                   style: const TextStyle(
                     color: Colors.white70,
                     fontSize: 12,
                   ),
-                  maxLines: 1, 
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
-          
+
           // Stats
-           Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             mainAxisSize: MainAxisSize.min,
             children: [
               statsAsync.when(
                 data: (stats) => Text(
                   "${stats.totalRedemptions}",
-                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold),
                 ),
                 loading: () => BlinkingSkeleton(
                     width: 30,
                     height: 20,
                     baseColor: Colors.white.withOpacity(0.3)),
-                error: (_,__) => const Text("-", style: TextStyle(color: Colors.white)),
+                error: (_, __) =>
+                    const Text("-", style: TextStyle(color: Colors.white)),
               ),
               const Text(
                 "Redemptions",
-                 style: TextStyle(
+                style: TextStyle(
                   color: Colors.white70,
                   fontSize: 10,
                 ),
@@ -306,8 +321,8 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
             ],
           )
         ],
-       ),
-     );
+      ),
+    );
   }
 
   Widget _buildLoadMoreIndicator() {
@@ -375,7 +390,9 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
                 Text(
                   university,
                   style: TextStyle(
-                    color: isCurrentUser ? Colors.white70 : AppColors.textSecondary,
+                    color: isCurrentUser
+                        ? Colors.white70
+                        : AppColors.textSecondary,
                     fontSize: 14,
                   ),
                 ),
@@ -398,7 +415,8 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
               Text(
                 "Redemptions",
                 style: TextStyle(
-                  color: isCurrentUser ? Colors.white70 : AppColors.textSecondary,
+                  color:
+                      isCurrentUser ? Colors.white70 : AppColors.textSecondary,
                   fontSize: 10,
                 ),
               ),
@@ -409,12 +427,12 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
     );
   }
 
-
   Widget _buildLeaderboardListSkeleton() {
     return ListView.separated(
       padding: const EdgeInsets.only(bottom: 100),
       itemCount: 15, // Show plenty of items
-      physics: const NeverScrollableScrollPhysics(), // Or allow scrolling? Usually static for skeleton
+      physics:
+          const NeverScrollableScrollPhysics(), // Or allow scrolling? Usually static for skeleton
       separatorBuilder: (context, index) => const Divider(
         height: 1,
         thickness: 1.0,

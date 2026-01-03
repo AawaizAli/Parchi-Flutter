@@ -785,7 +785,8 @@ class CompactParchiHeader extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      // Smaller Notification Circle
+                      // Smaller Notification Circle (HIDDEN TEMPORARILY)
+                      /*
                       Container(
                         width: 35, // Fixed smaller width
                         height: 35, // Fixed smaller height
@@ -801,6 +802,7 @@ class CompactParchiHeader extends StatelessWidget {
                           onPressed: onNotificationTap,
                         ),
                       ),
+                      */
                     ],
                   ),
                 ),

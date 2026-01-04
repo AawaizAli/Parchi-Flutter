@@ -68,8 +68,15 @@ class _LoginFormState extends ConsumerState<LoginForm> {
               (route) => false);
       }
     } catch (e) {
-      setState(
-          () => _errorMessage = e.toString().replaceFirst('Exception: ', ''));
+      final err = e.toString();
+      if (err.contains("SocketException") ||
+          err.contains("ClientException") ||
+          err.contains("Connection refused")) {
+        setState(() => _errorMessage = "Check your internet connection");
+      } else {
+        setState(() =>
+            _errorMessage = err.replaceFirst('Exception: ', ''));
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

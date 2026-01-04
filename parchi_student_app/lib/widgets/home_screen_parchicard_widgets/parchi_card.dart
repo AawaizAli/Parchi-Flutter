@@ -613,6 +613,12 @@ class CompactParchiHeader extends StatelessWidget {
   final String studentId;
   final String universityName; // [NEW]
   final bool isGolden;
+  final String? profilePicture; // [NEW]
+  final String studentInitials; // [NEW]
+  final VoidCallback onProfileTap; // [NEW]
+  final ValueChanged<String>? onSearchChanged; // [NEW]
+  final double scrollProgress;
+  final VoidCallback onNotificationTap;
   final bool isLoading; // [NEW]
 
   const CompactParchiHeader({

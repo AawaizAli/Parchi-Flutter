@@ -237,13 +237,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     );
                   },
                   loading: () => CompactParchiHeader(
-                    studentName: "LOADING...",
-                    studentId: "PK-....",
-                    universityName: "...",
+                    studentName: "", // Empty for skeleton
+                    studentId: "",
+                    universityName: "",
                     scrollProgress: progress,
                     onNotificationTap: _openNotifications,
-                    studentInitials: "ST",
+                    studentInitials: "",
                     onProfileTap: _navigateToProfile,
+                    isLoading: true, // [NEW] Trigger skeleton
                   ),
                   error: (err, stack) => CompactParchiHeader(
                     studentName: "OFFLINE",

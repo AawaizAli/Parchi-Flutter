@@ -796,7 +796,7 @@ class CompactParchiHeader extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+
                       // Smaller Notification Circle (HIDDEN TEMPORARILY)
                       /*
                       Container(

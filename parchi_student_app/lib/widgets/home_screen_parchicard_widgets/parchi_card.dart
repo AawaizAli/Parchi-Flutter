@@ -613,12 +613,7 @@ class CompactParchiHeader extends StatelessWidget {
   final String studentId;
   final String universityName; // [NEW]
   final bool isGolden;
-  final String? profilePicture; // [NEW]
-  final String studentInitials; // [NEW]
-  final VoidCallback onProfileTap; // [NEW]
-  final ValueChanged<String>? onSearchChanged; // [NEW]
-  final double scrollProgress;
-  final VoidCallback onNotificationTap;
+  final bool isLoading; // [NEW]
 
   const CompactParchiHeader({
     super.key,
@@ -632,6 +627,7 @@ class CompactParchiHeader extends StatelessWidget {
     required this.studentInitials, // [NEW]
     required this.onProfileTap, // [NEW]
     this.onSearchChanged, // [NEW]
+    this.isLoading = false, // [NEW]
   });
 
   @override
@@ -716,44 +712,54 @@ class CompactParchiHeader extends StatelessWidget {
                   child: Row(
                     children: [
                       // [NEW] Profile Button (Left)
-                      GestureDetector(
-                        onTap: onProfileTap,
-                        child: Container(
-                          width: 35,
-                          height: 35,
-                          decoration: const BoxDecoration(
-                            color: AppColors.surfaceVariant,
-                            shape: BoxShape.circle,
-                          ),
-                          child: ClipOval(
-                            child: profilePicture != null
-                                ? Image.network(
-                                    profilePicture!,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) =>
-                                        Center(
-                                      child: Text(
-                                        studentInitials,
-                                        style: const TextStyle(
-                                          color: AppColors.textSecondary,
-                                          fontWeight: FontWeight.bold,
+                      isLoading
+                          ? Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: BlinkingSkeleton(
+                                width: 35,
+                                height: 35,
+                                borderRadius: 17.5, // Circular
+                                baseColor: AppColors.surfaceVariant,
+                              ),
+                            )
+                          : GestureDetector(
+                              onTap: onProfileTap,
+                              child: Container(
+                                width: 35,
+                                height: 35,
+                                margin: const EdgeInsets.only(right: 8),
+                                decoration: const BoxDecoration(
+                                  color: AppColors.surfaceVariant,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: ClipOval(
+                                  child: profilePicture != null
+                                      ? Image.network(
+                                          profilePicture!,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) =>
+                                              Center(
+                                            child: Text(
+                                              studentInitials,
+                                              style: const TextStyle(
+                                                color: AppColors.textSecondary,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        )
+                                      : Center(
+                                          child: Text(
+                                            studentInitials,
+                                            style: const TextStyle(
+                                              color: AppColors.textSecondary,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                    ),
-                                  )
-                                : Center(
-                                    child: Text(
-                                      studentInitials,
-                                      style: const TextStyle(
-                                        color: AppColors.textSecondary,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
+                                ),
+                              ),
+                            ),
                       Expanded(
                         child: Container(
                           height: 35,
@@ -830,42 +836,62 @@ class CompactParchiHeader extends StatelessWidget {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       const SizedBox(height: 5),
-                                      Text(
-                                        studentName,
-                                        style: TextStyle(
-                                          color: textColor,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                      ),
+                                      isLoading
+                                          ? BlinkingSkeleton(
+                                              width: 120,
+                                              height: 16,
+                                              baseColor:
+                                                  Colors.white.withOpacity(0.3),
+                                            )
+                                          : Text(
+                                              studentName,
+                                              style: TextStyle(
+                                                color: textColor,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w900,
+                                              ),
+                                            ),
                                       const SizedBox(height: 1),
-                                      Text(
-                                        universityName.toUpperCase(),
-                                        style: TextStyle(
-                                          color: secondaryTextColor,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
+                                      isLoading
+                                          ? Padding(
+                                              padding: const EdgeInsets.only(
+                                                  top: 4.0),
+                                              child: BlinkingSkeleton(
+                                                width: 80,
+                                                height: 10,
+                                                baseColor:
+                                                    Colors.white.withOpacity(0.3),
+                                              ),
+                                            )
+                                          : Text(
+                                              universityName.toUpperCase(),
+                                              style: TextStyle(
+                                                color: secondaryTextColor,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
                                     ],
                                   ),
-                                  Text(
-                                    studentId,
-                                    style: TextStyle(
-                                      color: textColor,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
+                                  isLoading
+                                      ? BlinkingSkeleton(
+                                          width: 60,
+                                          height: 20,
+                                          baseColor:
+                                              Colors.white.withOpacity(0.3),
+                                        )
+                                      : Text(
+                                          studentId,
+                                          style: TextStyle(
+                                            color: textColor,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                        ),
                                 ],
                               ),
                             ),
-                            // Mini Icon (Kept as requested or removed? User said "parchi-icon.svg to be in the compact card just like the big one... placed behind search bar". 
-                            // The mini icon was previously here. I will keep it as it wasn't explicitly asked to be removed, but the "background icon" request might supersede it.
-                            // Actually, usually "just like the big one" implies the background decoration. 
-                            // The mini icon on the right might be redundant if the big one is there, but let's keep it for now as a logo unless it looks cluttered. 
-                            // This refers to the background decoration.
-                            // I will keep the mini icon for now as it serves as a logo.
+                            // Mini Icon (Kept as requested)
                            
                           ],
                         ),

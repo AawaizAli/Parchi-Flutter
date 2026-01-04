@@ -8,7 +8,7 @@ import '../../providers/user_provider.dart';
 import '../auth/login_screens/login_screen.dart';
 import 'Change_password/change_password_screen.dart';
 import 'pfp_change/profile_picture_upload_screen.dart';
-import 'redemption_history/redemption_history_screen.dart';
+import '../../widgets/common/spinning_loader.dart'; // [REQUIRED]
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -26,6 +26,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   Widget? _activeSheetContent;
   // State to track if we should show the "Floating Avatar" effect
   bool _showFocusedAvatar = false;
+  // [NEW] Track uploading state from child sheet
+  bool _isUploadingPfp = false;
 
   @override
   void initState() {
@@ -51,7 +53,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   // 1. Open Profile Picture Sheet (With Focused Avatar)
   void _openPfpSheet() {
     setState(() {
-      _activeSheetContent = ProfilePictureUploadSheet(onClose: _closeModal);
+      _activeSheetContent = ProfilePictureUploadSheet(
+        onClose: _closeModal,
+        onLoadingStateChanged: (isLoading) {
+          if (mounted) setState(() => _isUploadingPfp = isLoading);
+        },
+      );
       _showFocusedAvatar = true; // <--- TRUE: Avatar stays bright on top
     });
     _modalController.forward(from: 0.0);
@@ -201,6 +208,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         SvgPicture.asset(
                           'assets/ParchiFullTextYellow.svg',
                           height: 24,
+                          colorFilter: const ColorFilter.mode(
+                              AppColors.parchiGold, BlendMode.srcIn),
                         ),
                         const SizedBox(height: 20),
 
@@ -323,6 +332,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                 children: [
                                   // The Bright, Sharp Avatar
                                   buildAvatar(isInteractive: false),
+                                  // [UX IMPROVEMENT]: Loader Overlay
+                                  if (_isUploadingPfp)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 20.0),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.5),
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: const Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            SpinningLoader(size: 20, color: Colors.white),
+                                            SizedBox(width: 8),
+                                            Text("Uploading...",
+                                                style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.bold)),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
                                 ],
                               ),
                             ),

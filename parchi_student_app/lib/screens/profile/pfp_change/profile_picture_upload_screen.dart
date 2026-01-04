@@ -5,12 +5,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../utils/colours.dart';
 import '../../../services/supabase_storage_service.dart';
 import '../../../services/auth_service.dart';
+import '../../../widgets/common/spinning_loader.dart';
 import '../../../providers/user_provider.dart';
 
 class ProfilePictureUploadSheet extends ConsumerStatefulWidget {
-  final VoidCallback onClose; // Callback to handle closing animation
+  /* 
+   * [UX IMPROVEMENT]: Callbacks to notify parent (ProfileScreen) about upload state.
+   * This allows the "Focused Avatar" in the parent to show a loader.
+   */
+  final VoidCallback onClose; // [RESTORED]
+  final ValueChanged<bool>? onLoadingStateChanged;
 
-  const ProfilePictureUploadSheet({super.key, required this.onClose});
+  const ProfilePictureUploadSheet({
+    super.key, 
+    required this.onClose,
+    this.onLoadingStateChanged,
+  });
 
   @override
   ConsumerState<ProfilePictureUploadSheet> createState() => _ProfilePictureUploadSheetState();
@@ -37,6 +47,8 @@ class _ProfilePictureUploadSheetState extends ConsumerState<ProfilePictureUpload
     if (_selectedImage == null) return;
 
     setState(() => _isUploading = true);
+    widget.onLoadingStateChanged?.call(true); // Notify Parent
+
     try {
       final user = ref.read(userProfileProvider).value;
       if (user == null) throw Exception("User not found");
@@ -46,12 +58,11 @@ class _ProfilePictureUploadSheetState extends ConsumerState<ProfilePictureUpload
       await ref.refresh(userProfileProvider.future);
 
       if (mounted) {
-        // Trigger the close animation via callback
         widget.onClose(); 
         
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("Profile updated!"), 
-          backgroundColor: Colors.green,
+          content: Text("Profile updated!", style: TextStyle(color: AppColors.primary)), 
+          backgroundColor: Colors.white,
           behavior: SnackBarBehavior.floating,
         ));
       }
@@ -64,7 +75,10 @@ class _ProfilePictureUploadSheetState extends ConsumerState<ProfilePictureUpload
         ));
       }
     } finally {
-      if (mounted) setState(() => _isUploading = false);
+      if (mounted) {
+        setState(() => _isUploading = false);
+        widget.onLoadingStateChanged?.call(false); // Notify Parent
+      }
     }
   }
 
@@ -108,11 +122,12 @@ class _ProfilePictureUploadSheetState extends ConsumerState<ProfilePictureUpload
                 child: ElevatedButton(
                   onPressed: _isUploading ? null : _handleUpload,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
+                    backgroundColor: AppColors.primary, // Keep Blue
+                    disabledBackgroundColor: AppColors.primary, // Keep Blue when loading
                     foregroundColor: Colors.white,
                   ),
                   child: _isUploading 
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white)) 
+                      ? const SpinningLoader(size: 20, color: Colors.white)
                       : const Text("Save Photo"),
                 ),
               ),

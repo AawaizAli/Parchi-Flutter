@@ -82,7 +82,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     }
 
     return Scaffold(
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false, // [FIX] Prevent whole screen jump
       body: Stack(
         children: [
           // 1. BACKGROUND
@@ -142,23 +142,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(40),
-                child: PageView(
-                  controller: _pageController,
-                  physics:
-                      const NeverScrollableScrollPhysics(), // Disable swipe
-                  children: [
-                    // PAGE 0: FORGOT PASSWORD
-                    ForgotPasswordForm(onBackTap: _goToLogin),
+                child: Padding(
+                  // [FIX] Constrain the PageView to the visible area above the keyboard
+                  // This allows internal ScrollViews to auto-scroll focused fields into view
+                  padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).viewInsets.bottom),
+                  child: PageView(
+                    controller: _pageController,
+                    physics:
+                        const NeverScrollableScrollPhysics(), // Disable swipe
+                    children: [
+                      // PAGE 0: FORGOT PASSWORD
+                      ForgotPasswordForm(onBackTap: _goToLogin),
 
-                    // PAGE 1: LOGIN
-                    LoginForm(
-                      onSignupTap: _goToSignup,
-                      onForgotTap: _goToForgotPassword,
-                    ),
+                      // PAGE 1: LOGIN
+                      LoginForm(
+                        onSignupTap: _goToSignup,
+                        onForgotTap: _goToForgotPassword,
+                      ),
 
-                    // PAGE 2: SIGNUP
-                    SignupForm(onLoginTap: _goToLogin),
-                  ],
+                      // PAGE 2: SIGNUP
+                      SignupForm(onLoginTap: _goToLogin),
+                    ],
+                  ),
                 ),
               ),
             ),

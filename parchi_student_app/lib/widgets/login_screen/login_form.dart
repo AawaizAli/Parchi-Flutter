@@ -77,7 +77,8 @@ class _LoginFormState extends ConsumerState<LoginForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
+      physics: const ClampingScrollPhysics(),
       padding: const EdgeInsets.all(24.0),
       child: Form(
         key: _formKey,
@@ -99,10 +100,11 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             ),
             const SizedBox(height: 30),
 
-            _buildTextField(_emailController, "Email", Icons.email_outlined),
+            _buildTextField(_emailController, "Email", Icons.email_outlined,
+                action: TextInputAction.next),
             const SizedBox(height: 16),
             _buildTextField(_passwordController, "Password", Icons.lock_outline,
-                isPassword: true),
+                isPassword: true, action: TextInputAction.done),
 
             if (_errorMessage != null) ...[
               const SizedBox(height: 10),
@@ -128,7 +130,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
               ),
             ),
 
-            const Spacer(),
+            const SizedBox(height: 48), // Replaced Spacer with fixed space
 
             SizedBox(
               width: double.infinity,
@@ -158,7 +160,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
 
   Widget _buildTextField(
       TextEditingController controller, String hint, IconData icon,
-      {bool isPassword = false}) {
+      {bool isPassword = false, TextInputAction action = TextInputAction.done}) {
     return Container(
       height: 56,
       decoration: BoxDecoration(
@@ -167,6 +169,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
       child: TextFormField(
         controller: controller,
         obscureText: isPassword && !_isPasswordVisible,
+        textInputAction: action, // [NEW] Controls keyboard return key
         decoration: InputDecoration(
           hintText: hint,
           prefixIcon: Icon(icon, color: AppColors.textSecondary),

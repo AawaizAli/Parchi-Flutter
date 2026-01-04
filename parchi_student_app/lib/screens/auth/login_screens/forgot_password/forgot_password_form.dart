@@ -75,7 +75,8 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
+      physics: const ClampingScrollPhysics(),
       padding: const EdgeInsets.all(24.0),
       child: Form(
         key: _formKey,
@@ -161,7 +162,7 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
               ),
             ],
 
-            const Spacer(),
+            const SizedBox(height: 48), // Replaced Spacer
 
             // Send Link Button
             SizedBox(

@@ -82,6 +82,7 @@ class _SignupFormState extends State<SignupForm> {
     // REMOVED: LayoutBuilder and ConstrainedBox that forced full height
     return SingleChildScrollView(
       physics: const ClampingScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 24), // Just standard padding
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24.0),
         child: Form(
@@ -115,25 +116,25 @@ class _SignupFormState extends State<SignupForm> {
               const SizedBox(height: 20),
 
               _buildTextField(_firstNameController, "First Name",
-                  Icons.person_outline),
+                  Icons.person_outline, action: TextInputAction.next),
               const SizedBox(height: 12),
               _buildTextField(
-                  _lastNameController, "Last Name", Icons.person_outline),
+                  _lastNameController, "Last Name", Icons.person_outline, action: TextInputAction.next),
               const SizedBox(height: 12),
               _buildTextField(_emailController, "Student Email",
-                  Icons.email_outlined),
+                  Icons.email_outlined, action: TextInputAction.next),
               const SizedBox(height: 12),
               _buildTextField(_passwordController, "Password",
                   Icons.lock_outline,
-                  isPassword: true),
+                  isPassword: true, action: TextInputAction.next),
               const SizedBox(height: 12),
               _buildTextField(_confirmPasswordController,
                   "Confirm Password", Icons.lock_outline,
-                  isPassword: true),
+                  isPassword: true, action: TextInputAction.next),
               const SizedBox(height: 12),
               _buildTextField(_phoneController, "Phone (Optional)",
                   Icons.phone_outlined,
-                  isNumber: true),
+                  isNumber: true, action: TextInputAction.done),
               const SizedBox(height: 12),
               _buildUniversityDropdown(),
 
@@ -186,7 +187,7 @@ class _SignupFormState extends State<SignupForm> {
 
   Widget _buildTextField(
       TextEditingController controller, String hint, IconData icon,
-      {bool isPassword = false, bool isNumber = false}) {
+      {bool isPassword = false, bool isNumber = false, TextInputAction action = TextInputAction.done}) {
     return Container(
       decoration: BoxDecoration(
           color: AppColors.textSecondary.withOpacity(0.1),
@@ -195,6 +196,7 @@ class _SignupFormState extends State<SignupForm> {
         controller: controller,
         obscureText: isPassword && !_isPasswordVisible,
         keyboardType: isNumber ? TextInputType.phone : TextInputType.text,
+        textInputAction: action, // [NEW] Controls keyboard return key
         validator: (val) {
           if (isNumber) return null;
           if (val == null || val.isEmpty) return "Required";

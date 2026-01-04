@@ -199,10 +199,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
                         // Logo
                         SvgPicture.asset(
-                          'assets/ParchiFullText.svg',
+                          'assets/ParchiFullTextYellow.svg',
                           height: 24,
-                          colorFilter: const ColorFilter.mode(
-                              AppColors.parchiGold, BlendMode.srcIn),
                         ),
                         const SizedBox(height: 20),
 

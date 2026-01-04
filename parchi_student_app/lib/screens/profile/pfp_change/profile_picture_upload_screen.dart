@@ -14,12 +14,14 @@ class ProfilePictureUploadSheet extends ConsumerStatefulWidget {
    * This allows the "Focused Avatar" in the parent to show a loader.
    */
   final VoidCallback onClose; // [RESTORED]
-  final ValueChanged<bool>? onLoadingStateChanged;
+  final ValueChanged<bool>? onLoadingStateChanged; // [RESTORED]
+  final ValueChanged<File?>? onImageSelected; // [NEW]
 
   const ProfilePictureUploadSheet({
     super.key, 
     required this.onClose,
     this.onLoadingStateChanged,
+    this.onImageSelected, // [NEW]
   });
 
   @override
@@ -37,6 +39,7 @@ class _ProfilePictureUploadSheetState extends ConsumerState<ProfilePictureUpload
       final XFile? picked = await _picker.pickImage(source: source, imageQuality: 70);
       if (picked != null) {
         setState(() => _selectedImage = File(picked.path));
+        widget.onImageSelected?.call(_selectedImage); // [NEW] Notify Parent
       }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));

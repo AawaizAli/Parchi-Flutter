@@ -1,3 +1,4 @@
+import 'dart:io'; // [REQUIRED]
 import 'dart:ui'; // [REQUIRED] for ImageFilter
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/material.dart';
@@ -28,6 +29,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   bool _showFocusedAvatar = false;
   // [NEW] Track uploading state from child sheet
   bool _isUploadingPfp = false;
+  File? _localPreviewImage; // [NEW] Preview local selection
+
 
   @override
   void initState() {
@@ -58,6 +61,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         onLoadingStateChanged: (isLoading) {
           if (mounted) setState(() => _isUploadingPfp = isLoading);
         },
+        onImageSelected: (file) {
+          if (mounted) setState(() => _localPreviewImage = file);
+        },
       );
       _showFocusedAvatar = true; // <--- TRUE: Avatar stays bright on top
     });
@@ -79,7 +85,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     // Reverse animation, then clear content
     _modalController.reverse().whenComplete(() {
       if (mounted) {
-        setState(() => _activeSheetContent = null);
+        setState(() {
+          _activeSheetContent = null;
+          _localPreviewImage = null; // Clear preview on close
+        });
       }
     });
   }
@@ -145,9 +154,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     child: CircleAvatar(
                       radius: 50, // Slightly smaller to fit screen
                       backgroundColor: AppColors.backgroundLight,
-                      backgroundImage: (user?.profilePicture != null)
-                          ? NetworkImage(user!.profilePicture!)
-                          : null,
+                      backgroundImage: (_localPreviewImage != null)
+                          ? FileImage(_localPreviewImage!) as ImageProvider
+                          : (user?.profilePicture != null)
+                              ? NetworkImage(user!.profilePicture!)
+                              : null,
                       child: (user?.profilePicture == null)
                           ? const Icon(Icons.person,
                               size: 50, color: AppColors.textSecondary)

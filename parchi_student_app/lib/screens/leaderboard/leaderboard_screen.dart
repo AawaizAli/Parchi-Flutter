@@ -94,7 +94,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
         if (isLoading)
           _buildLeaderboardListSkeleton()
         else if (hasError)
-          _buildErrorView(state.error!)
+          _buildLeaderboardListSkeleton() // Skeleton on error
         else if (isEmpty)
           _buildEmptyView()
         else

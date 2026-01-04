@@ -399,9 +399,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
           },
           loading: () => const Center(
               child: CircularProgressIndicator(color: AppColors.textOnPrimary)),
-          error: (err, stack) => Center(
-              child: Text("Error: $err",
-                  style: const TextStyle(color: AppColors.textOnPrimary))),
+          error: (err, stack) => const Center(
+              child: CircularProgressIndicator(
+                  color: AppColors.textOnPrimary)), // Loading on error
         ),
       ),
     );

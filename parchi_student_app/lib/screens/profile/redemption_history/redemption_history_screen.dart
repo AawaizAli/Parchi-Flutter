@@ -121,7 +121,7 @@ class _RedemptionHistoryScreenState
                     ],
                   ),
                   loading: () => _buildHeaderSkeleton(),
-                  error: (_, __) => const SizedBox.shrink(),
+                  error: (_, __) => _buildHeaderSkeleton(), // Skeleton on error
                 ),
               ),
             ),
@@ -135,9 +135,7 @@ class _RedemptionHistoryScreenState
           ),
           child: historyAsync.when(
             loading: () => _buildListSkeleton(),
-            error: (err, stack) => Center(
-                child: Text('Error: $err',
-                    style: const TextStyle(color: AppColors.error))),
+            error: (err, stack) => _buildListSkeleton(), // Skeleton on error
             data: (items) {
               if (items.isEmpty) return _buildEmptyState();
               return ClipRRect(

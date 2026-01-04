@@ -183,7 +183,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         universityName: "",
                         isLoading: true),
                     error: (err, stack) => const ParchiCard(
-                        studentName: "OFFLINE", studentId: "ERROR"),
+                        studentName: "",
+                        studentId: "",
+                        universityName: "",
+                        isLoading: true), // Skeleton on error
                   ),
                 ),
               ),
@@ -247,13 +250,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     isLoading: true, // [NEW] Trigger skeleton
                   ),
                   error: (err, stack) => CompactParchiHeader(
-                    studentName: "OFFLINE",
-                    studentId: "ERROR",
-                    universityName: "...",
+                    studentName: "",
+                    studentId: "",
+                    universityName: "",
                     scrollProgress: progress,
                     onNotificationTap: _openNotifications,
-                    studentInitials: "ER",
+                    studentInitials: "",
                     onProfileTap: _navigateToProfile,
+                    isLoading: true, // Skeleton on error
                   ),
                 ),
               ),

@@ -52,6 +52,12 @@ class ParchiApp extends StatelessWidget {
           ),
           iconTheme: IconThemeData(color: AppColors.textPrimary),
         ),
+        // [NEW] Global Cursor & Selection Color
+        textSelectionTheme: TextSelectionThemeData(
+          cursorColor: AppColors.primary,
+          selectionColor: AppColors.primary.withOpacity(0.3),
+          selectionHandleColor: AppColors.primary,
+        ),
       ),
       home: const AuthWrapper(),
     );

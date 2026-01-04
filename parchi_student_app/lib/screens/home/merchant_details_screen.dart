@@ -23,38 +23,9 @@ class MerchantDetailsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
-      body: CustomRefreshIndicator(
-        onRefresh: refresh,
-        offsetToArmed: 100.0,
-        builder: (BuildContext context, Widget child,
-            IndicatorController controller) {
-          return Stack(
-            children: <Widget>[
-              AnimatedBuilder(
-                animation: controller,
-                builder: (context, _) {
-                  return SizedBox(
-                    height: controller.value * 100.0,
-                    width: double.infinity,
-                    child: Center(
-                      child: ParchiLoader(
-                        isLoading: controller.isLoading,
-                        progress: controller.value,
-                      ),
-                    ),
-                  );
-                },
-              ),
-              Transform.translate(
-                offset: Offset(0.0, controller.value * 100.0),
-                child: child,
-              ),
-            ],
-          );
-        },
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
+      body: NestedScrollView(
+        headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+          return <Widget>[
             // --- 1. SLIVER APP BAR WITH BANNER ---
             SliverAppBar(
               expandedHeight: 200.0,
@@ -69,8 +40,8 @@ class MerchantDetailsScreen extends ConsumerWidget {
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
-                  icon:
-                      const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                  icon: const Icon(Icons.arrow_back,
+                      color: AppColors.textPrimary),
                   onPressed: () => Navigator.pop(context),
                   tooltip: 'Back',
                 ),
@@ -86,133 +57,170 @@ class MerchantDetailsScreen extends ConsumerWidget {
                     : Container(color: AppColors.surfaceVariant),
               ),
             ),
-
-            // --- 2. MERCHANT INFO HEADER ---
-            SliverToBoxAdapter(
-              child: Container(
-                color: AppColors.surface,
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Logo
-                        Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                                color: AppColors.surfaceVariant.withOpacity(0.5)),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: merchant.logoPath != null
-                                ? Image.network(
-                                    merchant.logoPath!,
-                                    fit: BoxFit.contain,
-                                    errorBuilder: (ctx, err, stack) => const Icon(
-                                        Icons.store,
-                                        size: 30,
-                                        color: AppColors.textSecondary),
-                                  )
-                                : const Icon(Icons.store,
-                                    size: 30, color: AppColors.textSecondary),
-                          ),
+          ];
+        },
+        body: CustomRefreshIndicator(
+          onRefresh: refresh,
+          offsetToArmed: 100.0,
+          builder: (BuildContext context, Widget child,
+              IndicatorController controller) {
+            return Stack(
+              children: <Widget>[
+                AnimatedBuilder(
+                  animation: controller,
+                  builder: (context, _) {
+                    return SizedBox(
+                      height: controller.value * 100.0,
+                      width: double.infinity,
+                      child: Center(
+                        child: ParchiLoader(
+                          isLoading: controller.isLoading,
+                          progress: controller.value,
                         ),
-                        const SizedBox(width: 16),
-                        // Name & Category
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                merchant.businessName,
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              if (merchant.category != null) ...[
-                                const SizedBox(height: 4),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    merchant.category!,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
+                      ),
+                    );
+                  },
+                ),
+                Transform.translate(
+                  offset: Offset(0.0, controller.value * 100.0),
+                  child: child,
+                ),
+              ],
+            );
+          },
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              // --- 2. MERCHANT INFO HEADER ---
+              SliverToBoxAdapter(
+                child: Container(
+                  color: AppColors.surface,
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Logo
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: AppColors.surfaceVariant
+                                      .withOpacity(0.5)),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
                                 ),
                               ],
-                            ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: merchant.logoPath != null
+                                  ? Image.network(
+                                      merchant.logoPath!,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (ctx, err, stack) =>
+                                          const Icon(Icons.store,
+                                              size: 30,
+                                              color: AppColors.textSecondary),
+                                    )
+                                  : const Icon(Icons.store,
+                                      size: 30,
+                                      color: AppColors.textSecondary),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          // Name & Category
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  merchant.businessName,
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                if (merchant.category != null) ...[
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          AppColors.primary.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      merchant.category!,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // Terms & Conditions
+                      if (merchant.termsAndConditions != null &&
+                          merchant.termsAndConditions!.isNotEmpty) ...[
+                        const SizedBox(height: 24),
+                        const Text(
+                          "Terms & Conditions",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          merchant.termsAndConditions!,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
+                            height: 1.5,
                           ),
                         ),
                       ],
-                    ),
-
-                    // Terms & Conditions
-                    if (merchant.termsAndConditions != null &&
-                        merchant.termsAndConditions!.isNotEmpty) ...[
-                      const SizedBox(height: 24),
-                      const Text(
-                        "Terms & Conditions",
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        merchant.termsAndConditions!,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                          height: 1.5,
-                        ),
-                      ),
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
 
-            // --- 3. SPACER ---
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+              // --- 3. SPACER ---
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-            // --- 4. BRANCHES & OFFERS LIST ---
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final branch = visibleBranches[index];
-                    return _buildBranchItem(branch);
-                  },
-                  childCount: visibleBranches.length,
+              // --- 4. BRANCHES & OFFERS LIST ---
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final branch = visibleBranches[index];
+                      return _buildBranchItem(branch);
+                    },
+                    childCount: visibleBranches.length,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -268,21 +276,6 @@ class MerchantDetailsScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              // Contact button if phone exists
-              if (branch.contactPhone != null &&
-                  branch.contactPhone!.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.05),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.phone,
-                    size: 20,
-                    color: AppColors.primary,
-                  ),
-                ),
             ],
           ),
           
@@ -441,7 +434,18 @@ class MerchantDetailsSkeleton extends StatelessWidget {
           SliverAppBar(
             expandedHeight: 200,
             backgroundColor: AppColors.surface,
-            leading: const SizedBox(), 
+            leading: Container(
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.surface.withOpacity(0.8),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                onPressed: () => Navigator.pop(context),
+                tooltip: 'Back',
+              ),
+            ),
             flexibleSpace: FlexibleSpaceBar(
                background: Container(color: Colors.grey.withOpacity(0.1)),
             ),

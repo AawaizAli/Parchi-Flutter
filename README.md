@@ -2,6 +2,8 @@
 
 A Flutter-based mobile application for students to discover and redeem discounts from verified merchants using a secure token-based system.
 
+bathroom commit
+
 ## 🚀 Features
 
 - **Student Verification**: Secure KYC process with document upload

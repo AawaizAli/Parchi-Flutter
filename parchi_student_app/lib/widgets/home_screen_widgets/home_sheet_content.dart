@@ -254,7 +254,21 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                           return _buildBrandSkeleton();
                         },
                       ),
-                      error: (err, stack) => Center(child: Text('Error: $err')),
+                      error: (err, stack) => GridView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          childAspectRatio: 1.05,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                        ),
+                        itemCount: 6,
+                        itemBuilder: (context, index) {
+                          return _buildBrandSkeleton();
+                        },
+                      ),
                       data: (brands) {
                         if (brands.isEmpty) {
                           return const Center(
@@ -328,11 +342,13 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                       return _buildOfferSkeleton();
                     },
                   ),
-                  error: (err, stack) => Center(
-                    child: Text(
-                      "Error loading offers",
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
+                  error: (err, stack) => ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: 3,
+                    itemBuilder: (context, index) {
+                      return _buildOfferSkeleton();
+                    },
                   ),
                   data: (offers) {
                     if (offers.isEmpty) {
@@ -405,14 +421,14 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                   ),
                 ),
               ),
-              error: (err, stack) => SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Center(
-                    child: Text(
-                      "Error loading restaurants",
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
+              error: (err, stack) => SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      return _buildRestaurantListItemSkeleton();
+                    },
+                    childCount: 4,
                   ),
                 ),
               ),

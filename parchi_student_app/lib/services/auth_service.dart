@@ -163,6 +163,8 @@ class AuthService {
     required String dateOfBirth,
     required String studentIdCardFrontUrl,
     required String studentIdCardBackUrl,
+    required String cnicFrontImageUrl,
+    required String cnicBackImageUrl,
     required String selfieImageUrl,
   }) async {
     try {
@@ -178,6 +180,8 @@ class AuthService {
         'dateOfBirth': dateOfBirth,
         'studentIdCardFrontUrl': studentIdCardFrontUrl,
         'studentIdCardBackUrl': studentIdCardBackUrl,
+        'cnicFrontImageUrl': cnicFrontImageUrl,
+        'cnicBackImageUrl': cnicBackImageUrl,
         'selfieImageUrl': selfieImageUrl,
       };
 

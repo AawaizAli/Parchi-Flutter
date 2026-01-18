@@ -81,11 +81,63 @@ class SupabaseStorageService {
     }
   }
 
+  /// Upload CNIC front image to Supabase Storage
+  /// Returns the public URL of the uploaded image
+  Future<String> uploadCnicFrontImage(File imageFile, String userId) async {
+    try {
+      final String filePath = SupabaseConfig.getCnicFrontPath(userId);
+      
+      // Upload file to Supabase Storage
+      await _supabase.storage
+          .from(SupabaseConfig.studentKycBucket)
+          .upload(filePath, imageFile, fileOptions: const FileOptions(
+            cacheControl: '3600',
+            upsert: false,
+          ));
+
+      // Get public URL
+      final String publicUrl = _supabase.storage
+          .from(SupabaseConfig.studentKycBucket)
+          .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (e) {
+      throw Exception('Failed to upload CNIC front image: $e');
+    }
+  }
+
+  /// Upload CNIC back image to Supabase Storage
+  /// Returns the public URL of the uploaded image
+  Future<String> uploadCnicBackImage(File imageFile, String userId) async {
+    try {
+      final String filePath = SupabaseConfig.getCnicBackPath(userId);
+      
+      // Upload file to Supabase Storage
+      await _supabase.storage
+          .from(SupabaseConfig.studentKycBucket)
+          .upload(filePath, imageFile, fileOptions: const FileOptions(
+            cacheControl: '3600',
+            upsert: false,
+          ));
+
+      // Get public URL
+      final String publicUrl = _supabase.storage
+          .from(SupabaseConfig.studentKycBucket)
+          .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (e) {
+      throw Exception('Failed to upload CNIC back image: $e');
+    }
+  }
+
   /// Upload all KYC images and return their URLs
-  /// Returns a map with 'studentIdUrl', 'studentIdBackUrl', and 'selfieUrl' keys
+  /// Returns a map with 'studentIdUrl', 'studentIdBackUrl', 'cnicFrontUrl', 'cnicBackUrl', and 'selfieUrl' keys
   Future<Map<String, String>> uploadKycImages({
     required File studentIdImage,
     required File studentIdBackImage,
+    required File cnicFrontImage,
+    required File cnicBackImage,
     required File selfieImage,
     required String userId,
   }) async {
@@ -94,13 +146,17 @@ class SupabaseStorageService {
       final results = await Future.wait([
         uploadStudentIdImage(studentIdImage, userId),
         uploadStudentIdBackImage(studentIdBackImage, userId),
+        uploadCnicFrontImage(cnicFrontImage, userId),
+        uploadCnicBackImage(cnicBackImage, userId),
         uploadSelfieImage(selfieImage, userId),
       ]);
 
       return {
         'studentIdUrl': results[0],
         'studentIdBackUrl': results[1],
-        'selfieUrl': results[2],
+        'cnicFrontUrl': results[2],
+        'cnicBackUrl': results[3],
+        'selfieUrl': results[4],
       };
     } catch (e) {
       throw Exception('Failed to upload KYC images: $e');

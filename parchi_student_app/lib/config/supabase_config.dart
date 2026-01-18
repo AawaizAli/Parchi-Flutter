@@ -33,5 +33,9 @@ class SupabaseConfig {
       'student-id-back/$userId/${DateTime.now().millisecondsSinceEpoch}.jpg';
   static String getSelfiePath(String userId) =>
       'selfie/$userId/${DateTime.now().millisecondsSinceEpoch}.jpg';
+  static String getCnicFrontPath(String userId) =>
+      'cnic-front/$userId/${DateTime.now().millisecondsSinceEpoch}.jpg';
+  static String getCnicBackPath(String userId) =>
+      'cnic-back/$userId/${DateTime.now().millisecondsSinceEpoch}.jpg';
 }
 

@@ -39,6 +39,8 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
   final SupabaseStorageService _storageService = SupabaseStorageService();
   File? _studentIdImage;
   File? _studentIdBackImage;
+  File? _cnicFrontImage;
+  File? _cnicBackImage;
   File? _selfieImage;
   String? _validationError;
   bool _isUploading = false;
@@ -79,6 +81,10 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
             _studentIdImage = File(image.path);
           } else if (imageType == 1) {
             _studentIdBackImage = File(image.path);
+          } else if (imageType == 2) {
+            _cnicFrontImage = File(image.path);
+          } else if (imageType == 3) {
+            _cnicBackImage = File(image.path);
           } else {
             _selfieImage = File(image.path);
           }
@@ -103,6 +109,14 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
       setState(() => _validationError = "Upload Student ID Back");
       return false;
     }
+    if (_cnicFrontImage == null) {
+      setState(() => _validationError = "Upload CNIC Front");
+      return false;
+    }
+    if (_cnicBackImage == null) {
+      setState(() => _validationError = "Upload CNIC Back");
+      return false;
+    }
     if (_selfieImage == null) {
       setState(() => _validationError = "Upload Selfie");
       return false;
@@ -122,6 +136,8 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
       final imageUrls = await _storageService.uploadKycImages(
         studentIdImage: _studentIdImage!,
         studentIdBackImage: _studentIdBackImage!,
+        cnicFrontImage: _cnicFrontImage!,
+        cnicBackImage: _cnicBackImage!,
         selfieImage: _selfieImage!,
         userId: tempUserId,
       );
@@ -137,6 +153,8 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
         dateOfBirth: widget.dateOfBirth,
         studentIdCardFrontUrl: imageUrls['studentIdUrl']!,
         studentIdCardBackUrl: imageUrls['studentIdBackUrl']!,
+        cnicFrontImageUrl: imageUrls['cnicFrontUrl']!,
+        cnicBackImageUrl: imageUrls['cnicBackUrl']!,
         selfieImageUrl: imageUrls['selfieUrl']!,
       );
 
@@ -266,11 +284,25 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
                                 () => _showImageSourceDialog(1),
                                 image: _studentIdBackImage),
                             const SizedBox(height: 24),
+                            _buildInputLabel("CNIC Front *"),
+                            _buildUploadBox(
+                                "Upload CNIC Front",
+                                _cnicFrontImage != null,
+                                () => _showImageSourceDialog(2),
+                                image: _cnicFrontImage),
+                            const SizedBox(height: 24),
+                            _buildInputLabel("CNIC Back *"),
+                            _buildUploadBox(
+                                "Upload CNIC Back",
+                                _cnicBackImage != null,
+                                () => _showImageSourceDialog(3),
+                                image: _cnicBackImage),
+                            const SizedBox(height: 24),
                             _buildInputLabel("Selfie Image *"),
                             _buildUploadBox(
                                 "Upload Selfie",
                                 _selfieImage != null,
-                                () => _showImageSourceDialog(2),
+                                () => _showImageSourceDialog(4),
                                 image: _selfieImage),
                             if (_validationError != null) ...[
                               const SizedBox(height: 16),

@@ -20,7 +20,10 @@ class _SignupFormState extends State<SignupForm> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _cnicController = TextEditingController(); // NEW
+  final _dobController = TextEditingController(); // NEW
   String? _selectedUniversity;
+  DateTime? _selectedDate; // NEW
   bool _isPasswordVisible = false;
   bool _isLoading = false;
   String? _errorMessage;
@@ -34,15 +37,69 @@ class _SignupFormState extends State<SignupForm> {
     "Szabist"
   ];
 
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _phoneController.dispose();
+    _cnicController.dispose();
+    _dobController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().subtract(const Duration(days: 365 * 18)), // Default to 18 years ago
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+         return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primary, // Header background color
+              onPrimary: AppColors.textOnPrimary, // Header text color
+              onSurface: AppColors.textPrimary, // Body text color
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary, // Button text color
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+        _dobController.text = "${picked.toLocal()}".split(' ')[0]; // yyyy-mm-dd
+      });
+    }
+  }
+
   Future<void> _handleNext() async {
     if (_firstNameController.text.trim().isEmpty ||
         _lastNameController.text.trim().isEmpty ||
         _emailController.text.trim().isEmpty ||
         _passwordController.text.isEmpty ||
         _confirmPasswordController.text.isEmpty ||
+        _phoneController.text.trim().isEmpty || // Phone is now mandatory
+        _cnicController.text.trim().isEmpty || // CNIC mandatory
+        _dobController.text.isEmpty || // DOB mandatory
         _selectedUniversity == null) {
       setState(() => _errorMessage = "Please Fill Out All The Fields");
       return;
+    }
+
+    // CNIC Validation (Example: 13 digits)
+    if (_cnicController.text.trim().length != 13) {
+       setState(() => _errorMessage = "CNIC must be 13 digits");
+       return;
     }
 
     if (_passwordController.text != _confirmPasswordController.text) {
@@ -69,6 +126,8 @@ class _SignupFormState extends State<SignupForm> {
             password: _passwordController.text,
             phone: _phoneController.text.trim(),
             university: _selectedUniversity!,
+            cnic: _cnicController.text.trim(),
+            dateOfBirth: _dobController.text.trim(),
           ),
         ),
       );
@@ -79,21 +138,18 @@ class _SignupFormState extends State<SignupForm> {
 
   @override
   Widget build(BuildContext context) {
-    // REMOVED: LayoutBuilder and ConstrainedBox that forced full height
     return SingleChildScrollView(
       physics: const ClampingScrollPhysics(),
-      padding: const EdgeInsets.only(bottom: 24), // Just standard padding
+      padding: const EdgeInsets.only(bottom: 24),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24.0),
         child: Form(
           key: _formKey,
           child: Column(
-            // Changed to min so it only takes necessary space
             mainAxisSize: MainAxisSize.min, 
             children: [
               const SizedBox(height: 20),
 
-              // Switch Back to Login
               Row(
                 children: [
                   GestureDetector(
@@ -132,9 +188,25 @@ class _SignupFormState extends State<SignupForm> {
                   "Confirm Password", Icons.lock_outline,
                   isPassword: true, action: TextInputAction.next),
               const SizedBox(height: 12),
-              _buildTextField(_phoneController, "Phone (Optional)",
+              // Phone (Mandatory)
+              _buildTextField(_phoneController, "Phone Number",
                   Icons.phone_outlined,
-                  isNumber: true, action: TextInputAction.done),
+                  isNumber: true, action: TextInputAction.next),
+              const SizedBox(height: 12),
+               // CNIC (Mandatory)
+              _buildTextField(_cnicController, "CNIC (13 digits)",
+                  Icons.credit_card,
+                  isNumber: true, maxLength: 13, action: TextInputAction.next),
+              const SizedBox(height: 12),
+              // Date of Birth (Mandatory)
+              GestureDetector(
+                onTap: () => _selectDate(context),
+                child: AbsorbPointer(
+                  child: _buildTextField(_dobController, "Date of Birth",
+                      Icons.calendar_today,
+                      isReadOnly: true, action: TextInputAction.done),
+                ),
+              ),
               const SizedBox(height: 12),
               _buildUniversityDropdown(),
 
@@ -187,7 +259,7 @@ class _SignupFormState extends State<SignupForm> {
 
   Widget _buildTextField(
       TextEditingController controller, String hint, IconData icon,
-      {bool isPassword = false, bool isNumber = false, TextInputAction action = TextInputAction.done}) {
+      {bool isPassword = false, bool isNumber = false, int? maxLength, bool isReadOnly = false, TextInputAction action = TextInputAction.done}) {
     return Container(
       decoration: BoxDecoration(
           color: AppColors.textSecondary.withOpacity(0.1),
@@ -195,16 +267,20 @@ class _SignupFormState extends State<SignupForm> {
       child: TextFormField(
         controller: controller,
         obscureText: isPassword && !_isPasswordVisible,
-        keyboardType: isNumber ? TextInputType.phone : TextInputType.text,
-        textInputAction: action, // [NEW] Controls keyboard return key
+        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+        textInputAction: action, // Controls keyboard return key
+        readOnly: isReadOnly,
+        maxLength: maxLength,
+        onTap: isReadOnly ? () => _selectDate(context) : null,
         validator: (val) {
-          if (isNumber) return null;
+          if (isReadOnly) return null; // Date picker handled separately
           if (val == null || val.isEmpty) return "Required";
           if (isPassword && val.length < 6) return "Min 6 chars";
           return null;
         },
         decoration: InputDecoration(
           hintText: hint,
+          counterText: "", // Hide character counter
           prefixIcon: Icon(icon, color: AppColors.textSecondary),
           suffixIcon: isPassword
               ? IconButton(

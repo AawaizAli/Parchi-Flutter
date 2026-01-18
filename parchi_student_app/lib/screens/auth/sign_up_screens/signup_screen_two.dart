@@ -15,6 +15,8 @@ class SignupScreenTwo extends StatefulWidget {
   final String password;
   final String phone;
   final String university;
+  final String cnic;
+  final String dateOfBirth;
 
   const SignupScreenTwo({
     super.key,
@@ -24,6 +26,8 @@ class SignupScreenTwo extends StatefulWidget {
     required this.password,
     required this.phone,
     required this.university,
+    required this.cnic,
+    required this.dateOfBirth,
   });
 
   @override
@@ -127,8 +131,10 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
         lastName: widget.lastName,
         email: widget.email,
         password: widget.password,
-        phone: widget.phone.isNotEmpty ? widget.phone : null,
+        phone: widget.phone,
         university: widget.university,
+        cnic: widget.cnic,
+        dateOfBirth: widget.dateOfBirth,
         studentIdCardFrontUrl: imageUrls['studentIdUrl']!,
         studentIdCardBackUrl: imageUrls['studentIdBackUrl']!,
         selfieImageUrl: imageUrls['selfieUrl']!,

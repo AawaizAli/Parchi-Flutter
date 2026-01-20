@@ -1,37 +1,18 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../models/merchant_detail_model.dart';
 import '../models/student_merchant_model.dart';
+import 'auth_service.dart';
 
 class MerchantsService {
-  static const String _accessTokenKey = 'access_token';
-
-  Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_accessTokenKey);
-  }
 
   Future<MerchantDetailModel> getMerchantDetails(String merchantId) async {
-    final token = await getToken();
-    if (token == null) {
-      throw Exception('No authentication token found.');
-    }
-
     try {
-      final response = await http.get(
-        Uri.parse(ApiConfig.merchantDetailsEndpoint(merchantId)),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
+      final response = await authService.authenticatedGet(ApiConfig.merchantDetailsEndpoint(merchantId));
 
       final responseData = jsonDecode(response.body) as Map<String, dynamic>;
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        // NestJS response structure: { data: {...}, ... }
         if (responseData['data'] != null) {
           return MerchantDetailModel.fromJson(responseData['data']);
         }
@@ -52,10 +33,6 @@ class MerchantsService {
     int limit = 10,
     String? month,
   }) async {
-    final token = await getToken();
-    if (token == null) {
-      throw Exception('No authentication token found.');
-    }
 
     final queryParameters = {
       'page': page.toString(),
@@ -67,13 +44,7 @@ class MerchantsService {
         .replace(queryParameters: queryParameters);
 
     try {
-      final response = await http.get(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
+      final response = await authService.authenticatedGet(uri.toString());
 
       final responseData = jsonDecode(response.body) as Map<String, dynamic>;
 

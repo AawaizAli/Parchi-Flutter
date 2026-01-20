@@ -4,18 +4,30 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../models/auth_models.dart';
 
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
 class AuthService {
   static const String _accessTokenKey = 'access_token';
   static const String _refreshTokenKey = 'refresh_token';
   static const String _tokenExpiresAtKey = 'token_expires_at';
   static const String _userKey = 'user';
 
+  final _secureStorage = const FlutterSecureStorage();
+
   // Get stored access token with auto-refresh check
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     
     // Check if token exists and is expired/about to expire
-    final expiresAt = prefs.getInt(_tokenExpiresAtKey);
+    // Note: ExpiresAt is stored in secure storage now too? 
+    // Actually, storing expiry in secure storage makes sense if tokens are there.
+    // However, for speed, prefs is faster. Let's keep expiry in prefs or move to secure.
+    // Secure storage is async and slightly slower. 
+    // Let's store tokens in secure storage, and keep expiry in secure storage to be consistent.
+    
+    final expiresAtStr = await _secureStorage.read(key: _tokenExpiresAtKey);
+    final expiresAt = expiresAtStr != null ? int.tryParse(expiresAtStr) : null;
+
     if (expiresAt != null) {
       final expiryTime = expiresAt * 1000; // Convert to milliseconds
       // Check if expired or about to expire (within 5 minutes)
@@ -23,48 +35,41 @@ class AuthService {
         try {
           print("Token expired or close to expiry. Refreshing...");
           await refreshToken();
-          // If refresh succeeded, the new token is in SharedPreferences
-          return prefs.getString(_accessTokenKey);
+          // If refresh succeeded, the new token is in SecureStorage
+          return await _secureStorage.read(key: _accessTokenKey);
         } catch (e) {
           print("Auto-refresh in getToken failed: $e");
-          // If refresh failed, we might still return the old token 
-          // and let the API call fail with 401, or return null.
-          // For now, return the old token. The API call will likely throw 'Unauthorized'.
         }
       }
     }
     
-    return prefs.getString(_accessTokenKey);
+    return await _secureStorage.read(key: _accessTokenKey);
   }
 
   // Set access token
   Future<void> setToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_accessTokenKey, token);
+    await _secureStorage.write(key: _accessTokenKey, value: token);
   }
 
   // Get stored refresh token
   Future<String?> getRefreshToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_refreshTokenKey);
+    return await _secureStorage.read(key: _refreshTokenKey);
   }
 
   // Set refresh token
   Future<void> setRefreshToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_refreshTokenKey, token);
+    await _secureStorage.write(key: _refreshTokenKey, value: token);
   }
 
   // Set token expiry
   Future<void> setTokenExpiry(int expiresAt) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_tokenExpiresAtKey, expiresAt);
+    await _secureStorage.write(key: _tokenExpiresAtKey, value: expiresAt.toString());
   }
 
   // Get token expiry
   Future<int?> getTokenExpiry() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(_tokenExpiresAtKey);
+    final str = await _secureStorage.read(key: _tokenExpiresAtKey);
+    return str != null ? int.tryParse(str) : null;
   }
 
   // Store user data
@@ -88,10 +93,12 @@ class AuthService {
   // Remove all stored tokens and user data
   Future<void> removeToken() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_accessTokenKey);
-    await prefs.remove(_refreshTokenKey);
-    await prefs.remove(_tokenExpiresAtKey);
+    // Remove user data from prefs
     await prefs.remove(_userKey);
+    // Remove tokens from secure storage
+    await _secureStorage.delete(key: _accessTokenKey);
+    await _secureStorage.delete(key: _refreshTokenKey);
+    await _secureStorage.delete(key: _tokenExpiresAtKey);
   }
 
   // Check if user is authenticated
@@ -553,6 +560,97 @@ class AuthService {
 
     // Always remove tokens locally
     await removeToken();
+  }
+  // --- STANDARDIZED API METHODS ---
+
+  // Helper method to handle authenticated GET requests with auto-refresh retry
+  Future<http.Response> authenticatedGet(String url) async {
+    // 1. Get current token (triggers auto-refresh if close to expiry)
+    String? token = await getToken();
+    
+    if (token == null) {
+      throw Exception('No authentication token found. Please login.');
+    }
+
+    final uri = Uri.parse(url);
+    
+    // 2. First Attempt
+    var response = await http.get(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    // 3. Check for 401 Unauthorized
+    if (response.statusCode == 401) {
+      print("Got 401 Unauthorized. Attempting to refresh token and retry...");
+      try {
+        // Force refresh
+        await refreshToken();
+        token = await getToken(); // Get the new token (from secure storage)
+
+        if (token != null) {
+           // 4. Retry Request
+           print("Retrying request with new token...");
+           response = await http.get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          );
+        }
+      } catch (e) {
+        print("Retry failed: $e");
+        // Throwing unauthorized will likely trigger a logout in the UI or provider
+        throw Exception("Unauthorized: Session expired. Please login again.");
+      }
+    }
+
+    return response;
+  }
+
+  // Helper method to handle authenticated POST requests
+  Future<http.Response> authenticatedPost(String url, {Object? body}) async {
+    String? token = await getToken();
+    
+    if (token == null) throw Exception('No authentication token found.');
+
+    final uri = Uri.parse(url);
+
+    var response = await http.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: body != null ? jsonEncode(body) : null,
+    );
+
+    if (response.statusCode == 401) {
+       print("Got 401 Unauthorized (POST). Attempting to refresh...");
+       try {
+         await refreshToken();
+         token = await getToken();
+         
+         if (token != null) {
+            response = await http.post(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: body != null ? jsonEncode(body) : null,
+          );
+         }
+       } catch (e) {
+         throw Exception("Unauthorized: Session expired.");
+       }
+    }
+    
+    return response;
   }
 }
 

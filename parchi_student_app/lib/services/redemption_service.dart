@@ -1,23 +1,13 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../models/redemption_model.dart';
+import 'auth_service.dart';
 
 class RedemptionService {
-  static const String _accessTokenKey = 'access_token';
-
-  Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_accessTokenKey);
-  }
 
   // Get Redemption History
   Future<List<RedemptionModel>> getRedemptions(
       {int page = 1, String? status}) async {
-    final token = await getToken();
-    if (token == null) return [];
-
     try {
       final queryParams = {
         'page': page.toString(),
@@ -27,13 +17,7 @@ class RedemptionService {
       final uri = Uri.parse(ApiConfig.redemptionHistoryEndpoint)
           .replace(queryParameters: queryParams);
 
-      final response = await http.get(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
+      final response = await authService.authenticatedGet(uri.toString());
 
       final responseData = jsonDecode(response.body) as Map<String, dynamic>;
 
@@ -57,20 +41,8 @@ class RedemptionService {
 
   // Get Redemption Stats
   Future<RedemptionStats> getStats() async {
-    final token = await getToken();
-    if (token == null)
-      return RedemptionStats(
-          totalRedemptions: 0, bonusesUnlocked: 0, leaderboardPosition: 0);
-
-
     try {
-      final response = await http.get(
-        Uri.parse(ApiConfig.redemptionStatsEndpoint),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
+      final response = await authService.authenticatedGet(ApiConfig.redemptionStatsEndpoint);
 
       final responseData = jsonDecode(response.body) as Map<String, dynamic>;
 
@@ -88,17 +60,8 @@ class RedemptionService {
 
   // Get Redemption Details
   Future<RedemptionModel> getRedemptionDetails(String id) async {
-    final token = await getToken();
-    if (token == null) throw Exception('No authentication token found.');
-
     try {
-      final response = await http.get(
-        Uri.parse(ApiConfig.redemptionDetailsEndpoint(id)),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
+      final response = await authService.authenticatedGet(ApiConfig.redemptionDetailsEndpoint(id));
 
       final responseData = jsonDecode(response.body) as Map<String, dynamic>;
 

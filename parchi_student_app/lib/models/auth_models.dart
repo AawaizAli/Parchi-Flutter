@@ -97,11 +97,21 @@ class Session {
   });
 
   factory Session.fromJson(Map<String, dynamic> json) {
+    // Robustly handle expires_at. If not present, calculate from expires_in
+    int expiresAt;
+    if (json['expires_at'] != null) {
+      expiresAt = json['expires_at'] as int;
+    } else {
+       // expires_in is usually in seconds. Current time + seconds
+       final expiresIn = json['expires_in'] as int? ?? 3600;
+       expiresAt = (DateTime.now().millisecondsSinceEpoch ~/ 1000) + expiresIn;
+    }
+
     return Session(
       accessToken: json['access_token'] as String,
       refreshToken: json['refresh_token'] as String,
-      expiresAt: json['expires_at'] as int,
-      expiresIn: json['expires_in'] as int,
+      expiresAt: expiresAt,
+      expiresIn: json['expires_in'] as int? ?? 3600,
       tokenType: json['token_type'] as String? ?? 'bearer',
       user: json['user'] != null ? User.fromJson(json['user'] as Map<String, dynamic>) : null,
     );

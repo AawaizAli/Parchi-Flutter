@@ -10,9 +10,30 @@ class AuthService {
   static const String _tokenExpiresAtKey = 'token_expires_at';
   static const String _userKey = 'user';
 
-  // Get stored access token
+  // Get stored access token with auto-refresh check
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
+    
+    // Check if token exists and is expired/about to expire
+    final expiresAt = prefs.getInt(_tokenExpiresAtKey);
+    if (expiresAt != null) {
+      final expiryTime = expiresAt * 1000; // Convert to milliseconds
+      // Check if expired or about to expire (within 5 minutes)
+      if (DateTime.now().millisecondsSinceEpoch >= expiryTime - 300000) {
+        try {
+          print("Token expired or close to expiry. Refreshing...");
+          await refreshToken();
+          // If refresh succeeded, the new token is in SharedPreferences
+          return prefs.getString(_accessTokenKey);
+        } catch (e) {
+          print("Auto-refresh in getToken failed: $e");
+          // If refresh failed, we might still return the old token 
+          // and let the API call fail with 401, or return null.
+          // For now, return the old token. The API call will likely throw 'Unauthorized'.
+        }
+      }
+    }
+    
     return prefs.getString(_accessTokenKey);
   }
 
@@ -82,13 +103,73 @@ class AuthService {
     final expiresAt = await getTokenExpiry();
     if (expiresAt != null) {
       final expiryTime = expiresAt * 1000; // Convert to milliseconds
-      if (DateTime.now().millisecondsSinceEpoch >= expiryTime) {
-        await removeToken();
-        return false;
+      // Check if expired or about to expire (within 5 minutes)
+      if (DateTime.now().millisecondsSinceEpoch >= expiryTime - 300000) {
+        // Attempt refresh
+        try {
+          await refreshToken();
+          return true;
+        } catch (e) {
+          // Refresh failed, logout
+          await removeToken();
+          return false;
+        }
       }
     }
 
     return true;
+  }
+
+  // Refresh Token
+  Future<void> refreshToken() async {
+    final refreshToken = await getRefreshToken();
+    if (refreshToken == null) {
+      throw Exception('No refresh token available');
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConfig.refreshEndpoint),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'refreshToken': refreshToken,
+        }),
+      );
+
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        // The backend returns { data: { user: ..., session: ... }, ... }
+        // We need to parse the inner session data based on how AuthResponse expects it
+        // Or manually update tokens if the structure is different.
+        // Based on backend implementation: return { user: ..., session: ... } wrapped in ApiResponse
+        
+        // Api Response wrapper: { data: { user: ..., session: ... }, message: ..., status: ... }
+        final sessionData = responseData['data']['session'];
+        if (sessionData != null) {
+            // Update stored tokens
+            if (sessionData['access_token'] != null) {
+              await setToken(sessionData['access_token']);
+            }
+            if (sessionData['refresh_token'] != null) {
+              await setRefreshToken(sessionData['refresh_token']);
+            }
+            if (sessionData['expires_at'] != null) {
+               await setTokenExpiry(sessionData['expires_at']);
+            } else if (sessionData['expires_in'] != null) {
+               final expiresIn = sessionData['expires_in'] as int;
+               final expiresAt = (DateTime.now().millisecondsSinceEpoch ~/ 1000) + expiresIn;
+               await setTokenExpiry(expiresAt);
+            }
+        }
+      } else {
+        throw Exception('Refresh failed');
+      }
+    } catch (e) {
+      throw Exception('Refresh token failed: ${e.toString()}');
+    }
   }
 
   // Check if user is authenticated and has student role
@@ -96,6 +177,7 @@ class AuthService {
     final isAuth = await isAuthenticated();
     if (!isAuth) return false;
 
+    // Reload user from local storage to be sure
     final user = await getUser();
     if (user == null) return false;
 

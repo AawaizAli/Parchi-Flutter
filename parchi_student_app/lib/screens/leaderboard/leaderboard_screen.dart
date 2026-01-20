@@ -312,7 +312,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
                     const Text("-", style: TextStyle(color: Colors.white)),
               ),
               const Text(
-                "Redemptions",
+                "Parchiyan",
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 10,
@@ -413,7 +413,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
                 ),
               ),
               Text(
-                "Redemptions",
+                "Parchiyan",
                 style: TextStyle(
                   color:
                       isCurrentUser ? Colors.white70 : AppColors.textSecondary,

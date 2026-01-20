@@ -279,6 +279,24 @@ class MerchantDetailsScreen extends ConsumerWidget {
             ],
           ),
           
+          if (branch.contactPhone != null && branch.contactPhone!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.phone, size: 16, color: AppColors.primary),
+                const SizedBox(width: 8),
+                Text(
+                  branch.contactPhone!,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ],
+          
           const SizedBox(height: 20),
           const Divider(height: 1, color: AppColors.surfaceVariant),
           const SizedBox(height: 16),

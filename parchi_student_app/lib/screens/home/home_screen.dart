@@ -167,7 +167,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     data: (user) {
                       final fname = user?.firstName ?? "Student";
                       final lname = user?.lastName ?? "";
-                      final fullName = "$fname $lname".trim().toUpperCase();
+                      final fullName = "$fname\n$lname".trim().toUpperCase();
                       final pId = user?.parchiId ?? "PENDING";
                       final uni = user?.university ?? "Unknown University";
 
@@ -216,7 +216,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   data: (user) {
                     final fname = user?.firstName ?? "Student";
                     final lname = user?.lastName ?? "";
-                    final fullName = "$fname $lname".trim().toUpperCase();
+                    final fullName = "$fname\n$lname".trim().toUpperCase();
                     final pId = user?.parchiId ?? "PENDING";
                     final uni = user?.university ?? "Unknown University";
 

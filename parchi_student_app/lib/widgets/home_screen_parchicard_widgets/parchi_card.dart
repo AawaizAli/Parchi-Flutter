@@ -557,8 +557,8 @@ class CardFrontContent extends StatelessWidget {
                               )
                             : Text(
                                 studentName,
-                                maxLines: 1, // Ensure single line
-                                overflow: TextOverflow.ellipsis, // Truncate
+                                maxLines: 2, // Allow 2 lines for First/Last name split
+                                overflow: TextOverflow.ellipsis, 
                                 style: TextStyle(
                               color: textColor,
                               fontSize: 14,
@@ -858,8 +858,8 @@ class CompactParchiHeader extends StatelessWidget {
                                               )
                                             : Text(
                                                 studentName,
-                                                maxLines: 1, // Wrap logic handled by width constraint, but ensure neatness
-                                                overflow: TextOverflow.ellipsis, // Truncate if too long for 1 line
+                                                maxLines: 2, // Allow 2 lines for First/Last name split
+                                                overflow: TextOverflow.ellipsis, 
                                                 style: TextStyle(
                                                   color: textColor,
                                                   fontSize: 14,

@@ -27,6 +27,9 @@ dependencies:
   flutter_secure_storage: ^9.0.0
   google_fonts: ^6.3.2
   flutter_svg: ^2.2.3
+  firebase_core: ^4.4.0
+  firebase_messaging: ^16.1.1
+  flutter_local_notifications: ^19.5.0
 
 dev_dependencies:
   flutter_test:

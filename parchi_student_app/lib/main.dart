@@ -10,11 +10,22 @@ import 'screens/leaderboard/leaderboard_screen.dart';
 import 'screens/profile/redemption_history/redemption_history_screen.dart'; // [NEW] History Screen
 import 'screens/auth/login_screens/login_screen.dart';
 import 'services/auth_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'services/notification_handler_service.dart';
+import 'firebase_options.dart'; // [NEW] Import generated options
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   await dotenv.load(fileName: ".env");
+
+  // [NEW] Initialize Firebase with generated options
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // [NEW] Initialize Notification Service (Subscribes to 'students_all')
+  await NotificationHandlerService().initialize();
   
   await Supabase.initialize(
     url: SupabaseConfig.supabaseUrl,

@@ -542,43 +542,50 @@ class CardFrontContent extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // 2. Student Name
-                      isLoading
-                          ? BlinkingSkeleton(
-                              width: 150,
-                              height: 24,
-                              baseColor: Colors.white.withOpacity(0.3),
-                            )
-                          : Text(
-                              studentName,
-                              style: TextStyle(
-                            color: textColor,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold, // Bold
-                            letterSpacing: 0.1),
-                            ),
-                      const SizedBox(height: 2),
+                  SizedBox(
+                    width: 200, // Fixed width limit for larger card
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // 2. Student Name
+                        isLoading
+                            ? BlinkingSkeleton(
+                                width: 150,
+                                height: 24,
+                                baseColor: Colors.white.withOpacity(0.3),
+                              )
+                            : Text(
+                                studentName,
+                                maxLines: 1, // Ensure single line
+                                overflow: TextOverflow.ellipsis, // Truncate
+                                style: TextStyle(
+                              color: textColor,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold, // Bold
+                              letterSpacing: 0.1),
+                              ),
+                        const SizedBox(height: 2),
 
-                      // 3. University Name
-                      isLoading
-                          ? BlinkingSkeleton(
-                              width: 100,
-                              height: 10,
-                              baseColor: Colors.white.withOpacity(0.3),
-                            )
-                          : Text(
-                              universityName.toUpperCase(),
-                              style: TextStyle(
-                                  color: secondaryTextColor,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600, // Semi-bold
-                                  letterSpacing: 0.1),
-                            ),
-                    ],
+                        // 3. University Name
+                        isLoading
+                            ? BlinkingSkeleton(
+                                width: 100,
+                                height: 10,
+                                baseColor: Colors.white.withOpacity(0.3),
+                              )
+                            : Text(
+                                universityName.toUpperCase(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    color: secondaryTextColor,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600, // Semi-bold
+                                    letterSpacing: 0.1),
+                              ),
+                      ],
+                    ),
                   ),
                   // 1. Parchi ID (Most Important)
                   isLoading
@@ -797,8 +804,7 @@ class CompactParchiHeader extends StatelessWidget {
                         ),
                       ),
 
-                      // Smaller Notification Circle (HIDDEN TEMPORARILY)
-                      /*
+                      const SizedBox(width: 8),
                       Container(
                         width: 35, // Fixed smaller width
                         height: 35, // Fixed smaller height
@@ -814,7 +820,6 @@ class CompactParchiHeader extends StatelessWidget {
                           onPressed: onNotificationTap,
                         ),
                       ),
-                      */
                     ],
                   ),
                 ),
@@ -837,47 +842,54 @@ class CompactParchiHeader extends StatelessWidget {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const SizedBox(height: 5),
-                                      isLoading
-                                          ? BlinkingSkeleton(
-                                              width: 120,
-                                              height: 16,
-                                              baseColor:
-                                                  Colors.white.withOpacity(0.3),
-                                            )
-                                          : Text(
-                                              studentName,
-                                              style: TextStyle(
-                                                color: textColor,
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w900,
-                                              ),
-                                            ),
-                                      const SizedBox(height: 1),
-                                      isLoading
-                                          ? Padding(
-                                              padding: const EdgeInsets.only(
-                                                  top: 4.0),
-                                              child: BlinkingSkeleton(
-                                                width: 80,
-                                                height: 10,
+                                  SizedBox(
+                                    width: 180, // Set width limit as requested
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const SizedBox(height: 5),
+                                        isLoading
+                                            ? BlinkingSkeleton(
+                                                width: 120,
+                                                height: 16,
                                                 baseColor:
                                                     Colors.white.withOpacity(0.3),
+                                              )
+                                            : Text(
+                                                studentName,
+                                                maxLines: 1, // Wrap logic handled by width constraint, but ensure neatness
+                                                overflow: TextOverflow.ellipsis, // Truncate if too long for 1 line
+                                                style: TextStyle(
+                                                  color: textColor,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w900,
+                                                ),
                                               ),
-                                            )
-                                          : Text(
-                                              universityName.toUpperCase(),
-                                              style: TextStyle(
-                                                color: secondaryTextColor,
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.bold,
+                                        const SizedBox(height: 1),
+                                        isLoading
+                                            ? Padding(
+                                                padding: const EdgeInsets.only(
+                                                    top: 4.0),
+                                                child: BlinkingSkeleton(
+                                                  width: 80,
+                                                  height: 10,
+                                                  baseColor:
+                                                      Colors.white.withOpacity(0.3),
+                                                ),
+                                              )
+                                            : Text(
+                                                universityName.toUpperCase(),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  color: secondaryTextColor,
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
                                               ),
-                                            ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                   isLoading
                                       ? BlinkingSkeleton(

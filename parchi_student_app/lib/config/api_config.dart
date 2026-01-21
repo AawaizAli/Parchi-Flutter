@@ -39,4 +39,9 @@ class ApiConfig {
 
   // Leaderboard Endpoints
   static String get leaderboardEndpoint => '$baseUrl/students/leaderboard';
+
+  // Notification Endpoints
+  static String get studentNotificationsEndpoint => '$baseUrl/student/notifications';
+  static String markNotificationReadEndpoint(String id) =>
+      '$baseUrl/notifications/$id/read';
 }

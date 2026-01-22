@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // [NEW] Import Riverpod
 import 'package:google_fonts/google_fonts.dart';
+import 'screens/auth/reset_password/reset_password_screen.dart';
 import 'config/supabase_config.dart';
 import 'utils/colours.dart';
 import 'screens/home/home_screen.dart';
@@ -17,7 +18,7 @@ import 'firebase_options.dart'; // [NEW] Import generated options
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   await dotenv.load(fileName: ".env");
 
   // [NEW] Initialize Firebase with generated options
@@ -27,12 +28,12 @@ void main() async {
 
   // [NEW] Initialize Notification Service (Subscribes to 'students_all')
   await NotificationHandlerService().initialize();
-  
+
   await Supabase.initialize(
     url: SupabaseConfig.supabaseUrl,
     anonKey: SupabaseConfig.supabaseAnonKey,
   );
-  
+
   runApp(
     // [NEW] Wrap entire app in ProviderScope
     const ProviderScope(
@@ -86,7 +87,6 @@ class AuthWrapper extends StatefulWidget {
 class _AuthWrapperState extends State<AuthWrapper> {
   bool _isLoading = true;
   bool _isAuthenticated = false;
-
   late final StreamSubscription<AuthState> _authSubscription;
 
   @override
@@ -109,22 +109,29 @@ class _AuthWrapperState extends State<AuthWrapper> {
             if (session.refreshToken != null) {
               await authService.setRefreshToken(session.refreshToken!);
             }
-            
+
             // Sync user profile from backend
             await authService.getProfile();
-            
+
             if (mounted) {
-               // Re-check auth state to update UI
-               await _checkAuthState();
+              // Re-check auth state to update UI
+              await _checkAuthState();
             }
           } catch (e) {
             debugPrint("Error syncing auth state: $e");
           }
         }
       } else if (event == AuthChangeEvent.signedOut) {
-         if (mounted) {
-           _checkAuthState();
-         }
+        if (mounted) {
+          _checkAuthState();
+        }
+      } else if (event == AuthChangeEvent.passwordRecovery) {
+        if (mounted) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+                builder: (context) => const ResetPasswordScreen()),
+          );
+        }
       }
     });
   }
@@ -234,7 +241,8 @@ class _MainScreenState extends State<MainScreen> {
               BottomNavigationBarItem(
                   icon: Icon(Icons.leaderboard), label: "Leaderboard"),
               BottomNavigationBarItem(
-                  icon: Icon(Icons.history), label: "History"), // [NEW] History Icon
+                  icon: Icon(Icons.history),
+                  label: "History"), // [NEW] History Icon
             ],
           ),
         ),

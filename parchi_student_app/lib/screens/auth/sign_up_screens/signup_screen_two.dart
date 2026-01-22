@@ -2,10 +2,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // [NEW]
 import '../../../utils/colours.dart';
 import '../../../services/supabase_storage_service.dart';
 import '../../../services/auth_service.dart';
+import '../../../models/auth_models.dart'; // [NEW] For ConflictException
 import 'signup_verification_screen.dart';
+import 'verification_success_screen.dart'; // [NEW]
 import '../../../widgets/common/spinning_loader.dart';
 
 class SignupScreenTwo extends StatefulWidget {
@@ -45,6 +48,22 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
   String? _validationError;
   bool _isUploading = false;
   final AuthService _authService = AuthService();
+
+  @override
+  void initState() {
+    super.initState();
+    _clearExistingSession();
+  }
+
+  Future<void> _clearExistingSession() async {
+    // Ensure we start with a clean slate to avoid stale sessions triggering false verification
+    try {
+        await Supabase.instance.client.auth.signOut();
+        await _authService.logout();
+    } catch (e) {
+      debugPrint("Error clearing session: $e");
+    }
+  }
 
   void _showImageSourceDialog(int imageType) {
     showModalBottomSheet(
@@ -166,10 +185,59 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
                     parchiId: signupResponse.parchiId,
                     email: signupResponse.email)));
     } catch (e) {
-      _showError('Signup failed: ${e.toString()}');
+      if (e is ConflictException || 
+          e.toString().contains("Conflict") || 
+          e.toString().contains("Email already registered")) {
+        // [NEW] Handle Pending/Registered User Logic
+        await _checkAccountStatus();
+      } else {
+        _showError('Signup failed: ${e.toString()}');
+      }
     } finally {
       if (mounted) setState(() => _isUploading = false);
     }
+  }
+
+  Future<void> _checkAccountStatus() async {
+     try {
+       // Attempt to login to check status
+       final response = await _authService.login(
+         email: widget.email,
+         password: widget.password,
+       );
+       
+       // Force fetch latest profile to get status
+       await _authService.getProfile();
+       final user = await _authService.getUser(); // Reload from storage
+       
+       if (user != null) {
+          if (user.verificationStatus == 'pending') {
+             // User is pending approval -> Show Success/Pending Screen
+             if (mounted) {
+               Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const VerificationSuccessScreen()),
+                  (route) => false,
+               );
+             }
+             return;
+          } else if (user.verificationStatus == 'approved') {
+             _showError("Account already approved. Please login.");
+             Future.delayed(const Duration(seconds: 2), () {
+                if(mounted) {
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                }
+             });
+             return;
+          }
+       }
+       
+       // Default fallback
+        _showError("Email already registered. Please login.");
+     } catch (e) {
+       // Login failed (wrong password? or other issue)
+       _showError('Signup failed: Email already registered.');
+     }
   }
 
   @override

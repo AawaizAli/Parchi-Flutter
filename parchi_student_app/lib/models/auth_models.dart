@@ -16,6 +16,8 @@ class User {
   final String? university;
   final String? profilePicture;
   final bool isFoundersClub; // [NEW]
+  final String? verificationStatus; // [NEW]
+
   User({
     required this.id,
     required this.email,
@@ -28,6 +30,7 @@ class User {
     this.university,
     this.profilePicture, 
     this.isFoundersClub = false, // [NEW] Default to false
+    this.verificationStatus, // [NEW]
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -44,15 +47,15 @@ class User {
       
       firstName: studentData != null 
           ? studentData['first_name'] 
-          : json['firstName'],
+          : json['first_name'] ?? json['firstName'],
       
       lastName: studentData != null 
           ? studentData['last_name'] 
-          : json['lastName'],
+          : json['last_name'] ?? json['lastName'],
       
       parchiId: studentData != null 
           ? studentData['parchi_id'] 
-          : json['parchiId'],
+          : json['parchi_id'] ?? json['parchiId'],
           
       university: studentData != null 
           ? studentData['university'] 
@@ -61,12 +64,17 @@ class User {
     // [FIX] Add this block to read the profile picture from backend response
       profilePicture: studentData != null 
           ? studentData['profile_picture'] 
-          : json['profilePicture'],
+          : json['profile_picture'] ?? json['profilePicture'],
 
       // [NEW] Parse is_founders_club
       isFoundersClub: studentData != null
           ? (studentData['is_founders_club'] as bool? ?? false)
-          : (json['isFoundersClub'] as bool? ?? false),
+          : (json['is_founders_club'] as bool?) ?? (json['isFoundersClub'] as bool? ?? false),
+
+      // [NEW] Parse verification_status
+      verificationStatus: studentData != null
+          ? (studentData['verification_status'] as String?)
+          : (json['verification_status'] as String?) ?? (json['verificationStatus'] as String?), // Check snake_case first from root
     );
   }
 
@@ -84,6 +92,7 @@ class User {
       'university': university,
       'profilePicture': profilePicture, 
       'isFoundersClub': isFoundersClub, // [NEW]
+      'verificationStatus': verificationStatus, // [NEW]
     };
   }
 }

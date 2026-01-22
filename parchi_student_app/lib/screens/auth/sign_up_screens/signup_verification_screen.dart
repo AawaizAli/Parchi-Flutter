@@ -5,15 +5,20 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../utils/colours.dart';
 import '../login_screens/login_screen.dart';
 import '../../../main.dart'; // To navigate to MainScreen (wrapped in AuthWrapper)
+import 'verification_success_screen.dart'; // [NEW]
 
 class SignupVerificationScreen extends StatefulWidget {
   final String? parchiId;
   final String? email;
+  final String? accessToken; // [NEW]
+  final String? refreshToken; // [NEW]
 
   const SignupVerificationScreen({
     super.key,
     this.parchiId,
     this.email,
+    this.accessToken,
+    this.refreshToken,
   });
 
   @override
@@ -29,6 +34,7 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
   late StreamSubscription<AuthState> _authSubscription;
   bool _isVerified = false;
   bool _isResending = false;
+  bool _isLinkExpired = false; // [NEW] Track link expiry
 
   @override
   void initState() {
@@ -42,26 +48,59 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
       curve: Curves.elasticOut,
     );
     _controller.forward();
+    
+    // [NEW] Manually set session if tokens are passed
+    if (widget.accessToken != null) {
+      _setManualSession();
+    }
 
     _setupDeepLinkListener();
+  }
+
+  Future<void> _setManualSession() async {
+    try {
+      if (widget.refreshToken != null) {
+        await Supabase.instance.client.auth.setSession(
+          widget.refreshToken!,
+        );
+      }
+      // The listener will pick up the 'signedIn' event shortly
+    } catch (e) {
+      debugPrint("Error setting manual session: $e");
+      // If error occurs here, it likely means the token is invalid or expired
+      if (mounted) {
+        setState(() {
+          _isLinkExpired = true;
+        });
+      }
+    }
   }
 
   void _setupDeepLinkListener() {
     _authSubscription =
         Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       final AuthChangeEvent event = data.event;
-      if (event == AuthChangeEvent.signedIn ||
-          event == AuthChangeEvent.passwordRecovery) {
+      final Session? session = data.session;
+      
+      if (session != null) {
         _handleVerificationSuccess();
+      } else {
+        // Force check current session if event suggests we should have one
+        final currentSession = Supabase.instance.client.auth.currentSession;
+        if (currentSession != null) {
+             _handleVerificationSuccess();
+        }
       }
     });
   }
 
   void _handleVerificationSuccess() {
+    print("_handleVerificationSuccess called. isVerified: $_isVerified, mounted: $mounted");
     if (_isVerified) return;
     if (mounted) {
       setState(() {
         _isVerified = true;
+        _isLinkExpired = false; // Reset expiry if successful
       });
       // Restart animation for the checkmark
       _controller.reset();
@@ -70,11 +109,10 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
       // Navigate after delay
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) {
-          // Navigate to Home (which main.dart AuthWrapper defaults to when authed)
-          // We pushAndRemoveUntil to clear the back stack
+          // Navigate to Success Screen
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (context) => const AuthWrapper()),
+            MaterialPageRoute(builder: (context) => const VerificationSuccessScreen()),
             (route) => false,
           );
         }
@@ -83,17 +121,24 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
   }
 
   Future<void> _resendEmail() async {
-    if (widget.email == null) return;
+    print("Resend Email clicked");
+    if (widget.email == null) {
+      print("Email is null");
+      return;
+    }
     setState(() {
       _isResending = true;
+      _isLinkExpired = false; // Reset expiry while resending
     });
 
     try {
+      print("Resending email to ${widget.email}");
       await Supabase.instance.client.auth.resend(
         email: widget.email!,
         type: OtpType.signup,
         emailRedirectTo: 'parchi://auth-callback',
       );
+      print("Resend successful");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -103,6 +148,7 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
         );
       }
     } catch (e) {
+      print("Resend failed: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -223,8 +269,9 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
                                   color: AppColors.surface,
                                   boxShadow: [
                                     BoxShadow(
-                                      color:
-                                          AppColors.primary.withOpacity(0.15),
+                                      color: _isLinkExpired
+                                          ? Colors.red.withOpacity(0.15)
+                                          : AppColors.primary.withOpacity(0.15),
                                       blurRadius: 20,
                                       offset: const Offset(0, 10),
                                     ),
@@ -234,9 +281,13 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
                                   child: Icon(
                                     _isVerified
                                         ? Icons.check_circle_rounded
-                                        : Icons.mark_email_unread_rounded,
+                                        : (_isLinkExpired
+                                            ? Icons.error_outline_rounded
+                                            : Icons.mark_email_unread_rounded),
                                     size: 80,
-                                    color: AppColors.primary,
+                                    color: _isLinkExpired
+                                        ? Colors.red
+                                        : AppColors.primary,
                                   ),
                                 ),
                               ),
@@ -247,11 +298,15 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
                             Text(
                               _isVerified
                                   ? "You're all set!"
-                                  : "Verify your email",
-                              style: const TextStyle(
+                                  : (_isLinkExpired
+                                      ? "Link Expired"
+                                      : "Verify your email"),
+                              style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.w800,
-                                color: AppColors.textPrimary,
+                                color: _isLinkExpired
+                                    ? Colors.red
+                                    : AppColors.textPrimary,
                                 letterSpacing: -0.5,
                               ),
                             ),
@@ -259,7 +314,9 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
                             Text(
                               _isVerified
                                   ? "Your email has been verified successfully.\nRedirecting you..."
-                                  : "We've sent a verification link to\n${widget.email ?? 'your email address'}.\nPlease check your inbox and spam folder.",
+                                  : (_isLinkExpired
+                                      ? "This verification link has expired or is invalid.\nPlease request a new one."
+                                      : "We've sent a verification link to\n${widget.email ?? 'your email address'}.\nPlease check your inbox and spam folder."),
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 16,

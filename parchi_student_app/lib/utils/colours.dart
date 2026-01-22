@@ -10,7 +10,20 @@ class AppColors {
   // - Active Buttons & Tab Icons (main.dart)
   // - Link Text (login_form.dart, signup_verification_screen.dart)
   // - Arrow Icons (profile_screen.dart)
-  static const Color primary = Color(0xFF007AFF); // A vibrant blue
+
+    // new blue that we have been using
+
+//   static const Color primary = Color(0xFF007AFF);
+
+    // dull blue parchi original
+    // static const Color primary = Color(0xFF326295); 
+
+    // testing another blue
+    // static const Color primary = Color(0xFF1581BF); 
+
+    // static const Color primary = Color(0xFF0573eb); 
+
+    static const Color primary = Color(0xFF0069db); 
 
   // Used for:
   // - Main App Background (Top Section)
@@ -109,4 +122,7 @@ class AppColors {
   // Used for:
   // - Profile Screen Header SVG & Ring
   static const Color parchiGold = Color(0xFFE3E935);
+  
+  // Founders Club
+  static const Color foundersClub = Color(0xFFFF6A39);
 }

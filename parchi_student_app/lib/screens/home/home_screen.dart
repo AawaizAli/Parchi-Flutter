@@ -175,6 +175,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         studentName: fullName.isEmpty ? "STUDENT" : fullName,
                         studentId: pId,
                         universityName: uni,
+                        isFoundersClub: user?.isFoundersClub ?? false, // [NEW]
                       );
                     },
                     loading: () => const ParchiCard(

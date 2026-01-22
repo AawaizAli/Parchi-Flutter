@@ -14,17 +14,19 @@ import '../common/blinking_skeleton.dart';
 class ParchiCard extends StatelessWidget {
   final String studentName;
   final String studentId;
-  final String universityName; // [NEW]
-  final bool isGolden; // [NEW] Gold Mode Flag
-  final bool isLoading; // [NEW]
+  final String universityName;
+  final bool isGolden; // Gold Mode Flag
+  final bool isFoundersClub; // [NEW] Founders Club Flag
+  final bool isLoading;
 
   const ParchiCard({
     super.key,
-    this.studentName = "", // Empty default instead of dummy name
-    this.studentId = "", // Empty default instead of dummy ID
-    this.universityName = "", // [NEW]
-    this.isGolden = false, // Default is standard
-    this.isLoading = false, // [NEW]
+    this.studentName = "",
+    this.studentId = "",
+    this.universityName = "",
+    this.isGolden = false,
+    this.isFoundersClub = false, // [NEW]
+    this.isLoading = false,
   });
 
   @override
@@ -47,6 +49,22 @@ class ParchiCard extends StatelessWidget {
       stops: [0.1, 0.5, 0.9],
     );
 
+    // [NEW] Founders Club Color (Solid or Gradient if desired, keeping it simple solid based on request)
+    // Request says: make the bg #FF6A39
+    final Color? cardColor = isFoundersClub 
+        ? AppColors.foundersClub 
+        : (isGolden ? null : AppColors.primary);
+    
+    final Gradient? cardGradient = isFoundersClub 
+        ? null // Solid color for Founders Club
+        : (isGolden ? goldGradient : null); // Primary uses user defined color but code above uses null+primary color fallbacks, wait standardGradient is defined but not used?
+        // Original code: color: isGolden ? null : AppColors.primary, gradient: isGolden ? goldGradient : null
+        
+    // Let's stick to the requested logic:
+    // If Founders -> #FF6A39
+    // If Golden -> Gold Gradient
+    // Else -> AppColors.primary
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: GestureDetector(
@@ -63,8 +81,9 @@ class ParchiCard extends StatelessWidget {
                 child: ParchiCardDetail(
                   studentName: studentName,
                   studentId: studentId,
-                  universityName: universityName, // [NEW]
-                  isGolden: isGolden, // Pass state to detail view
+                  universityName: universityName,
+                  isGolden: isGolden,
+                  isFoundersClub: isFoundersClub, // [NEW] Pass deep
                 ),
               );
             },
@@ -78,8 +97,8 @@ class ParchiCard extends StatelessWidget {
               height: 200,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: isGolden ? null : AppColors.primary,
-                gradient: isGolden ? goldGradient : null,
+                color: cardColor, 
+                gradient: cardGradient,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: isGolden
                     ? [
@@ -95,9 +114,10 @@ class ParchiCard extends StatelessWidget {
               child: CardFrontContent(
                 studentName: studentName,
                 studentId: studentId,
-                universityName: universityName, // [NEW]
+                universityName: universityName,
                 isGolden: isGolden,
-                isLoading: isLoading, // [NEW]
+                isFoundersClub: isFoundersClub, // [NEW]
+                isLoading: isLoading,
               ),
             ),
           ),
@@ -113,15 +133,17 @@ class ParchiCard extends StatelessWidget {
 class ParchiCardDetail extends ConsumerStatefulWidget {
   final String studentName;
   final String studentId;
-  final String universityName; // [NEW]
+  final String universityName;
   final bool isGolden;
+  final bool isFoundersClub; // [NEW]
 
   const ParchiCardDetail({
     super.key,
     required this.studentName,
     required this.studentId,
-    required this.universityName, // [NEW]
+    required this.universityName,
     this.isGolden = false,
+    this.isFoundersClub = false, // [NEW]
   });
 
   @override
@@ -257,42 +279,65 @@ class _ParchiCardDetailState extends ConsumerState<ParchiCardDetail>
       end: Alignment.bottomRight,
     );
 
+    // [NEW] Founders Club styling
+    final Color? cardColor = widget.isFoundersClub
+        ? AppColors.foundersClub
+        : (widget.isGolden ? null : AppColors.primary);
+
+    final Gradient? cardGradient = widget.isFoundersClub
+        ? null
+        : (widget.isGolden ? goldGradient : null);
+
     return Container(
       height: 200,
       width: MediaQuery.of(context).size.width - 32, // Match horizontal padding of 16 * 2
       decoration: BoxDecoration(
-        color: widget.isGolden ? null : AppColors.primary,
-        gradient: widget.isGolden ? goldGradient : null,
+        color: cardColor,
+        gradient: cardGradient,
         borderRadius: BorderRadius.circular(20),
         // Glow removed
       ),
       child: CardFrontContent(
         studentName: widget.studentName,
         studentId: widget.studentId,
-        universityName: widget.universityName, // [NEW]
+        universityName: widget.universityName,
         isGolden: widget.isGolden,
+        isFoundersClub: widget.isFoundersClub, // [NEW]
       ),
     );
   }
 
   Widget _buildBackFace() {
-    return Container(
-      height: 200,
-      width: MediaQuery.of(context).size.width - 32, // Match horizontal padding of 16 * 2
-      decoration: BoxDecoration(
-        color: widget.isGolden ? null : AppColors.primary, // Primary BG
-        gradient: widget.isGolden
+    // [NEW] Founders Club styling
+    final Color? cardColor = widget.isFoundersClub
+        ? AppColors.foundersClub
+        : (widget.isGolden ? null : AppColors.primary);
+
+    final Gradient? cardGradient = widget.isFoundersClub
+        ? null
+        : (widget.isGolden
             ? const LinearGradient(
                 colors: [AppColors.goldStart, AppColors.goldMid],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               )
-            : null,
+            : null);
+
+    final Color borderColor = widget.isFoundersClub
+        ? Colors.white.withOpacity(0.5) // Or similar contrast
+        : (widget.isGolden
+            ? AppColors.goldShadow
+            : AppColors.primary.withOpacity(0.5));
+
+    return Container(
+      height: 200,
+      width: MediaQuery.of(context).size.width - 32, // Match horizontal padding of 16 * 2
+      decoration: BoxDecoration(
+        color: cardColor, // Primary BG
+        gradient: cardGradient,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-            color: widget.isGolden
-                ? AppColors.goldShadow
-                : AppColors.primary.withOpacity(0.5),
+            color: borderColor,
             width: 1),
         // Glow removed
       ),
@@ -476,17 +521,19 @@ class _ParchiCardDetailState extends ConsumerState<ParchiCardDetail>
 class CardFrontContent extends StatelessWidget {
   final String studentName;
   final String studentId;
-  final String universityName; // [NEW]
+  final String universityName;
   final bool isGolden;
-  final bool isLoading; // [NEW]
+  final bool isFoundersClub; // [NEW]
+  final bool isLoading;
 
   const CardFrontContent({
     super.key,
     required this.studentName,
     required this.studentId,
-    required this.universityName, // [NEW]
+    required this.universityName,
     required this.isGolden,
-    this.isLoading = false, // [NEW]
+    this.isFoundersClub = false, // [NEW]
+    this.isLoading = false,
   });
 
   @override
@@ -536,6 +583,26 @@ class CardFrontContent extends StatelessWidget {
                     colorFilter: const ColorFilter.mode(
                         Color(0xFFE3E935), BlendMode.srcIn),
                   ),
+
+                  // [NEW] Founders Club Label
+                  if (isFoundersClub)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        "FOUNDER'S CLUB",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
                 ],
               ),
               Row(
@@ -557,8 +624,8 @@ class CardFrontContent extends StatelessWidget {
                               )
                             : Text(
                                 studentName,
-                                maxLines: 1, // Ensure single line
-                                overflow: TextOverflow.ellipsis, // Truncate
+                                maxLines: 2, // Allow 2 lines if too long (requested behavior)
+                                overflow: TextOverflow.ellipsis, 
                                 style: TextStyle(
                               color: textColor,
                               fontSize: 14,
@@ -858,8 +925,8 @@ class CompactParchiHeader extends StatelessWidget {
                                               )
                                             : Text(
                                                 studentName,
-                                                maxLines: 1, // Wrap logic handled by width constraint, but ensure neatness
-                                                overflow: TextOverflow.ellipsis, // Truncate if too long for 1 line
+                                                maxLines: 2, // Allow 2 lines
+                                                overflow: TextOverflow.ellipsis, 
                                                 style: TextStyle(
                                                   color: textColor,
                                                   fontSize: 14,

@@ -49,5 +49,16 @@
 	<string>This app needs access to your camera to take photos for student verification.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs access to your photo library to select images for student verification.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>parchi</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

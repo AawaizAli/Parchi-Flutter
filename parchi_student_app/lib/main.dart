@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -86,19 +87,63 @@ class _AuthWrapperState extends State<AuthWrapper> {
   bool _isLoading = true;
   bool _isAuthenticated = false;
 
+  late final StreamSubscription<AuthState> _authSubscription;
+
   @override
   void initState() {
     super.initState();
     _checkAuthState();
+    _setupAuthListener();
+  }
+
+  void _setupAuthListener() {
+    _authSubscription =
+        Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
+      final AuthChangeEvent event = data.event;
+      final Session? session = data.session;
+
+      if (event == AuthChangeEvent.signedIn && session != null) {
+        if (session.accessToken.isNotEmpty) {
+          try {
+            await authService.setToken(session.accessToken);
+            if (session.refreshToken != null) {
+              await authService.setRefreshToken(session.refreshToken!);
+            }
+            
+            // Sync user profile from backend
+            await authService.getProfile();
+            
+            if (mounted) {
+               // Re-check auth state to update UI
+               await _checkAuthState();
+            }
+          } catch (e) {
+            debugPrint("Error syncing auth state: $e");
+          }
+        }
+      } else if (event == AuthChangeEvent.signedOut) {
+         if (mounted) {
+           _checkAuthState();
+         }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription.cancel();
+    super.dispose();
   }
 
   Future<void> _checkAuthState() async {
     try {
       final isStudentAuth = await authService.isStudentAuthenticated();
-      setState(() {
-        _isAuthenticated = isStudentAuth;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isAuthenticated = isStudentAuth;
+          _isLoading = false;
+        });
+      }
 
       if (!isStudentAuth) {
         final isAuth = await authService.isAuthenticated();
@@ -107,10 +152,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
         }
       }
     } catch (e) {
-      setState(() {
-        _isAuthenticated = false;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isAuthenticated = false;
+          _isLoading = false;
+        });
+      }
     }
   }
 

@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../utils/colours.dart';
 import '../login_screens/login_screen.dart';
+import '../../../main.dart'; // To navigate to MainScreen (wrapped in AuthWrapper)
 
 class SignupVerificationScreen extends StatefulWidget {
   final String? parchiId;
@@ -23,6 +26,10 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
+  late StreamSubscription<AuthState> _authSubscription;
+  bool _isVerified = false;
+  bool _isResending = false;
+
   @override
   void initState() {
     super.initState();
@@ -35,10 +42,87 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
       curve: Curves.elasticOut,
     );
     _controller.forward();
+
+    _setupDeepLinkListener();
+  }
+
+  void _setupDeepLinkListener() {
+    _authSubscription =
+        Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      final AuthChangeEvent event = data.event;
+      if (event == AuthChangeEvent.signedIn ||
+          event == AuthChangeEvent.passwordRecovery) {
+        _handleVerificationSuccess();
+      }
+    });
+  }
+
+  void _handleVerificationSuccess() {
+    if (_isVerified) return;
+    if (mounted) {
+      setState(() {
+        _isVerified = true;
+      });
+      // Restart animation for the checkmark
+      _controller.reset();
+      _controller.forward();
+
+      // Navigate after delay
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          // Navigate to Home (which main.dart AuthWrapper defaults to when authed)
+          // We pushAndRemoveUntil to clear the back stack
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const AuthWrapper()),
+            (route) => false,
+          );
+        }
+      });
+    }
+  }
+
+  Future<void> _resendEmail() async {
+    if (widget.email == null) return;
+    setState(() {
+      _isResending = true;
+    });
+
+    try {
+      await Supabase.instance.client.auth.resend(
+        email: widget.email!,
+        type: OtpType.signup,
+        emailRedirectTo: 'parchi://auth-callback',
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Verification email sent!"),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error: ${e.toString()}"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isResending = false;
+        });
+      }
+    }
   }
 
   @override
   void dispose() {
+    _authSubscription.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -46,7 +130,7 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final containerHeight = screenHeight * 0.75; // Same as SignupScreenTwo
+    final containerHeight = screenHeight * 0.75;
 
     return Scaffold(
       body: Stack(
@@ -56,12 +140,13 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
             color: AppColors.primary,
           ),
 
-          // 2. LOGO (Positioned at top)
+          // 2. LOGO
           AnimatedPositioned(
             duration: const Duration(milliseconds: 600),
             curve: Curves.easeInOutQuart,
-            top: -screenHeight * 0.10, // Moves up same as SignupScreenTwo
-            left: 0, right: 0,
+            top: -screenHeight * 0.10,
+            left: 0,
+            right: 0,
             height: screenHeight * 0.45,
             child: SafeArea(
               child: Center(
@@ -77,11 +162,13 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
             ),
           ),
 
-          // 3. WHITE CONTAINER (Floating)
+          // 3. WHITE CONTAINER
           AnimatedPositioned(
             duration: const Duration(milliseconds: 600),
             curve: Curves.easeInOutQuart,
-            bottom: 0, left: 0, right: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
             height: containerHeight,
             child: Container(
               margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
@@ -104,12 +191,14 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
                       padding: const EdgeInsets.fromLTRB(24, 24, 24, 10),
                       child: Row(
                         children: [
-                          const SizedBox(width: 8), // Spacer since no back button or maybe home button
-                          const Text("Verification",
-                              style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary)),
+                          const SizedBox(width: 8),
+                          Text(
+                            _isVerified ? "Verification" : "Check Mail",
+                            style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary),
+                          ),
                         ],
                       ),
                     ),
@@ -121,9 +210,9 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                             const SizedBox(height: 20),
+                            const SizedBox(height: 20),
 
-                            // Animated Tick
+                            // Animated Icon
                             ScaleTransition(
                               scale: _scaleAnimation,
                               child: Container(
@@ -141,10 +230,12 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
                                     ),
                                   ],
                                 ),
-                                child: const Center(
+                                child: Center(
                                   child: Icon(
-                                    Icons.check_circle_rounded,
-                                    size: 90,
+                                    _isVerified
+                                        ? Icons.check_circle_rounded
+                                        : Icons.mark_email_unread_rounded,
+                                    size: 80,
                                     color: AppColors.primary,
                                   ),
                                 ),
@@ -153,9 +244,11 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
 
                             const SizedBox(height: 32),
 
-                            const Text(
-                              "You're all set!",
-                              style: TextStyle(
+                            Text(
+                              _isVerified
+                                  ? "You're all set!"
+                                  : "Verify your email",
+                              style: const TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.textPrimary,
@@ -164,7 +257,9 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              "Your documents have been submitted.\nVerification usually takes 24-48 hours.",
+                              _isVerified
+                                  ? "Your email has been verified successfully.\nRedirecting you..."
+                                  : "We've sent a verification link to\n${widget.email ?? 'your email address'}.\nPlease check your inbox and spam folder.",
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 16,
@@ -173,79 +268,54 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
                               ),
                             ),
 
-                            if (widget.parchiId != null) ...[
-                              const SizedBox(height: 32),
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 24, vertical: 20),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary.withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: AppColors.primary.withOpacity(0.2),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Column(
-                                  children: [
-                                    const Text(
-                                      "YOUR PARCHI ID",
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.textSecondary,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 1.0,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      widget.parchiId!,
-                                      style: const TextStyle(
-                                        fontSize: 28,
-                                        color: AppColors.primary,
-                                        fontWeight: FontWeight.w900,
-                                        letterSpacing: 2.0,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-
                             const SizedBox(height: 40),
 
-                            // Back to Login Button
-                            SizedBox(
-                              width: double.infinity,
-                              height: 56,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pushAndRemoveUntil(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            const LoginScreen()),
-                                    (route) => false,
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
+                            // If NOT verified, show buttons
+                            if (!_isVerified) ...[
+                              // Open Mail App (Optional, hard to do cross-platform reliably without specific package, let's just stick to Resend/Back)
+
+                              // Resend Button
+                              SizedBox(
+                                width: double.infinity,
+                                height: 56,
+                                child: OutlinedButton(
+                                  onPressed:
+                                      _isResending ? null : _resendEmail,
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(
+                                        color: AppColors.primary, width: 2),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
                                   ),
-                                ),
-                                child: const Text(
-                                  "Back to Login",
-                                  style: TextStyle(
-                                    color: AppColors.textOnPrimary,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  child: _isResending
+                                      ? const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: AppColors.primary,
+                                          ),
+                                        )
+                                      : const Text(
+                                          "Resend Email",
+                                          style: TextStyle(
+                                            color: AppColors.primary,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                 ),
                               ),
-                            ),
+                              const SizedBox(height: 16),
+
+                              const SizedBox(height: 16),
+                            ] else ...[
+                               // Verified State Loading Indicator
+                               const SizedBox(height: 20),
+                               const CircularProgressIndicator(color: AppColors.primary),
+                            ],
+                            
                             const SizedBox(height: 20),
                           ],
                         ),

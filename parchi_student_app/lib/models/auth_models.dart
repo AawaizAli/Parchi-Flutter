@@ -15,6 +15,7 @@ class User {
   final String? parchiId;
   final String? university;
   final String? profilePicture;
+  final bool isFoundersClub; // [NEW]
   User({
     required this.id,
     required this.email,
@@ -26,6 +27,7 @@ class User {
     this.parchiId,
     this.university,
     this.profilePicture, 
+    this.isFoundersClub = false, // [NEW] Default to false
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -60,6 +62,11 @@ class User {
       profilePicture: studentData != null 
           ? studentData['profile_picture'] 
           : json['profilePicture'],
+
+      // [NEW] Parse is_founders_club
+      isFoundersClub: studentData != null
+          ? (studentData['is_founders_club'] as bool? ?? false)
+          : (json['isFoundersClub'] as bool? ?? false),
     );
   }
 
@@ -74,7 +81,9 @@ class User {
       'lastName': lastName,
       'parchiId': parchiId,
       'university': university,
+      'university': university,
       'profilePicture': profilePicture, 
+      'isFoundersClub': isFoundersClub, // [NEW]
     };
   }
 }

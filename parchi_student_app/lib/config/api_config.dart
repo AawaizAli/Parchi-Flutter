@@ -44,4 +44,7 @@ class ApiConfig {
   static String get studentNotificationsEndpoint => '$baseUrl/student/notifications';
   static String markNotificationReadEndpoint(String id) =>
       '$baseUrl/notifications/$id/read';
+      
+  // Institutes Endpoint
+  static String get institutesEndpoint => '$baseUrl/institutes';
 }

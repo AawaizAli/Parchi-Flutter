@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../utils/colours.dart';
 import '../common/spinning_loader.dart';
 import '../../screens/auth/sign_up_screens/signup_screen_two.dart'; 
+import '../../services/institutes_service.dart';
+import '../../models/institute_model.dart'; 
 
 class SignupForm extends StatefulWidget {
   final VoidCallback onLoginTap;
@@ -28,14 +30,36 @@ class _SignupFormState extends State<SignupForm> {
   bool _isLoading = false;
   String? _errorMessage;
 
-  final List<String> _universities = [
-    "FAST NUCES",
-    "IBA Karachi",
-    "LUMS",
-    "NUST",
-    "Karachi University",
-    "Szabist"
-  ];
+  final InstitutesService _institutesService = InstitutesService();
+  List<Institute> _institutes = [];
+  bool _isLoadingInstitutes = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchInstitutes();
+  }
+
+  Future<void> _fetchInstitutes() async {
+    setState(() => _isLoadingInstitutes = true);
+    try {
+      final institutes = await _institutesService.fetchInstitutes();
+      setState(() {
+        _institutes = institutes;
+        _isLoadingInstitutes = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingInstitutes = false;
+          // Fallback to empty or show error
+        });
+        // existing hardcoded list as fallback could be an option, but user wants api.
+        // For now, we'll leave it empty or maybe show a snackbar.
+      }
+      print("Error fetching institutes: $e");
+    }
+  }
 
   @override
   void dispose() {
@@ -307,14 +331,21 @@ class _SignupFormState extends State<SignupForm> {
           color: AppColors.textSecondary.withOpacity(0.1),
           borderRadius: BorderRadius.circular(16)),
       child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
+        child: _isLoadingInstitutes 
+            ? const Center(child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: SpinningLoader(size: 20),
+              ))
+            : DropdownButton<String>(
           value: _selectedUniversity,
           hint: const Text("Select University",
               style: TextStyle(color: AppColors.textSecondary)),
           isExpanded: true,
           icon: Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary),
-          items: _universities
-              .map((u) => DropdownMenuItem(value: u, child: Text(u)))
+          items: _institutes
+              .map((institute) => DropdownMenuItem(
+                  value: institute.name, // Using name as the value
+                  child: Text(institute.name)))
               .toList(),
           onChanged: (v) => setState(() => _selectedUniversity = v),
         ),

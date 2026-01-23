@@ -13,7 +13,7 @@ class AppColors {
 
     // new blue that we have been using
 
-//   static const Color primary = Color(0xFF007AFF);
+    // static const Color primary = Color(0xFF007AFF);
 
     // dull blue parchi original
     // static const Color primary = Color(0xFF326295); 

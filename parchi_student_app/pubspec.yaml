@@ -55,4 +55,4 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/Parchi-Icon-with-old-blue.png"
+  image_path: "assets/Parchi-Icon-with-new-blue.png"

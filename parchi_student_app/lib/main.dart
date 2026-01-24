@@ -77,49 +77,60 @@ class ParchiApp extends StatelessWidget {
       // [NEW] robust route handler for deep links
       // [NEW] robust route handler for deep links
       onGenerateRoute: (settings) {
-        
         // Check if the route is related to auth-callback OR contains an access token fragment
         final uri = Uri.tryParse(settings.name ?? '');
         final hasAccessToken = settings.name?.contains('access_token') ?? false;
-        
-        if (hasAccessToken || (uri != null && (uri.path.contains('auth-callback') || uri.host.contains('auth-callback')))) {
-           
-           String? accessToken;
-           String? refreshToken;
-           String? type; // [NEW] Track the type (signup vs recovery)
-           
-           // Try to parse tokens from fragment
-           try {
-             // If settings.name starts with /, prepending http://dummy.com makes it a valid URI to parse fragment
-             // Example: /#access_token=...&type=recovery
-             final parsingUri = Uri.parse("http://dummy.com${settings.name}");
-             final fragment = parsingUri.fragment;
-             if (fragment.isNotEmpty) {
-               final queryParams = Uri.splitQueryString(fragment);
-               accessToken = queryParams['access_token'];
-               refreshToken = queryParams['refresh_token'];
-               type = queryParams['type']; // 'recovery', 'signup', etc.
-             }
-           } catch (e) {
-             debugPrint("Error parsing tokens: $e");
-           }
 
-           // [NEW] Logic to differentiate Password Reset vs Signup Verification
-           if (type == 'recovery') {
-              return MaterialPageRoute(
-                builder: (context) => const ResetPasswordScreen(),
-              );
-           }
+        if (hasAccessToken ||
+            (uri != null &&
+                (uri.path.contains('auth-callback') ||
+                    uri.host.contains('auth-callback') ||
+                    uri.path.contains('reset-password') ||
+                    uri.host.contains('reset-password')))) {
+          String? accessToken;
+          String? refreshToken;
+          String? type; // [NEW] Track the type (signup vs recovery)
 
-           // Default: Signup Verification
-           return MaterialPageRoute(
+          // Try to parse tokens from fragment
+          try {
+            // If settings.name starts with /, prepending http://dummy.com makes it a valid URI to parse fragment
+            // Example: /#access_token=...&type=recovery
+            final parsingUri = Uri.parse("http://dummy.com${settings.name}");
+            final fragment = parsingUri.fragment;
+            if (fragment.isNotEmpty) {
+              final queryParams = Uri.splitQueryString(fragment);
+              accessToken = queryParams['access_token'];
+              refreshToken = queryParams['refresh_token'];
+              type = queryParams['type']; // 'recovery', 'signup', etc.
+            }
+          } catch (e) {
+            debugPrint("Error parsing tokens: $e");
+          }
+
+          // Check path/host for explicit markers too
+          if (uri != null) {
+            if (uri.path.contains('reset-password') ||
+                uri.host.contains('reset-password')) {
+              type = 'recovery';
+            }
+          }
+
+          // [NEW] Logic to differentiate Password Reset vs Signup Verification
+          if (type == 'recovery') {
+            return MaterialPageRoute(
+              builder: (context) => const ResetPasswordScreen(),
+            );
+          }
+
+          // Default: Signup Verification
+          return MaterialPageRoute(
             builder: (context) => SignupVerificationScreen(
               accessToken: accessToken,
               refreshToken: refreshToken,
             ),
-          ); 
+          );
         }
-        
+
         // Default fallback
         return MaterialPageRoute(
           builder: (context) => const AuthWrapper(),

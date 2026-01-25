@@ -78,7 +78,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     if (_currentPage == 2) {
       containerHeight = screenHeight * 0.75;
     } else {
-      containerHeight = screenHeight * 0.44;
+      containerHeight = screenHeight * 0.50;
     }
 
     return Scaffold(

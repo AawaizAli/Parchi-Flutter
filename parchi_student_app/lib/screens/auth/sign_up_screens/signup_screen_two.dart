@@ -9,7 +9,9 @@ import '../../../services/auth_service.dart';
 import '../../../models/auth_models.dart'; // [NEW] For ConflictException
 import 'signup_verification_screen.dart';
 import 'verification_success_screen.dart'; // [NEW]
+
 import '../../../widgets/common/spinning_loader.dart';
+import '../../../widgets/common/image_source_popup.dart'; // [NEW] Import
 
 class SignupScreenTwo extends StatefulWidget {
   final String firstName;
@@ -66,27 +68,18 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
   }
 
   void _showImageSourceDialog(int imageType) {
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => SafeArea(
-          child: Wrap(children: [
-        ListTile(
-            leading: const Icon(Icons.photo_library),
-            title: const Text('Gallery'),
-            onTap: () async {
-              Navigator.pop(ctx);
-              _pickImage(ImageSource.gallery, imageType);
-            }),
-        ListTile(
-            leading: const Icon(Icons.camera_alt),
-            title: const Text('Camera'),
-            onTap: () async {
-              Navigator.pop(ctx);
-              _pickImage(ImageSource.camera, imageType);
-            }),
-      ])),
+      builder: (ctx) => ImageSourcePopup(
+        onCameraTap: () async {
+          Navigator.pop(ctx);
+          _pickImage(ImageSource.camera, imageType);
+        },
+        onGalleryTap: () async {
+          Navigator.pop(ctx);
+          _pickImage(ImageSource.gallery, imageType);
+        },
+      ),
     );
   }
 

@@ -154,7 +154,7 @@ class _SignupFormState extends State<SignupForm> {
             lastName: _capitalize(_lastNameController.text),
             email: _emailController.text.trim(),
             password: _passwordController.text,
-            phone: _phoneController.text.trim(),
+            phone: "+92${_phoneController.text.trim()}", // Prepend +92
             university: _selectedUniversity!,
             cnic: _cnicController.text.trim(),
             dateOfBirth: _dobController.text.trim(),
@@ -221,7 +221,7 @@ class _SignupFormState extends State<SignupForm> {
               // Phone (Mandatory)
               _buildTextField(_phoneController, "Phone Number",
                   Icons.phone_outlined,
-                  isNumber: true, action: TextInputAction.next),
+                  isNumber: true, action: TextInputAction.next, prefixText: "+92 "),
               const SizedBox(height: 12),
                // CNIC (Mandatory)
               _buildTextField(_cnicController, "CNIC (13 digits)",
@@ -289,7 +289,7 @@ class _SignupFormState extends State<SignupForm> {
 
   Widget _buildTextField(
       TextEditingController controller, String hint, IconData icon,
-      {bool isPassword = false, bool isNumber = false, int? maxLength, bool isReadOnly = false, TextInputAction action = TextInputAction.done}) {
+      {bool isPassword = false, bool isNumber = false, int? maxLength, bool isReadOnly = false, TextInputAction action = TextInputAction.done, String? prefixText}) {
     return Container(
       decoration: BoxDecoration(
           color: AppColors.textSecondary.withOpacity(0.1),
@@ -312,6 +312,10 @@ class _SignupFormState extends State<SignupForm> {
           hintText: hint,
           counterText: "", // Hide character counter
           prefixIcon: Icon(icon, color: AppColors.textSecondary),
+          prefixText: prefixText, // [NEW] Added prefix text support
+          prefixStyle: TextStyle(
+              color: AppColors.textSecondary.withOpacity(0.5), // [FIX] Lower opacity
+              fontSize: 16),
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(

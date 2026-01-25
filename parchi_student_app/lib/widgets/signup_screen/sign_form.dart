@@ -354,6 +354,8 @@ class _SignupFormState extends State<SignupForm> {
                   child: Text(institute.name)))
               .toList(),
           onChanged: (v) => setState(() => _selectedUniversity = v),
+          dropdownColor: Colors.white,
+          borderRadius: BorderRadius.circular(16),
         ),
       ),
     );

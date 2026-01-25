@@ -83,7 +83,7 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 10),
+            const SizedBox(height: 0),
             const Text(
               "Forgot Password?",
               style: TextStyle(
@@ -101,7 +101,7 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 20),
 
             // Email Input
             Container(
@@ -162,7 +162,26 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
               ),
             ],
 
-            const SizedBox(height: 48), // Replaced Spacer
+            const SizedBox(height: 22), // Compensation for missing fields to align buttons
+
+
+            // Back to Login Link (Aligned like Forgot Password in Login Form)
+            Align(
+              alignment: Alignment.center,
+              child: GestureDetector(
+                onTap: _isLoading ? null : widget.onBackTap,
+                child: const Text(
+                  "Back to Login",
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
 
             // Send Link Button
             SizedBox(
@@ -188,22 +207,6 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Back Button
-            Center(
-              child: TextButton(
-                onPressed: _isLoading ? null : widget.onBackTap,
-                child: const Text(
-                  "Back to Login",
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
               ),
             ),
           ],

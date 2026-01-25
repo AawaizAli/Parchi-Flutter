@@ -412,7 +412,7 @@ class _ParchiCardDetailState extends ConsumerState<ParchiCardDetail>
             _buildSingleStat(
               value: stats.leaderboardPosition > 0 ? "#${stats.leaderboardPosition}" : "-",
               label: "Rank",
-              subLabel: "Global",
+              subLabel: "Nationwide",
             ),
           ],
         ),

@@ -105,7 +105,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                 ),
               ],
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 22),
 
             _buildTextField(_emailController, "Email", Icons.email_outlined,
                 action: TextInputAction.next),
@@ -114,12 +114,12 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                 isPassword: true, action: TextInputAction.done),
 
             if (_errorMessage != null) ...[
-              const SizedBox(height: 10),
+              const SizedBox(height: 22),
               Text(_errorMessage!,
                   style: const TextStyle(color: AppColors.error, fontSize: 12)),
             ],
 
-            const SizedBox(height: 16), // Spacing for forgot password
+            const SizedBox(height: 20), // Spacing for forgot password
 
             // Forgot Password Link
             Align(
@@ -137,7 +137,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
               ),
             ),
 
-            const SizedBox(height: 48), // Replaced Spacer with fixed space
+            const SizedBox(height: 20), // Replaced Spacer with fixed space
 
             SizedBox(
               width: double.infinity,

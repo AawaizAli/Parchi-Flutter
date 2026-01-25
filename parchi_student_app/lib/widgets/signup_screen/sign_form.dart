@@ -106,6 +106,12 @@ class _SignupFormState extends State<SignupForm> {
     }
   }
 
+  String _capitalize(String input) {
+    if (input.trim().isEmpty) return "";
+    final val = input.trim();
+    return val[0].toUpperCase() + val.substring(1);
+  }
+
   Future<void> _handleNext() async {
     if (_firstNameController.text.trim().isEmpty ||
         _lastNameController.text.trim().isEmpty ||
@@ -144,8 +150,8 @@ class _SignupFormState extends State<SignupForm> {
         context,
         MaterialPageRoute(
           builder: (_) => SignupScreenTwo(
-            firstName: _firstNameController.text.trim(),
-            lastName: _lastNameController.text.trim(),
+            firstName: _capitalize(_firstNameController.text),
+            lastName: _capitalize(_lastNameController.text),
             email: _emailController.text.trim(),
             password: _passwordController.text,
             phone: _phoneController.text.trim(),

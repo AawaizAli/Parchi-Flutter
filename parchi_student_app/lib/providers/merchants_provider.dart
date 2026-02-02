@@ -18,7 +18,6 @@ class MerchantListState {
   final String? error;
   final int page;
   final bool hasMore;
-  final String searchQuery; // [NEW]
 
   MerchantListState({
     this.items = const [],
@@ -27,7 +26,6 @@ class MerchantListState {
     this.error,
     this.page = 1,
     this.hasMore = true,
-    this.searchQuery = "", // [NEW]
   });
 
   MerchantListState copyWith({
@@ -37,18 +35,14 @@ class MerchantListState {
     String? error,
     int? page,
     bool? hasMore,
-    String? searchQuery, // [NEW]
   }) {
     return MerchantListState(
       items: items ?? this.items,
       isLoading: isLoading ?? this.isLoading,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
-      error: error, // Keep error nullable update if passed explicitly? defaulting to keep old is better usually unless clearing.
-      // Actually my previous implementation of copyWith for error was a bit loose.
-      // Let's stick to standard pattern: if passed, update.
+      error: error,
       page: page ?? this.page,
       hasMore: hasMore ?? this.hasMore,
-      searchQuery: searchQuery ?? this.searchQuery, // [NEW]
     );
   }
 }
@@ -72,7 +66,6 @@ class MerchantListNotifier extends StateNotifier<MerchantListState> {
         page: 1,
         limit: _limit,
         month: currentMonth,
-        search: state.searchQuery, // [NEW]
       );
 
       state = state.copyWith(
@@ -90,22 +83,8 @@ class MerchantListNotifier extends StateNotifier<MerchantListState> {
   }
 
   Future<void> refresh() async {
-    // Keep search query, reset list
-    state = state.copyWith(items: [], isLoading: true, page: 1, hasMore: true);
-    await loadInitial();
-  }
-
-  Future<void> search(String query) async {
-    // Update query, reset list, load
-    if (state.searchQuery == query) return; // Debounce duplicate
-    
-    state = state.copyWith(
-      searchQuery: query,
-      items: [], 
-      isLoading: true, 
-      page: 1, 
-      hasMore: true
-    );
+    // Reset and reload
+    state = MerchantListState(items: [], isLoading: true);
     await loadInitial();
   }
 
@@ -123,7 +102,6 @@ class MerchantListNotifier extends StateNotifier<MerchantListState> {
         page: nextPage,
         limit: _limit,
         month: currentMonth,
-        search: state.searchQuery, // [NEW]
       );
 
       state = state.copyWith(
@@ -134,6 +112,7 @@ class MerchantListNotifier extends StateNotifier<MerchantListState> {
       );
     } catch (e) {
       state = state.copyWith(isLoadingMore: false);
+      // Optional: Handle error toast here
     }
   }
 }

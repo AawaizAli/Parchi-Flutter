@@ -4,7 +4,6 @@ import '../../utils/colours.dart';
 import '../../widgets/home_screen_parchicard_widgets/parchi_card.dart';
 import '../../widgets/home_screen_widgets/home_sheet_content.dart';
 import '../../providers/user_provider.dart';
-import '../../providers/merchants_provider.dart'; // [NEW]
 import 'notfication/notification_screen.dart'; // [NEW] Import the new screen
 import '../profile/profile_screen.dart'; // [NEW] Import Profile Screen
 
@@ -238,8 +237,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         setState(() {
                           _searchQuery = val;
                         });
-                        // [NEW] Trigger Backend Search
-                        ref.read(studentMerchantsProvider.notifier).search(val);
                       },
                     );
                   },

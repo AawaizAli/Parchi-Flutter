@@ -459,10 +459,17 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                Builder(
                 builder: (context) {
                 final merchants = merchantState.items;
-                // [FILTERING LOGIC REMOVED - NOW HANDLED BY BACKEND]
-                // List rendered directly from state
+                // [FILTERING LOGIC]
+                final filteredMerchants = widget.searchQuery.isEmpty
+                    ? merchants
+                    : merchants.where((m) {
+                        final query = widget.searchQuery.toLowerCase();
+                        final name = (m.businessName).toLowerCase();
+                        final cat = (m.category ?? "").toLowerCase();
+                        return name.contains(query) || cat.contains(query);
+                      }).toList();
 
-                if (merchants.isEmpty) {
+                if (filteredMerchants.isEmpty) {
                   return SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.all(20.0),
@@ -483,7 +490,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        if (index == merchants.length) {
+                        if (index == filteredMerchants.length) {
                            // Load More Indicator
                            if (merchantState.isLoadingMore) {
                              return const Padding(
@@ -493,7 +500,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                            }
                            return const SizedBox(height: 50); // Bottom padding
                         }
-                        final merchant = merchants[index];
+                        final merchant = filteredMerchants[index];
                         return GestureDetector(
                           onTap: () => _onMerchantTap(context, merchant.id),
                           child: RestaurantBigCard(
@@ -504,7 +511,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                           ),
                         );
                       },
-                      childCount: merchants.length + (widget.searchQuery.isEmpty ? 1 : 1), // Always allow loading more
+                      childCount: filteredMerchants.length + (widget.searchQuery.isEmpty ? 1 : 0),
                     ),
                   ),
                 );

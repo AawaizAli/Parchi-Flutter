@@ -16,14 +16,17 @@ import '../../screens/home/merchant_details_screen.dart';
 import '../../models/merchant_detail_model.dart';
 import '../../models/student_merchant_model.dart';
 
+import '../../providers/home_ui_provider.dart'; // [NEW]
+import '../../providers/user_provider.dart'; // [NEW] Added for explicit refresh if needed
+
 class HomeSheetContent extends ConsumerStatefulWidget {
   final ScrollController scrollController;
-  final String searchQuery; // [NEW]
+  final String searchQuery;
 
   const HomeSheetContent({
     super.key,
     required this.scrollController,
-    this.searchQuery = "", // [NEW] Default empty
+    this.searchQuery = "",
   });
 
   @override
@@ -56,23 +59,14 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
     return currentScroll >= (maxScroll * 0.9);
   }
 
-  // --- DUMMY DATA FOR BRANDS ---
-  // --- DUMMY DATA FOR BRANDS REMOVED ---
-
-  // --- DUMMY DATA FOR ALL RESTAURANTS (MERCHANTS) ---
-  // --- DUMMY DATA FOR ALL RESTAURANTS (MERCHANTS) ---
-  // --- DUMMY DATA REMOVED ---
-
   // --- REFRESH LOGIC ---
   Future<void> _refreshData() async {
-    try {
-      // Load fresh data
-      await ref.refresh(featuredOffersProvider.future);
-      await ref.refresh(brandsProvider.future);
-      await ref.read(studentMerchantsProvider.notifier).refresh();
-    } catch (e) {
-      debugPrint("Refresh failed: $e");
-    }
+    // 1. Force the spinner to show for at least 1 second (per requirement)
+    await Future.delayed(const Duration(seconds: 1));
+    
+    // 2. Trigger the Pulse -> Skeleton -> Data Fetch sequence
+    // We don't await this because we want the spinner to close while the rest happens
+    ref.read(homeUIProvider.notifier).startRefreshSequence();
   }
 
   // --- NAVIGATION LOGIC ---
@@ -192,12 +186,16 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
 
   @override
   Widget build(BuildContext context) {
+    final homeUIState = ref.watch(homeUIProvider);
+    final isSkeletonLoading = homeUIState.isSkeletonLoading;
+
+    // effective data providers (force loading if sequence dictates)
+    // We don't change the actual provider state, we just ignore data and show skeleton
+    
     final offersAsync = ref.watch(featuredOffersProvider);
     final merchantState = ref.watch(studentMerchantsProvider);
-    final studentMerchantsAsync = null; // Removed old async usage
-    const double indicatorSize = 100.0; // Total height area for the loader
+    const double indicatorSize = 100.0;
 
-    // [Filter Logic]
     final isSearching = widget.searchQuery.isNotEmpty;
 
     return Container(
@@ -264,7 +262,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 240, // Height for 2 rows of items
-                child: ref.watch(brandsProvider).when(
+                        child: ref.watch(brandsProvider).when(
                       loading: () => GridView.builder(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         physics: const NeverScrollableScrollPhysics(),
@@ -296,6 +294,24 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                         },
                       ),
                       data: (brands) {
+                        if (isSkeletonLoading) {
+                           return GridView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              childAspectRatio: 1.05,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                            ),
+                            itemCount: 6, // Show 6 dummy skeletons
+                            itemBuilder: (context, index) {
+                              return _buildBrandSkeleton();
+                            },
+                          );
+                        }
+
                         if (brands.isEmpty) {
                           return const Center(
                               child: Text("No brands available"));
@@ -377,6 +393,17 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                     },
                   ),
                   data: (offers) {
+                    if (isSkeletonLoading) {
+                        return ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: 3,
+                        itemBuilder: (context, index) {
+                          return _buildOfferSkeleton();
+                        },
+                      );
+                    }
+
                     if (offers.isEmpty) {
                       return const Center(
                         child: Text(
@@ -436,7 +463,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
 
             // --- ALL RESTAURANTS LIST ---
             // --- FAKE ASYNC HANDLING FOR NEW STATE ---
-            if (merchantState.isLoading && merchantState.items.isEmpty)
+            if (isSkeletonLoading || (merchantState.isLoading && merchantState.items.isEmpty))
                SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverList(

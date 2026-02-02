@@ -4,6 +4,7 @@ import '../../utils/colours.dart';
 import '../../widgets/home_screen_parchicard_widgets/parchi_card.dart';
 import '../../widgets/home_screen_widgets/home_sheet_content.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/home_ui_provider.dart'; // [NEW]
 import 'notfication/notification_screen.dart'; // [NEW] Import the new screen
 import '../profile/profile_screen.dart'; // [NEW] Import Profile Screen
 
@@ -148,6 +149,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (_minSheetSize > _maxSheetSize) _minSheetSize = _maxSheetSize - 0.05;
 
     final userAsync = ref.watch(userProfileProvider);
+    final homeUIState = ref.watch(homeUIProvider); // [NEW]
 
     return ValueListenableBuilder<double>(
       valueListenable: _expandProgress,
@@ -175,7 +177,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         studentName: fullName.isEmpty ? "STUDENT" : fullName,
                         studentId: pId,
                         universityName: uni,
-                        isFoundersClub: user?.isFoundersClub ?? false, // [NEW]
+                        isFoundersClub: user?.isFoundersClub ?? false,
+                        // [NEW] Pass UI states
+                        isLoading: homeUIState.isSkeletonLoading, // Override loading if refreshing
                       );
                     },
                     loading: () => const ParchiCard(
@@ -238,6 +242,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           _searchQuery = val;
                         });
                       },
+                      isLoading: homeUIState.isSkeletonLoading, // [NEW] Pass skeleton state
                     );
                   },
                   loading: () => CompactParchiHeader(

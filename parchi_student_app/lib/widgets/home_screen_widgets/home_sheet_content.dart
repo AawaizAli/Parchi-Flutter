@@ -31,6 +31,31 @@ class HomeSheetContent extends ConsumerStatefulWidget {
 }
 
 class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
+  @override
+  void initState() {
+    super.initState();
+    widget.scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    widget.scrollController.removeListener(_onScroll);
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_isBottom) {
+      ref.read(studentMerchantsProvider.notifier).loadMore();
+    }
+  }
+
+  bool get _isBottom {
+    if (!widget.scrollController.hasClients) return false;
+    final maxScroll = widget.scrollController.position.maxScrollExtent;
+    final currentScroll = widget.scrollController.position.pixels;
+    return currentScroll >= (maxScroll * 0.9);
+  }
+
   // --- DUMMY DATA FOR BRANDS ---
   // --- DUMMY DATA FOR BRANDS REMOVED ---
 
@@ -44,7 +69,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
       // Load fresh data
       await ref.refresh(featuredOffersProvider.future);
       await ref.refresh(brandsProvider.future);
-      await ref.refresh(studentMerchantsProvider.future);
+      await ref.read(studentMerchantsProvider.notifier).refresh();
     } catch (e) {
       debugPrint("Refresh failed: $e");
     }
@@ -168,7 +193,8 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
   @override
   Widget build(BuildContext context) {
     final offersAsync = ref.watch(featuredOffersProvider);
-    final studentMerchantsAsync = ref.watch(studentMerchantsProvider);
+    final merchantState = ref.watch(studentMerchantsProvider);
+    final studentMerchantsAsync = null; // Removed old async usage
     const double indicatorSize = 100.0; // Total height area for the loader
 
     // [Filter Logic]
@@ -409,8 +435,9 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
             ),
 
             // --- ALL RESTAURANTS LIST ---
-            studentMerchantsAsync.when(
-              loading: () => SliverPadding(
+            // --- FAKE ASYNC HANDLING FOR NEW STATE ---
+            if (merchantState.isLoading && merchantState.items.isEmpty)
+               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
@@ -420,25 +447,24 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                     childCount: 4,
                   ),
                 ),
-              ),
-              error: (err, stack) => SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      return _buildRestaurantListItemSkeleton();
-                    },
-                    childCount: 4,
-                  ),
-                ),
-              ),
-              data: (merchants) {
+              )
+            else if (merchantState.error != null && merchantState.items.isEmpty)
+               SliverToBoxAdapter(
+                 child: Padding(
+                   padding: const EdgeInsets.all(20),
+                   child: Center(child: Text("Error: ${merchantState.error}")),
+                 ),
+               )
+            else
+               Builder(
+                builder: (context) {
+                final merchants = merchantState.items;
                 // [FILTERING LOGIC]
                 final filteredMerchants = widget.searchQuery.isEmpty
                     ? merchants
                     : merchants.where((m) {
                         final query = widget.searchQuery.toLowerCase();
-                        final name = (m.businessName ?? "").toLowerCase();
+                        final name = (m.businessName).toLowerCase();
                         final cat = (m.category ?? "").toLowerCase();
                         return name.contains(query) || cat.contains(query);
                       }).toList();
@@ -464,6 +490,16 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
+                        if (index == filteredMerchants.length) {
+                           // Load More Indicator
+                           if (merchantState.isLoadingMore) {
+                             return const Padding(
+                               padding: EdgeInsets.all(16.0),
+                               child: Center(child: CircularProgressIndicator()),
+                             );
+                           }
+                           return const SizedBox(height: 50); // Bottom padding
+                        }
                         final merchant = filteredMerchants[index];
                         return GestureDetector(
                           onTap: () => _onMerchantTap(context, merchant.id),
@@ -475,7 +511,7 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                           ),
                         );
                       },
-                      childCount: filteredMerchants.length,
+                      childCount: filteredMerchants.length + (widget.searchQuery.isEmpty ? 1 : 0),
                     ),
                   ),
                 );

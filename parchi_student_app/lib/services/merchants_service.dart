@@ -28,7 +28,7 @@ class MerchantsService {
     }
   }
 
-  Future<List<StudentMerchantModel>> getStudentMerchants({
+  Future<MerchantListResponse> getStudentMerchants({
     int page = 1,
     int limit = 10,
     String? month,
@@ -49,14 +49,12 @@ class MerchantsService {
       final responseData = jsonDecode(response.body) as Map<String, dynamic>;
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        if (responseData['data'] != null &&
-            responseData['data']['items'] != null) {
-          final List<dynamic> items = responseData['data']['items'];
-          return items
-              .map((item) => StudentMerchantModel.fromJson(item))
-              .toList();
+        // Updated to use the Response wrapper helper
+        if (responseData['data'] != null) {
+             return MerchantListResponse.fromJson(responseData);
         }
-        return [];
+        // Fallback or empty if structure is totally wrong, but should match
+         throw Exception('Invalid response format: missing data field');
       } else {
         throw _handleError(response.statusCode, responseData);
       }

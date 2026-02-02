@@ -10,15 +10,115 @@ final merchantDetailsProvider = FutureProvider.family<MerchantDetailModel, Strin
   },
 );
 
-final studentMerchantsProvider = FutureProvider<List<StudentMerchantModel>>((ref) async {
-  // Fetching first page with 10 items for the home screen list
-  final now = DateTime.now();
-  final currentMonth = "${now.year}-${now.month.toString().padLeft(2, '0')}";
-  
-  return merchantsService.getStudentMerchants(
-    page: 1, 
-    limit: 10, 
-    month: currentMonth,
-  );
+// State class for Merchant List
+class MerchantListState {
+  final List<StudentMerchantModel> items;
+  final bool isLoading;
+  final bool isLoadingMore;
+  final String? error;
+  final int page;
+  final bool hasMore;
+
+  MerchantListState({
+    this.items = const [],
+    this.isLoading = true,
+    this.isLoadingMore = false,
+    this.error,
+    this.page = 1,
+    this.hasMore = true,
+  });
+
+  MerchantListState copyWith({
+    List<StudentMerchantModel>? items,
+    bool? isLoading,
+    bool? isLoadingMore,
+    String? error,
+    int? page,
+    bool? hasMore,
+  }) {
+    return MerchantListState(
+      items: items ?? this.items,
+      isLoading: isLoading ?? this.isLoading,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      error: error,
+      page: page ?? this.page,
+      hasMore: hasMore ?? this.hasMore,
+    );
+  }
+}
+
+// Notifier to manage the merchant list state
+class MerchantListNotifier extends StateNotifier<MerchantListState> {
+  final MerchantsService _service;
+  final int _limit = 10;
+
+  MerchantListNotifier(this._service) : super(MerchantListState()) {
+    loadInitial();
+  }
+
+  Future<void> loadInitial() async {
+    try {
+      state = state.copyWith(isLoading: true, error: null);
+      final now = DateTime.now();
+      final currentMonth = "${now.year}-${now.month.toString().padLeft(2, '0')}";
+
+      final response = await _service.getStudentMerchants(
+        page: 1,
+        limit: _limit,
+        month: currentMonth,
+      );
+
+      state = state.copyWith(
+        items: response.items,
+        isLoading: false,
+        page: 1,
+        hasMore: response.pagination.hasNext,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString().replaceAll('Exception: ', ''),
+      );
+    }
+  }
+
+  Future<void> refresh() async {
+    // Reset and reload
+    state = MerchantListState(items: [], isLoading: true);
+    await loadInitial();
+  }
+
+  Future<void> loadMore() async {
+    if (!state.hasMore || state.isLoadingMore) return;
+
+    try {
+      state = state.copyWith(isLoadingMore: true);
+      final nextPage = state.page + 1;
+      
+      final now = DateTime.now();
+      final currentMonth = "${now.year}-${now.month.toString().padLeft(2, '0')}";
+
+      final response = await _service.getStudentMerchants(
+        page: nextPage,
+        limit: _limit,
+        month: currentMonth,
+      );
+
+      state = state.copyWith(
+        items: [...state.items, ...response.items],
+        isLoadingMore: false,
+        page: nextPage,
+        hasMore: response.pagination.hasNext,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoadingMore: false);
+      // Optional: Handle error toast here
+    }
+  }
+}
+
+final studentMerchantsProvider =
+    StateNotifierProvider<MerchantListNotifier, MerchantListState>((ref) {
+  return MerchantListNotifier(merchantsService);
 });
 

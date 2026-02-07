@@ -118,7 +118,10 @@ class ParchiApp extends StatelessWidget {
           // [NEW] Logic to differentiate Password Reset vs Signup Verification
           if (type == 'recovery') {
             return MaterialPageRoute(
-              builder: (context) => const ResetPasswordScreen(),
+              builder: (context) => ResetPasswordScreen(
+                accessToken: accessToken,
+                refreshToken: refreshToken,
+              ),
             );
           }
 

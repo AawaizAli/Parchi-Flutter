@@ -5,7 +5,14 @@ import '../../../widgets/common/spinning_loader.dart';
 import '../login_screens/login_screen.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
-  const ResetPasswordScreen({super.key});
+  final String? accessToken;
+  final String? refreshToken;
+
+  const ResetPasswordScreen({
+    super.key,
+    this.accessToken,
+    this.refreshToken,
+  });
 
   @override
   State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
@@ -20,6 +27,34 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   bool _isObscure = true;
   bool _isConfirmObscure = true;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.accessToken != null) {
+      _setSession();
+    }
+  }
+
+  Future<void> _setSession() async {
+    try {
+      if (widget.refreshToken != null) {
+        await Supabase.instance.client.auth.setSession(widget.refreshToken!);
+      } else {
+        // Fallback or error if no refresh token
+        // Usually recovery links have refresh_token
+        setState(() {
+          _errorMessage = 'Invalid link. Missing refresh token.';
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to restore session. Please try the link again.';
+        });
+      }
+    }
+  }
 
   @override
   void dispose() {

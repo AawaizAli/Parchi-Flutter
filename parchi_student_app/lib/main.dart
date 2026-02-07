@@ -13,6 +13,7 @@ import 'screens/leaderboard/leaderboard_screen.dart';
 import 'screens/profile/redemption_history/redemption_history_screen.dart'; // [NEW] History Screen
 import 'screens/auth/login_screens/login_screen.dart';
 import 'services/auth_service.dart';
+import 'services/navigation_service.dart'; // [NEW] Use generic navigation service
 import 'package:firebase_core/firebase_core.dart';
 import 'services/notification_handler_service.dart';
 import 'firebase_options.dart'; // [NEW] Import generated options
@@ -52,7 +53,6 @@ class ParchiApp extends StatefulWidget {
 }
 
 class _ParchiAppState extends State<ParchiApp> {
-  final _navigatorKey = GlobalKey<NavigatorState>();
   late AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
 
@@ -105,9 +105,9 @@ class _ParchiAppState extends State<ParchiApp> {
 
     // 2. Try extracting from query parameters (if not in fragment)
     if (accessToken == null) {
-       accessToken = uri.queryParameters['access_token'];
-       refreshToken = uri.queryParameters['refresh_token'];
-       type = uri.queryParameters['type'];
+      accessToken = uri.queryParameters['access_token'];
+      refreshToken = uri.queryParameters['refresh_token'];
+      type = uri.queryParameters['type'];
     }
 
     // Identify if it's a reset password or signup verification
@@ -116,8 +116,7 @@ class _ParchiAppState extends State<ParchiApp> {
     if (uri.path.contains('reset-password') ||
         uri.host.contains('reset-password') ||
         type == 'recovery') {
-      
-      _navigatorKey.currentState?.push(
+      NavigationService.navigatorKey.currentState?.push(
         MaterialPageRoute(
           builder: (context) => ResetPasswordScreen(
             accessToken: accessToken,
@@ -125,12 +124,11 @@ class _ParchiAppState extends State<ParchiApp> {
           ),
         ),
       );
-    } else if (uri.path.contains('auth-callback') || 
-               uri.host.contains('auth-callback') || 
-               type == 'signup' || 
-               type == 'magiclink') {
-      
-      _navigatorKey.currentState?.push(
+    } else if (uri.path.contains('auth-callback') ||
+        uri.host.contains('auth-callback') ||
+        type == 'signup' ||
+        type == 'magiclink') {
+      NavigationService.navigatorKey.currentState?.push(
         MaterialPageRoute(
           builder: (context) => SignupVerificationScreen(
             accessToken: accessToken,
@@ -144,9 +142,16 @@ class _ParchiAppState extends State<ParchiApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      navigatorKey: _navigatorKey,
+      navigatorKey:
+          NavigationService.navigatorKey, // [NEW] Global Navigator Key
+      scaffoldMessengerKey:
+          NavigationService.messengerKey, // [NEW] Global Messenger Key
       debugShowCheckedModeBanner: false,
       title: 'Parchi MVP',
+      routes: {
+        '/login': (context) =>
+            const LoginScreen(), // [NEW] Named route for global navigation
+      },
       theme: ThemeData(
         textTheme: GoogleFonts.montserratTextTheme(),
         primaryColor: AppColors.primary,
@@ -175,7 +180,7 @@ class _ParchiAppState extends State<ParchiApp> {
         // [NEW] Restore onGenerateRoute to handle "Cold Start" deep links directly
         // This prevents "Failed to handle route information" error
         final uri = Uri.tryParse(settings.name ?? '');
-        
+
         if (uri != null &&
             (uri.path.contains('auth-callback') ||
                 uri.host.contains('auth-callback') ||
@@ -185,14 +190,13 @@ class _ParchiAppState extends State<ParchiApp> {
                 // [NEW] Check for tokens in fragment (implicit flow) or query
                 uri.fragment.contains('access_token') ||
                 uri.queryParameters.containsKey('access_token'))) {
-          
           String? accessToken;
           String? refreshToken;
           String? type;
 
           // 1. Fragment parsing (primary for Supabase)
           // We treat settings.name as a full URI or path
-           try {
+          try {
             // Retrieve fragment directly if possible, or parse logic
             // If settings.name is just `/auth-callback#...`, Uri.tryParse handles it.
             if (uri.fragment.isNotEmpty) {
@@ -202,14 +206,14 @@ class _ParchiAppState extends State<ParchiApp> {
               type = queryParams['type'];
             }
           } catch (e) {
-             debugPrint("Error parsing fragment in generateRoute: $e");
+            debugPrint("Error parsing fragment in generateRoute: $e");
           }
 
           // 2. Query param parsing
           if (accessToken == null) {
-             accessToken = uri.queryParameters['access_token'];
-             refreshToken = uri.queryParameters['refresh_token'];
-             type = uri.queryParameters['type'];
+            accessToken = uri.queryParameters['access_token'];
+            refreshToken = uri.queryParameters['refresh_token'];
+            type = uri.queryParameters['type'];
           }
 
           // Determine screen
@@ -223,7 +227,7 @@ class _ParchiAppState extends State<ParchiApp> {
               ),
             );
           } else {
-             return MaterialPageRoute(
+            return MaterialPageRoute(
               builder: (context) => SignupVerificationScreen(
                 accessToken: accessToken,
                 refreshToken: refreshToken,
@@ -252,12 +256,14 @@ class _AuthWrapperState extends State<AuthWrapper> {
   bool _isLoading = true;
   bool _isAuthenticated = false;
   late final StreamSubscription<AuthState> _authSubscription;
+  StreamSubscription<String>? _authErrorSubscription;
 
   @override
   void initState() {
     super.initState();
     _checkAuthState();
     _setupAuthListener();
+    _setupAuthErrorListener();
   }
 
   void _setupAuthListener() {
@@ -300,9 +306,29 @@ class _AuthWrapperState extends State<AuthWrapper> {
     });
   }
 
+  void _setupAuthErrorListener() {
+    // Listen for auth errors (e.g., account deactivation)
+    _authErrorSubscription =
+        authService.onAuthError.listen((errorMessage) async {
+      debugPrint('Auth error received: $errorMessage');
+
+      if (!mounted) return;
+
+      // [UPDATED] Only show SnackBar here. AuthService handles navigation globally.
+      NavigationService.messengerKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    });
+  }
+
   @override
   void dispose() {
     _authSubscription.cancel();
+    _authErrorSubscription?.cancel();
     super.dispose();
   }
 

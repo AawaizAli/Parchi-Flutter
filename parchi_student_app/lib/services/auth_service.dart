@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -5,6 +6,7 @@ import '../config/api_config.dart';
 import '../models/auth_models.dart';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'navigation_service.dart'; // [NEW]
 
 class AuthService {
   static const String _accessTokenKey = 'access_token';
@@ -12,19 +14,27 @@ class AuthService {
   static const String _tokenExpiresAtKey = 'token_expires_at';
   static const String _userKey = 'user';
 
+  static bool _isLoggingOut = false; // [NEW] Global logout lock
+
   final _secureStorage = const FlutterSecureStorage();
+
+  // Stream controller for broadcasting auth errors (e.g., account deactivation)
+  final _authErrorController = StreamController<String>.broadcast();
+
+  // Expose stream for listeners to react to auth errors
+  Stream<String> get onAuthError => _authErrorController.stream;
 
   // Get stored access token with auto-refresh check
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     // Check if token exists and is expired/about to expire
-    // Note: ExpiresAt is stored in secure storage now too? 
+    // Note: ExpiresAt is stored in secure storage now too?
     // Actually, storing expiry in secure storage makes sense if tokens are there.
     // However, for speed, prefs is faster. Let's keep expiry in prefs or move to secure.
-    // Secure storage is async and slightly slower. 
+    // Secure storage is async and slightly slower.
     // Let's store tokens in secure storage, and keep expiry in secure storage to be consistent.
-    
+
     final expiresAtStr = await _secureStorage.read(key: _tokenExpiresAtKey);
     final expiresAt = expiresAtStr != null ? int.tryParse(expiresAtStr) : null;
 
@@ -42,7 +52,7 @@ class AuthService {
         }
       }
     }
-    
+
     return await _secureStorage.read(key: _accessTokenKey);
   }
 
@@ -63,7 +73,8 @@ class AuthService {
 
   // Set token expiry
   Future<void> setTokenExpiry(int expiresAt) async {
-    await _secureStorage.write(key: _tokenExpiresAtKey, value: expiresAt.toString());
+    await _secureStorage.write(
+        key: _tokenExpiresAtKey, value: expiresAt.toString());
   }
 
   // Get token expiry
@@ -129,8 +140,12 @@ class AuthService {
 
   // Refresh Token
   Future<void> refreshToken() async {
+    // [NEW] Lock check
+    if (_isLoggingOut) throw Exception('Session expired');
+
     final refreshToken = await getRefreshToken();
     if (refreshToken == null) {
+      await logout(); // [NEW] Ensure logout if no token
       throw Exception('No refresh token available');
     }
 
@@ -148,33 +163,57 @@ class AuthService {
       final responseData = jsonDecode(response.body) as Map<String, dynamic>;
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
+        // [Existing Success Logic]
         // The backend returns { data: { user: ..., session: ... }, ... }
         // We need to parse the inner session data based on how AuthResponse expects it
         // Or manually update tokens if the structure is different.
         // Based on backend implementation: return { user: ..., session: ... } wrapped in ApiResponse
-        
+
         // Api Response wrapper: { data: { user: ..., session: ... }, message: ..., status: ... }
         final sessionData = responseData['data']['session'];
         if (sessionData != null) {
-            // Update stored tokens
-            if (sessionData['access_token'] != null) {
-              await setToken(sessionData['access_token']);
-            }
-            if (sessionData['refresh_token'] != null) {
-              await setRefreshToken(sessionData['refresh_token']);
-            }
-            if (sessionData['expires_at'] != null) {
-               await setTokenExpiry(sessionData['expires_at']);
-            } else if (sessionData['expires_in'] != null) {
-               final expiresIn = sessionData['expires_in'] as int;
-               final expiresAt = (DateTime.now().millisecondsSinceEpoch ~/ 1000) + expiresIn;
-               await setTokenExpiry(expiresAt);
-            }
+          // Update stored tokens
+          if (sessionData['access_token'] != null) {
+            await setToken(sessionData['access_token']);
+          }
+          if (sessionData['refresh_token'] != null) {
+            await setRefreshToken(sessionData['refresh_token']);
+          }
+          if (sessionData['expires_at'] != null) {
+            await setTokenExpiry(sessionData['expires_at']);
+          } else if (sessionData['expires_in'] != null) {
+            final expiresIn = sessionData['expires_in'] as int;
+            final expiresAt =
+                (DateTime.now().millisecondsSinceEpoch ~/ 1000) + expiresIn;
+            await setTokenExpiry(expiresAt);
+          }
         }
       } else {
-        throw Exception('Refresh failed');
+        // [NEW] Handle Deactivation or Invalid Token explicitly
+        String errorMessage = "Session expired";
+        if (responseData.containsKey('message')) {
+          errorMessage = responseData['message'].toString();
+        }
+
+        // Broadcast specific error (e.g. "Account deactivated: ...")
+        _authErrorController.add(errorMessage);
+
+        await logout(); // [NEW] Trigger logout
+        throw Exception(errorMessage);
       }
     } catch (e) {
+      // If already logging out, just throw
+      if (_isLoggingOut) throw Exception('Session expired');
+
+      // If it's a network error, maybe we shouldn't logout?
+      // But if it's a "Refresh failed" from logic above, we already logged out.
+      // If it's a protocol exception, we might want to logout.
+
+      // For safety in this "horror movie" scenario, let's err on side of logging out if we can't refresh.
+      if (!e.toString().contains("Session expired")) {
+        // Avoid double broadcast if we threw it above
+        await logout();
+      }
       throw Exception('Refresh token failed: ${e.toString()}');
     }
   }
@@ -238,7 +277,7 @@ class AuthService {
   }
 
   // Student Signup with verification documents
-  /// 
+  ///
   /// Returns the signup response data on success
   /// Throws custom exceptions on error (ValidationException, ConflictException, etc.)
   Future<StudentSignupResponse> studentSignup({
@@ -296,9 +335,9 @@ class AuthService {
     } on http.ClientException {
       throw Exception('Network error. Please check your internet connection.');
     } catch (e) {
-      if (e is ValidationException || 
-          e is ConflictException || 
-          e is UnprocessableEntityException || 
+      if (e is ValidationException ||
+          e is ConflictException ||
+          e is UnprocessableEntityException ||
           e is ServerException) {
         rethrow;
       }
@@ -307,10 +346,11 @@ class AuthService {
   }
 
   /// Handle API error responses for student signup
-  Exception _handleStudentSignupError(int statusCode, Map<String, dynamic> errorData) {
+  Exception _handleStudentSignupError(
+      int statusCode, Map<String, dynamic> errorData) {
     final message = errorData['message'];
     String errorMessage;
-    
+
     // Handle array of validation messages
     if (message is List) {
       errorMessage = message.join(', ');
@@ -319,7 +359,7 @@ class AuthService {
     } else {
       errorMessage = 'An error occurred';
     }
-    
+
     switch (statusCode) {
       case 400:
         return ValidationException(errorMessage);
@@ -395,7 +435,7 @@ class AuthService {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final profileResponse = ProfileResponse.fromJson(responseData);
-        
+
         // Update stored user data
         await setUser(profileResponse.user);
 
@@ -434,7 +474,7 @@ class AuthService {
       } else {
         // Handle error response
         String errorMessage = 'Failed to send password reset email';
-        
+
         if (responseData.containsKey('message')) {
           final message = responseData['message'];
           if (message is List) {
@@ -443,7 +483,7 @@ class AuthService {
             errorMessage = message;
           }
         }
-        
+
         throw Exception(errorMessage);
       }
     } catch (e) {
@@ -464,7 +504,7 @@ class AuthService {
     try {
       final response = await http.patch(
         // Ensure this matches your backend route
-        Uri.parse('${ApiConfig.baseUrl}/auth/student/profile-picture'), 
+        Uri.parse('${ApiConfig.baseUrl}/auth/student/profile-picture'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -474,18 +514,16 @@ class AuthService {
 
       if (response.statusCode != 200) {
         final responseData = jsonDecode(response.body);
-        throw Exception(responseData['message'] ?? 'Failed to update profile picture');
+        throw Exception(
+            responseData['message'] ?? 'Failed to update profile picture');
       }
-      
+
       // Optionally force a profile refresh here
       await getProfile();
-      
     } catch (e) {
       throw Exception('Network error: $e');
     }
   }
-
-
 
   // Change Password
   Future<void> changePassword({
@@ -519,7 +557,7 @@ class AuthService {
       } else {
         // Handle error responses
         String errorMessage = 'Failed to change password';
-        
+
         if (responseData.containsKey('message')) {
           final message = responseData['message'];
           if (message is List) {
@@ -528,7 +566,7 @@ class AuthService {
             errorMessage = message;
           }
         }
-        
+
         throw Exception(errorMessage);
       }
     } catch (e) {
@@ -541,25 +579,46 @@ class AuthService {
 
   // Logout
   Future<void> logout() async {
-    final token = await getToken();
-    
-    if (token != null) {
-      try {
-        await http.post(
-          Uri.parse(ApiConfig.logoutEndpoint),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          },
-        );
-      } catch (e) {
-        // Even if logout request fails, clear local tokens
-        // Log error silently - user will be logged out locally anyway
-      }
-    }
+    // [NEW] 1. Check if already logging out
+    if (_isLoggingOut) return;
 
-    // Always remove tokens locally
-    await removeToken();
+    // [NEW] 2. Set lock
+    _isLoggingOut = true;
+
+    try {
+      final token = await getToken();
+
+      if (token != null) {
+        try {
+          await http.post(
+            Uri.parse(ApiConfig.logoutEndpoint),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          );
+        } catch (e) {
+          // Ignore network errors during logout
+        }
+      }
+
+      // Always remove tokens locally
+      await removeToken();
+
+      // [NEW] 3. Navigate to Login via Global Key
+      // Wrap in microtask to avoid "Navigator operation requested with a context that does not include a Navigator"
+      // or silent failures if called mid-frame.
+      Future.microtask(() {
+        NavigationService.navigatorKey.currentState?.pushNamedAndRemoveUntil(
+          '/login',
+          (route) => false,
+        );
+      });
+    } finally {
+      // [UPDATED] Do NOT reset _isLoggingOut manually.
+      // It should remain true until the app is restarted or a fresh login occurs.
+      // This prevents "second wave" logout storms.
+    }
   }
   // --- STANDARDIZED API METHODS ---
 
@@ -567,13 +626,18 @@ class AuthService {
   Future<http.Response> authenticatedGet(String url) async {
     // 1. Get current token (triggers auto-refresh if close to expiry)
     String? token = await getToken();
-    
+
+    // [New] Check if logout is in progress
+    if (_isLoggingOut) {
+      throw Exception('Session expired');
+    }
+
     if (token == null) {
       throw Exception('No authentication token found. Please login.');
     }
 
     final uri = Uri.parse(url);
-    
+
     // 2. First Attempt
     var response = await http.get(
       uri,
@@ -583,29 +647,51 @@ class AuthService {
       },
     );
 
-    // 3. Check for 401 Unauthorized
-    if (response.statusCode == 401) {
-      print("Got 401 Unauthorized. Attempting to refresh token and retry...");
-      try {
-        // Force refresh
-        await refreshToken();
-        token = await getToken(); // Get the new token (from secure storage)
+    // 3. Check for 401 Unauthorized or 403 Forbidden
+    if (response.statusCode == 401 || response.statusCode == 403) {
+      // 3. Check for 401 Unauthorized or 403 Forbidden
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        // Check lock before retrying
+        if (_isLoggingOut) throw Exception('Session expired');
 
-        if (token != null) {
-           // 4. Retry Request
-           print("Retrying request with new token...");
-           response = await http.get(
-            uri,
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
-          );
+        print(
+            "Got ${response.statusCode} ${response.statusCode == 401 ? 'Unauthorized' : 'Forbidden'}. Attempting to refresh token and retry...");
+        try {
+          // Force refresh (will throw & logout if fails)
+          await refreshToken();
+          token = await getToken(); // Get the new token
+
+          if (token != null) {
+            // 4. Retry Request
+            print("Retrying request with new token...");
+            response = await http.get(
+              uri,
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $token',
+              },
+            );
+
+            // Check if retry also failed with 401/403
+            if (response.statusCode == 401 || response.statusCode == 403) {
+              // If retry fails, we assume something is wrong (e.g. deactivated mid-stream)
+              // But refreshToken didn't throw, so we might need to handle this explicitly.
+              // However, usually refreshToken would fail if account is deactivated.
+              // If refreshToken succeeded but we still get 401/403, maybe scopes changed or token invalid.
+
+              final errorMessage = _extractErrorMessage(response);
+              _authErrorController.add(errorMessage);
+              await logout();
+              throw Exception(errorMessage);
+            }
+          }
+        } catch (e) {
+          print("Retry failed or aborted: $e");
+          // refreshToken already broadcasted & logged out if it failed.
+          // We just rethrow to stop execution context.
+          if (e.toString().contains("Session expired")) rethrow;
+          throw Exception("Unauthorized: Session expired. Please login again.");
         }
-      } catch (e) {
-        print("Retry failed: $e");
-        // Throwing unauthorized will likely trigger a logout in the UI or provider
-        throw Exception("Unauthorized: Session expired. Please login again.");
       }
     }
 
@@ -615,7 +701,7 @@ class AuthService {
   // Helper method to handle authenticated POST requests
   Future<http.Response> authenticatedPost(String url, {Object? body}) async {
     String? token = await getToken();
-    
+
     if (token == null) throw Exception('No authentication token found.');
 
     final uri = Uri.parse(url);
@@ -629,14 +715,17 @@ class AuthService {
       body: body != null ? jsonEncode(body) : null,
     );
 
-    if (response.statusCode == 401) {
-       print("Got 401 Unauthorized (POST). Attempting to refresh...");
-       try {
-         await refreshToken();
-         token = await getToken();
-         
-         if (token != null) {
-            response = await http.post(
+    if (response.statusCode == 401 || response.statusCode == 403) {
+      if (_isLoggingOut) throw Exception('Session expired');
+
+      print(
+          "Got ${response.statusCode} ${response.statusCode == 401 ? 'Unauthorized' : 'Forbidden'} (POST). Attempting to refresh...");
+      try {
+        await refreshToken();
+        token = await getToken();
+
+        if (token != null) {
+          response = await http.post(
             uri,
             headers: {
               'Content-Type': 'application/json',
@@ -644,16 +733,55 @@ class AuthService {
             },
             body: body != null ? jsonEncode(body) : null,
           );
-         }
-       } catch (e) {
-         throw Exception("Unauthorized: Session expired.");
-       }
+
+          // Check if retry also failed with 401/403
+          if (response.statusCode == 401 || response.statusCode == 403) {
+            final errorMessage = _extractErrorMessage(response);
+            _authErrorController.add(errorMessage);
+            await logout();
+            throw Exception(errorMessage);
+          }
+        }
+      } catch (e) {
+        if (e.toString().contains("Session expired")) rethrow;
+        throw Exception("Unauthorized: Session expired.");
+      }
     }
-    
+
     return response;
+  }
+
+  // Helper to extract error message from API response
+  String _extractErrorMessage(http.Response response) {
+    try {
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+
+      // Check for message field
+      if (responseData.containsKey('message')) {
+        final message = responseData['message'];
+        if (message is String) {
+          return message;
+        } else if (message is List) {
+          return message.join(', ');
+        }
+      }
+
+      // Check for error field
+      if (responseData.containsKey('error')) {
+        return responseData['error'].toString();
+      }
+
+      return 'Your account has been deactivated. Please contact support.';
+    } catch (e) {
+      return 'Your account has been deactivated. Please contact support.';
+    }
+  }
+
+  // Clean up resources
+  void dispose() {
+    _authErrorController.close();
   }
 }
 
 // Singleton instance
 final authService = AuthService();
-

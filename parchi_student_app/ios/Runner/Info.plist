@@ -45,6 +45,8 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>FlutterDeepLinkingEnabled</key>
+	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs access to your camera to take photos for student verification.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // [NEW] Import Riverpod
+import 'package:app_links/app_links.dart'; // [NEW] Import AppLinks
 import 'package:google_fonts/google_fonts.dart';
 import 'screens/auth/reset_password/reset_password_screen.dart';
 import 'config/supabase_config.dart';
@@ -43,12 +44,107 @@ void main() async {
   );
 }
 
-class ParchiApp extends StatelessWidget {
+class ParchiApp extends StatefulWidget {
   const ParchiApp({super.key});
+
+  @override
+  State<ParchiApp> createState() => _ParchiAppState();
+}
+
+class _ParchiAppState extends State<ParchiApp> {
+  final _navigatorKey = GlobalKey<NavigatorState>();
+  late AppLinks _appLinks;
+  StreamSubscription<Uri>? _linkSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _initDeepLinkListener();
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _initDeepLinkListener() async {
+    _appLinks = AppLinks();
+
+    // Check initial link checks are now handled by onGenerateRoute to avoid double navigation
+    // and "Failed to handle route" errors.
+    // However, for pure AppLinks support (if onGenerateRoute fails), we can keep the listener.
+
+    // Listen for new links
+    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
+      _handleDeepLink(uri);
+    });
+  }
+
+  void _handleDeepLink(Uri uri) {
+    // Check if the route is related to auth-callback OR contains an access token fragment
+    // Note: Supabase magic links often come as https://project.supabase.co/auth/v1/verify?token=...&type=signup&redirect_to=parchi://auth-callback
+    // Or simpler: parchi://auth-callback#access_token=...
+
+    // We need to parse fragment parameters primarily
+    String? accessToken;
+    String? refreshToken;
+    String? type;
+
+    // 1. Try extracting from fragment (typical for implicit flow / magic link redirects)
+    if (uri.fragment.isNotEmpty) {
+      try {
+        final queryParams = Uri.splitQueryString(uri.fragment);
+        accessToken = queryParams['access_token'];
+        refreshToken = queryParams['refresh_token'];
+        type = queryParams['type'];
+      } catch (e) {
+        debugPrint("Error parsing fragment: $e");
+      }
+    }
+
+    // 2. Try extracting from query parameters (if not in fragment)
+    if (accessToken == null) {
+       accessToken = uri.queryParameters['access_token'];
+       refreshToken = uri.queryParameters['refresh_token'];
+       type = uri.queryParameters['type'];
+    }
+
+    // Identify if it's a reset password or signup verification
+    // Sometimes 'type' param tells us.
+    // Also check path/host
+    if (uri.path.contains('reset-password') ||
+        uri.host.contains('reset-password') ||
+        type == 'recovery') {
+      
+      _navigatorKey.currentState?.push(
+        MaterialPageRoute(
+          builder: (context) => ResetPasswordScreen(
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+          ),
+        ),
+      );
+    } else if (uri.path.contains('auth-callback') || 
+               uri.host.contains('auth-callback') || 
+               type == 'signup' || 
+               type == 'magiclink') {
+      
+      _navigatorKey.currentState?.push(
+        MaterialPageRoute(
+          builder: (context) => SignupVerificationScreen(
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+          ),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'Parchi MVP',
       theme: ThemeData(
@@ -74,67 +170,69 @@ class ParchiApp extends StatelessWidget {
         ),
       ),
       home: const AuthWrapper(),
-      // [NEW] robust route handler for deep links
-      // [NEW] robust route handler for deep links
       onGenerateRoute: (settings) {
-        // Check if the route is related to auth-callback OR contains an access token fragment
+        debugPrint("onGenerateRoute: ${settings.name}");
+        // [NEW] Restore onGenerateRoute to handle "Cold Start" deep links directly
+        // This prevents "Failed to handle route information" error
         final uri = Uri.tryParse(settings.name ?? '');
-        final hasAccessToken = settings.name?.contains('access_token') ?? false;
-
-        if (hasAccessToken ||
-            (uri != null &&
-                (uri.path.contains('auth-callback') ||
-                    uri.host.contains('auth-callback') ||
-                    uri.path.contains('reset-password') ||
-                    uri.host.contains('reset-password')))) {
+        
+        if (uri != null &&
+            (uri.path.contains('auth-callback') ||
+                uri.host.contains('auth-callback') ||
+                uri.path.contains('reset-password') ||
+                uri.host.contains('reset-password') ||
+                uri.path.contains('verify') ||
+                // [NEW] Check for tokens in fragment (implicit flow) or query
+                uri.fragment.contains('access_token') ||
+                uri.queryParameters.containsKey('access_token'))) {
+          
           String? accessToken;
           String? refreshToken;
-          String? type; // [NEW] Track the type (signup vs recovery)
+          String? type;
 
-          // Try to parse tokens from fragment
-          try {
-            // If settings.name starts with /, prepending http://dummy.com makes it a valid URI to parse fragment
-            // Example: /#access_token=...&type=recovery
-            final parsingUri = Uri.parse("http://dummy.com${settings.name}");
-            final fragment = parsingUri.fragment;
-            if (fragment.isNotEmpty) {
-              final queryParams = Uri.splitQueryString(fragment);
+          // 1. Fragment parsing (primary for Supabase)
+          // We treat settings.name as a full URI or path
+           try {
+            // Retrieve fragment directly if possible, or parse logic
+            // If settings.name is just `/auth-callback#...`, Uri.tryParse handles it.
+            if (uri.fragment.isNotEmpty) {
+              final queryParams = Uri.splitQueryString(uri.fragment);
               accessToken = queryParams['access_token'];
               refreshToken = queryParams['refresh_token'];
-              type = queryParams['type']; // 'recovery', 'signup', etc.
+              type = queryParams['type'];
             }
           } catch (e) {
-            debugPrint("Error parsing tokens: $e");
+             debugPrint("Error parsing fragment in generateRoute: $e");
           }
 
-          // Check path/host for explicit markers too
-          if (uri != null) {
-            if (uri.path.contains('reset-password') ||
-                uri.host.contains('reset-password')) {
-              type = 'recovery';
-            }
+          // 2. Query param parsing
+          if (accessToken == null) {
+             accessToken = uri.queryParameters['access_token'];
+             refreshToken = uri.queryParameters['refresh_token'];
+             type = uri.queryParameters['type'];
           }
 
-          // [NEW] Logic to differentiate Password Reset vs Signup Verification
-          if (type == 'recovery') {
+          // Determine screen
+          if (uri.path.contains('reset-password') ||
+              uri.host.contains('reset-password') ||
+              type == 'recovery') {
             return MaterialPageRoute(
               builder: (context) => ResetPasswordScreen(
                 accessToken: accessToken,
                 refreshToken: refreshToken,
               ),
             );
+          } else {
+             return MaterialPageRoute(
+              builder: (context) => SignupVerificationScreen(
+                accessToken: accessToken,
+                refreshToken: refreshToken,
+              ),
+            );
           }
-
-          // Default: Signup Verification
-          return MaterialPageRoute(
-            builder: (context) => SignupVerificationScreen(
-              accessToken: accessToken,
-              refreshToken: refreshToken,
-            ),
-          );
         }
 
-        // Default fallback
+        // [Fix] Default fallback to AuthWrapper instead of null to prevent "Failed to handle route" crash
         return MaterialPageRoute(
           builder: (context) => const AuthWrapper(),
         );

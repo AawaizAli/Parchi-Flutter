@@ -76,7 +76,8 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
     _controller.forward();
     
     // [NEW] Manually set session if tokens are passed
-    if (widget.accessToken != null) {
+    // [NEW] Manually set session if tokens are passed
+    if (widget.refreshToken != null) {
       _setManualSession();
     }
 

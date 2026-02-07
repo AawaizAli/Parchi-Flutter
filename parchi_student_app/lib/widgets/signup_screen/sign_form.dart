@@ -132,12 +132,18 @@ class _SignupFormState extends State<SignupForm> {
        return;
     }
 
+    if (_passwordController.text.length < 6) {
+      setState(() => _errorMessage = "Password must be at least 6 characters");
+      return;
+    }
+
     if (_passwordController.text != _confirmPasswordController.text) {
       setState(() => _errorMessage = "Passwords Don't Match");
       return;
     }
 
-    if (_formKey.currentState!.validate()) {
+    // Proceed without Form validation as we are handling it manually
+    if (true) {
       setState(() {
         _isLoading = true;
         _errorMessage = null; 
@@ -302,20 +308,27 @@ class _SignupFormState extends State<SignupForm> {
         readOnly: isReadOnly,
         maxLength: maxLength,
         onTap: isReadOnly ? () => _selectDate(context) : null,
-        validator: (val) {
-          if (isReadOnly) return null; // Date picker handled separately
-          if (val == null || val.isEmpty) return "Required";
-          if (isPassword && val.length < 6) return "Min 6 chars";
-          return null;
-        },
         decoration: InputDecoration(
           hintText: hint,
           counterText: "", // Hide character counter
-          prefixIcon: Icon(icon, color: AppColors.textSecondary),
-          prefixText: prefixText, // [NEW] Added prefix text support
-          prefixStyle: TextStyle(
-              color: AppColors.textSecondary.withOpacity(0.5), // [FIX] Lower opacity
-              fontSize: 16),
+prefixIcon: prefixText == null
+              ? Icon(icon, color: AppColors.textSecondary)
+              : Padding(
+                  padding: const EdgeInsets.only(left: 12, right: 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(icon, color: AppColors.textSecondary),
+                      const SizedBox(width: 8),
+                      Text(
+                        prefixText,
+                        style: TextStyle(
+                            color: AppColors.textSecondary.withOpacity(0.5),
+                            fontSize: 16),
+                      ),
+                    ],
+                  ),
+                ),
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(

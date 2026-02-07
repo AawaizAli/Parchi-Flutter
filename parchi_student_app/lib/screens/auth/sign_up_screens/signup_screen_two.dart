@@ -50,6 +50,7 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
   String? _validationError;
   bool _isUploading = false;
   final AuthService _authService = AuthService();
+  bool _isStudentIdVerification = true; // [NEW] Default to Student ID
 
   @override
   void initState() {
@@ -107,17 +108,18 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
   }
 
   void _showError(String message) {
-    if (mounted)
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.red));
+    if (mounted) setState(() => _validationError = message);
   }
 
   bool _validateForm() {
     if (_studentIdImage == null) {
-      setState(() => _validationError = "Upload Student ID Front");
+      setState(() => _validationError = _isStudentIdVerification 
+          ? "Upload Student ID Front" 
+          : "Upload Paid Fee Challan");
       return false;
     }
-    if (_studentIdBackImage == null) {
+    // Only check back image if using Student ID verification
+    if (_isStudentIdVerification && _studentIdBackImage == null) {
       setState(() => _validationError = "Upload Student ID Back");
       return false;
     }
@@ -145,9 +147,15 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
         widget.email.replaceAll('@', '_').replaceAll('.', '_');
 
     try {
+      // If doing Challan verification, use the same image logic for 'back' to satisfy backend requirement
+      // effectively uploading the challan twice or mocking the back image slot
+      final File backImageToUpload = _isStudentIdVerification 
+          ? _studentIdBackImage! 
+          : _studentIdImage!; // Reuse challan for back slot
+
       final imageUrls = await _storageService.uploadKycImages(
         studentIdImage: _studentIdImage!,
-        studentIdBackImage: _studentIdBackImage!,
+        studentIdBackImage: backImageToUpload,
         cnicFrontImage: _cnicFrontImage!,
         cnicBackImage: _cnicBackImage!,
         selfieImage: _selfieImage!,
@@ -326,24 +334,96 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
                           children: [
                             const SizedBox(height: 10),
                             const Text(
-                                "Upload your student ID (front & back) and a selfie.",
+                                "Upload your verification documents.", // [MODIFIED] Generic text
                                 style: TextStyle(
                                     fontSize: 16,
                                     color: AppColors.textSecondary)),
-                            const SizedBox(height: 30),
-                            _buildInputLabel("Student ID Front *"),
+                            
+                            const SizedBox(height: 16),
+
+                            // [NEW] Toggle Switch
+                            Container(
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: AppColors.textSecondary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: GestureDetector(
+                                      onTap: () => setState(() => _isStudentIdVerification = true),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: _isStudentIdVerification 
+                                              ? AppColors.primary 
+                                              : Colors.transparent,
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            "Student ID",
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold, // [MODIFIED] Slightly bolder
+                                              color: _isStudentIdVerification 
+                                                  ? AppColors.textOnPrimary 
+                                                  : AppColors.textSecondary,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: GestureDetector(
+                                      onTap: () => setState(() => _isStudentIdVerification = false),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: !_isStudentIdVerification 
+                                              ? AppColors.primary 
+                                              : Colors.transparent,
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            "Paid Fee Challan",
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: !_isStudentIdVerification 
+                                                  ? AppColors.textOnPrimary 
+                                                  : AppColors.textSecondary,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 24),
+
+                            _buildInputLabel(_isStudentIdVerification ? "Student ID Front *" : "Paid Fee Challan *"),
                             _buildUploadBox(
-                                "Upload ID Front",
+                                _isStudentIdVerification ? "Upload ID Front" : "Upload Challan",
                                 _studentIdImage != null,
                                 () => _showImageSourceDialog(0),
                                 image: _studentIdImage),
-                            const SizedBox(height: 24),
-                            _buildInputLabel("Student ID Back *"),
-                            _buildUploadBox(
-                                "Upload ID Back",
-                                _studentIdBackImage != null,
-                                () => _showImageSourceDialog(1),
-                                image: _studentIdBackImage),
+                            
+                            // Only show ID Back if Student ID is selected
+                            if (_isStudentIdVerification) ...[
+                              const SizedBox(height: 24),
+                              _buildInputLabel("Student ID Back *"),
+                              _buildUploadBox(
+                                  "Upload ID Back",
+                                  _studentIdBackImage != null,
+                                  () => _showImageSourceDialog(1),
+                                  image: _studentIdBackImage),
+                            ],
+
                             const SizedBox(height: 24),
                             _buildInputLabel("CNIC Front *"),
                             _buildUploadBox(
@@ -367,9 +447,12 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
                                 image: _selfieImage),
                             if (_validationError != null) ...[
                               const SizedBox(height: 16),
-                              Text(_validationError!,
-                                  style: const TextStyle(
-                                      color: AppColors.error)),
+                              Center(
+                                child: Text(_validationError!,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                        color: AppColors.error, fontSize: 12)),
+                              ),
                             ],
                             const SizedBox(height: 30),
                             SizedBox(

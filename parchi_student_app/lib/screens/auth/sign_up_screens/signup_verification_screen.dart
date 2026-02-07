@@ -35,6 +35,32 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
   bool _isVerified = false;
   bool _isResending = false;
   bool _isLinkExpired = false; // [NEW] Track link expiry
+  
+  Timer? _resendTimer;
+  int _resendCountdown = 60;
+  bool _canResend = false;
+
+  void _startResendTimer() {
+    setState(() {
+      _resendCountdown = 60;
+      _canResend = false;
+    });
+    _resendTimer?.cancel();
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          if (_resendCountdown > 0) {
+            _resendCountdown--;
+          } else {
+            _canResend = true;
+            timer.cancel();
+          }
+        });
+      } else {
+         timer.cancel();
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -55,6 +81,7 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
     }
 
     _setupDeepLinkListener();
+    _startResendTimer(); // Start timer immediately on load
   }
 
   Future<void> _setManualSession() async {
@@ -140,6 +167,7 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
       );
       print("Resend successful");
       if (mounted) {
+        _startResendTimer(); // Restart timer on success
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Verification email sent!"),
@@ -169,6 +197,7 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
   @override
   void dispose() {
     _authSubscription.cancel();
+    _resendTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -336,11 +365,15 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
                                 width: double.infinity,
                                 height: 56,
                                 child: OutlinedButton(
-                                  onPressed:
-                                      _isResending ? null : _resendEmail,
+                                  onPressed: (_canResend && !_isResending)
+                                      ? _resendEmail
+                                      : null,
                                   style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(
-                                        color: AppColors.primary, width: 2),
+                                    side: BorderSide(
+                                        color: _canResend 
+                                           ? AppColors.primary 
+                                           : AppColors.textSecondary.withOpacity(0.3), 
+                                        width: 2),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(30),
                                     ),
@@ -354,10 +387,14 @@ class _SignupVerificationScreenState extends State<SignupVerificationScreen>
                                             color: AppColors.primary,
                                           ),
                                         )
-                                      : const Text(
-                                          "Resend Email",
+                                      : Text(
+                                          _canResend 
+                                              ? "Resend Email" 
+                                              : "Resend in $_resendCountdown s",
                                           style: TextStyle(
-                                            color: AppColors.primary,
+                                            color: _canResend 
+                                                ? AppColors.primary 
+                                                : AppColors.textSecondary,
                                             fontSize: 18,
                                             fontWeight: FontWeight.bold,
                                           ),

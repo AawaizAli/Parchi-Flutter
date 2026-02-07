@@ -55,18 +55,10 @@ class _SignupScreenTwoState extends State<SignupScreenTwo> {
   @override
   void initState() {
     super.initState();
-    _clearExistingSession();
+    // _clearExistingSession(); // Removed to prevent triggering logout navigation
   }
 
-  Future<void> _clearExistingSession() async {
-    // Ensure we start with a clean slate to avoid stale sessions triggering false verification
-    try {
-        await Supabase.instance.client.auth.signOut();
-        await _authService.logout();
-    } catch (e) {
-      debugPrint("Error clearing session: $e");
-    }
-  }
+  // Future<void> _clearExistingSession() async { ... } removed
 
   void _showImageSourceDialog(int imageType) {
     showDialog(

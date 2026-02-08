@@ -522,7 +522,13 @@ class _HomeSheetContentState extends ConsumerState<HomeSheetContent> {
                            if (merchantState.isLoadingMore) {
                              return const Padding(
                                padding: EdgeInsets.all(16.0),
-                               child: Center(child: CircularProgressIndicator()),
+                               child: Center(
+                                 child: SizedBox(
+                                   height: 60,
+                                   width: 60,
+                                   child: ParchiLoader(isLoading: true, progress: 0),
+                                 ),
+                               ),
                              );
                            }
                            return const SizedBox(height: 50); // Bottom padding

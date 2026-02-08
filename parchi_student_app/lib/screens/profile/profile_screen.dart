@@ -10,6 +10,8 @@ import '../auth/login_screens/login_screen.dart';
 import 'Change_password/change_password_screen.dart';
 import 'pfp_change/profile_picture_upload_screen.dart';
 import '../../widgets/common/spinning_loader.dart'; // [REQUIRED]
+import 'about_us_screen.dart'; // [NEW]
+import 'help_center_screen.dart'; // [NEW]
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -281,12 +283,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             _buildActionTile(
                               icon: Icons.help_outline,
                               label: "Help\nCenter",
-                              onTap: () {}, // TODO: Implement Help Center
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => const HelpCenterScreen()),
+                                );
+                              },
                             ),
                             _buildActionTile(
                               icon: Icons.info_outline,
                               label: "About\nUs",
-                              onTap: () {}, // TODO: Implement About Us
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => const AboutUsScreen()),
+                                );
+                              },
                             ),
                           ],
                         ),

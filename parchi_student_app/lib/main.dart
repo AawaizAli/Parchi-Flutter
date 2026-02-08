@@ -155,6 +155,10 @@ class _ParchiAppState extends State<ParchiApp> {
       theme: ThemeData(
         textTheme: GoogleFonts.montserratTextTheme(),
         primaryColor: AppColors.primary,
+        // [NEW] Enforce Blue Color Scheme to remove default Purple
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: AppColors.primary,
+        ),
         useMaterial3: true,
         scaffoldBackgroundColor: AppColors.backgroundLight,
         appBarTheme: const AppBarTheme(

@@ -30,8 +30,7 @@ class AppColors {
   // - Leaderboard Top 3 Ranks (leaderboard_screen.dart)
   // - Stats Progress Ring (home_sheet_content.dart)
   // - Profile Screen Background (profile_screen.dart)
-  static const Color secondary =
-      Color.fromARGB(255, 87, 27, 143); // A warm orange
+  static const Color secondary = Color(0xFF0069db); 
 
   // Used for:
   // - Success messages & Tags

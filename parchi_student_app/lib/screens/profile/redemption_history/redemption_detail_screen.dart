@@ -241,7 +241,7 @@ class RedemptionDetailScreen extends StatelessWidget {
                   const Divider(height: 24),
                   _buildDetailRow("Time", DateFormat('h:mm a').format(redemption.redeemedAt)),
                   const Divider(height: 24),
-                  _buildDetailRow("Transaction ID", "...${redemption.id.substring(redemption.id.length - 8).toUpperCase()}"),
+                  _buildDetailRow("Reference ID", redemption.id.split('-').last.toUpperCase()),
                   if (redemption.verifiedBy != null) ...[
                     const Divider(height: 24),
                     _buildDetailRow("Verified By", "Staff Member"),

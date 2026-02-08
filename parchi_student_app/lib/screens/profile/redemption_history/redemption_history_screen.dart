@@ -31,6 +31,8 @@ class _RedemptionHistoryScreenState
   final double _minSheetSize = 0.65;
   final double _maxSheetSize = 0.92;
 
+  bool _isRefreshing = false; // [NEW] State control for custom UX
+
   @override
   void initState() {
     super.initState();
@@ -46,9 +48,27 @@ class _RedemptionHistoryScreenState
   }
 
   Future<void> _refresh() async {
-    final statsFuture = ref.refresh(redemptionStatsProvider.future);
-    final historyFuture = ref.refresh(redemptionHistoryProvider.future);
-    await Future.wait([statsFuture, historyFuture]);
+    // 1. Force spinner for 1 second
+    await Future.delayed(const Duration(seconds: 1));
+    // 2. Start sequence (fire and forget from perspective of RefreshIndicator)
+    _startRefreshSequence();
+  }
+
+  Future<void> _startRefreshSequence() async {
+    if (!mounted) return;
+    setState(() => _isRefreshing = true);
+
+    try {
+      final statsFuture = ref.refresh(redemptionStatsProvider.future);
+      final historyFuture = ref.refresh(redemptionHistoryProvider.future);
+      await Future.wait([statsFuture, historyFuture]);
+    } catch (e) {
+      debugPrint("Redemption refresh error: $e");
+    } finally {
+      if (mounted) {
+        setState(() => _isRefreshing = false);
+      }
+    }
   }
 
   @override
@@ -137,6 +157,9 @@ class _RedemptionHistoryScreenState
             loading: () => _buildListSkeleton(),
             error: (err, stack) => _buildListSkeleton(), // Skeleton on error
             data: (items) {
+              // [NEW] Logic: If refreshing, FORCE SKELETON, otherwise show data
+              if (_isRefreshing) return _buildListSkeleton();
+
               if (items.isEmpty) return _buildEmptyState();
               return ClipRRect(
                 borderRadius:

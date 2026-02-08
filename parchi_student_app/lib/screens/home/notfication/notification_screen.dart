@@ -20,6 +20,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   List<NotificationItem> _notifications = [];
   bool _isLoading = true;
   String? _errorMessage;
+  bool _isRefreshing = false; // [NEW] State for custom refresh UX
 
   @override
   void initState() {
@@ -54,6 +55,20 @@ class _NotificationScreenState extends State<NotificationScreen> {
         });
       }
     }
+  }
+
+  // [NEW] Wrapper for CustomRefreshIndicator
+  Future<void> _handleRefresh() async {
+    // 1. Force spinner
+    await Future.delayed(const Duration(seconds: 1));
+    // 2. Start sequence
+    _startRefreshSequence();
+  }
+
+  Future<void> _startRefreshSequence() async {
+     setState(() => _isRefreshing = true);
+     await _fetchNotifications();
+     if (mounted) setState(() => _isRefreshing = false);
   }
 
   Future<void> _onNotificationTap(NotificationItem notif) async {
@@ -115,7 +130,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   Widget _buildBody() {
-    if (_isLoading && _notifications.isEmpty) {
+    if (_isRefreshing || (_isLoading && _notifications.isEmpty)) {
       return _buildSkeletonList();
     }
 
@@ -158,7 +173,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     }
 
     return CustomRefreshIndicator(
-      onRefresh: _fetchNotifications,
+      onRefresh: _handleRefresh,
       offsetToArmed: 100.0,
       builder: (BuildContext context, Widget child, IndicatorController controller) {
         return Stack(

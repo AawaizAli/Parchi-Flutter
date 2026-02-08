@@ -21,6 +21,8 @@ class LeaderboardScreen extends ConsumerStatefulWidget {
 
 class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
     with AutomaticKeepAliveClientMixin {
+  bool _isRefreshing = false;
+
   @override
   void initState() {
     super.initState();
@@ -32,7 +34,21 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
   }
 
   Future<void> _refresh() async {
-    await ref.read(leaderboardProvider.notifier).refresh();
+    // 1. Force spinner for 1 second
+    await Future.delayed(const Duration(seconds: 1));
+    // 2. Start sequence (fire and forget from perspective of RefreshIndicator)
+    _startRefreshSequence();
+  }
+
+  Future<void> _startRefreshSequence() async {
+    setState(() => _isRefreshing = true);
+    try {
+      await ref.read(leaderboardProvider.notifier).refresh();
+    } catch (e) {
+      debugPrint("Leaderboard refresh error: $e");
+    } finally {
+      if (mounted) setState(() => _isRefreshing = false);
+    }
   }
 
   @override
@@ -65,9 +81,10 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
     final state = ref.watch(leaderboardProvider);
 
     // 1. Get Loading State & Items
-    final bool isLoading = state.isLoading && state.items.isEmpty;
-    final bool hasError = state.error != null && state.items.isEmpty;
-    final bool isEmpty = state.items.isEmpty;
+    // 1. Get Loading State & Items
+    final bool showSkeleton = _isRefreshing || (state.isLoading && state.items.isEmpty);
+    final bool hasError = state.error != null && state.items.isEmpty && !showSkeleton;
+    final bool isEmpty = state.items.isEmpty && !showSkeleton && !hasError;
 
     // 2. Determine Current User Info
     final userState = ref.watch(userProfileProvider);
@@ -91,7 +108,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
     return Stack(
       children: [
         // --- MAIN LIST CONTENT ---
-        if (isLoading)
+        if (showSkeleton)
           _buildLeaderboardListSkeleton()
         else if (hasError)
           _buildLeaderboardListSkeleton() // Skeleton on error
@@ -164,7 +181,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
           ),
 
         // --- STICKY BOTTOM BAR (If user not in list) ---
-        if (!isLoading && !hasError && !isUserInList && user != null)
+        if (!showSkeleton && !hasError && !isUserInList && user != null)
           Positioned(
             left: 16,
             right: 16,

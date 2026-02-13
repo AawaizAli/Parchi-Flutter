@@ -17,6 +17,7 @@ class User {
   final String? profilePicture;
   final bool isFoundersClub; // [NEW]
   final String? verificationStatus; // [NEW]
+  final bool hasUnreadNotifications; // [NEW]
 
   User({
     required this.id,
@@ -31,6 +32,7 @@ class User {
     this.profilePicture, 
     this.isFoundersClub = false, // [NEW] Default to false
     this.verificationStatus, // [NEW]
+    this.hasUnreadNotifications = false, // [NEW]
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -75,6 +77,9 @@ class User {
       verificationStatus: studentData != null
           ? (studentData['verification_status'] as String?)
           : (json['verification_status'] as String?) ?? (json['verificationStatus'] as String?), // Check snake_case first from root
+      
+      // [NEW] Parse hasUnreadNotifications
+      hasUnreadNotifications: json['hasUnreadNotifications'] as bool? ?? false,
     );
   }
 
@@ -93,6 +98,7 @@ class User {
       'profilePicture': profilePicture, 
       'isFoundersClub': isFoundersClub, // [NEW]
       'verificationStatus': verificationStatus, // [NEW]
+      'hasUnreadNotifications': hasUnreadNotifications, // [NEW]
     };
   }
 }

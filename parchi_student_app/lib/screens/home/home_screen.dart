@@ -243,6 +243,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         });
                       },
                       isLoading: homeUIState.isSkeletonLoading, // [NEW] Pass skeleton state
+                      hasUnreadNotifications: user?.hasUnreadNotifications ?? false, // [NEW]
                     );
                   },
                   loading: () => CompactParchiHeader(

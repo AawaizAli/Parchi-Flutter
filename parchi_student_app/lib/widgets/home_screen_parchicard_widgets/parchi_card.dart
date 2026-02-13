@@ -693,6 +693,7 @@ class CompactParchiHeader extends StatelessWidget {
   final double scrollProgress;
   final VoidCallback onNotificationTap;
   final bool isLoading; // [NEW]
+  final bool hasUnreadNotifications; // [NEW]
 
   const CompactParchiHeader({
     super.key,
@@ -707,6 +708,7 @@ class CompactParchiHeader extends StatelessWidget {
     required this.onProfileTap, // [NEW]
     this.onSearchChanged, // [NEW]
     this.isLoading = false, // [NEW]
+    this.hasUnreadNotifications = false, // [NEW]
   });
 
   @override
@@ -871,20 +873,38 @@ class CompactParchiHeader extends StatelessWidget {
                       ),
 
                       const SizedBox(width: 8),
-                      Container(
-                        width: 35, // Fixed smaller width
-                        height: 35, // Fixed smaller height
-                        decoration: const BoxDecoration(
-                          color: AppColors.surfaceVariant,
-                          shape: BoxShape.circle,
-                        ),
-                        child: IconButton(
-                          padding: EdgeInsets.zero, // Remove default padding
-                          icon: const Icon(Icons.notifications_none,
-                              size: 20, // Smaller icon
-                              color: AppColors.textSecondary),
-                          onPressed: onNotificationTap,
-                        ),
+                      Stack(
+                        children: [
+                          Container(
+                            width: 35, // Fixed smaller width
+                            height: 35, // Fixed smaller height
+                            decoration: const BoxDecoration(
+                              color: AppColors.surfaceVariant,
+                              shape: BoxShape.circle,
+                            ),
+                            child: IconButton(
+                              padding: EdgeInsets.zero, // Remove default padding
+                              icon: const Icon(Icons.notifications_none,
+                                  size: 20, // Smaller icon
+                                  color: AppColors.textSecondary),
+                              onPressed: onNotificationTap,
+                            ),
+                          ),
+                          if (hasUnreadNotifications)
+                            Positioned(
+                              right: 6,
+                              top: 6,
+                              child: Container(
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 2), // Add border for visibility
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ],
                   ),

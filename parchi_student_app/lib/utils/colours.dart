@@ -23,14 +23,14 @@ class AppColors {
 
     // static const Color primary = Color(0xFF0573eb); 
 
-    static const Color primary = Color(0xFF0069db); 
+    static const Color primary = Color(0xFF0069db);
 
   // Used for:
   // - Main App Background (Top Section)
   // - Leaderboard Top 3 Ranks (leaderboard_screen.dart)
   // - Stats Progress Ring (home_sheet_content.dart)
   // - Profile Screen Background (profile_screen.dart)
-  static const Color secondary = Color(0xFF0069db); 
+  static const Color secondary = Color(0xFFFFF700);
 
   // Used for:
   // - Success messages & Tags

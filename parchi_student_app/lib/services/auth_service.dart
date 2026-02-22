@@ -238,6 +238,7 @@ class AuthService {
     required String role,
     String? phone,
   }) async {
+    _isLoggingOut = false; // Reset logout lock
     try {
       final response = await http.post(
         Uri.parse(ApiConfig.signupEndpoint),
@@ -295,6 +296,7 @@ class AuthService {
     required String cnicBackImageUrl,
     required String selfieImageUrl,
   }) async {
+    _isLoggingOut = false; // Reset logout lock
     try {
       // Prepare request body
       final requestBody = {
@@ -379,6 +381,7 @@ class AuthService {
     required String email,
     required String password,
   }) async {
+    _isLoggingOut = false; // Reset logout lock
     try {
       final response = await http.post(
         Uri.parse(ApiConfig.loginEndpoint),

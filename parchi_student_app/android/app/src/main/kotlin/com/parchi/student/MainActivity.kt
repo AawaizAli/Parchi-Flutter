@@ -1,4 +1,4 @@
-package com.example.parchi_student_app
+package com.parchi.student
 
 import io.flutter.embedding.android.FlutterActivity
 

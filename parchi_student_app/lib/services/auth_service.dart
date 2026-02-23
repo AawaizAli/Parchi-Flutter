@@ -49,6 +49,9 @@ class AuthService {
           return await _secureStorage.read(key: _accessTokenKey);
         } catch (e) {
           print("Auto-refresh in getToken failed: $e");
+          // Return null so callers know auth is required — do NOT return the
+          // expired token, as the backend will reject it.
+          return null;
         }
       }
     }
@@ -145,7 +148,7 @@ class AuthService {
 
     final refreshToken = await getRefreshToken();
     if (refreshToken == null) {
-      await logout(); // [NEW] Ensure logout if no token
+      await logout();
       throw Exception('No refresh token available');
     }
 
@@ -163,16 +166,8 @@ class AuthService {
       final responseData = jsonDecode(response.body) as Map<String, dynamic>;
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        // [Existing Success Logic]
-        // The backend returns { data: { user: ..., session: ... }, ... }
-        // We need to parse the inner session data based on how AuthResponse expects it
-        // Or manually update tokens if the structure is different.
-        // Based on backend implementation: return { user: ..., session: ... } wrapped in ApiResponse
-
-        // Api Response wrapper: { data: { user: ..., session: ... }, message: ..., status: ... }
         final sessionData = responseData['data']['session'];
         if (sessionData != null) {
-          // Update stored tokens
           if (sessionData['access_token'] != null) {
             await setToken(sessionData['access_token']);
           }
@@ -189,29 +184,25 @@ class AuthService {
           }
         }
       } else {
-        // [NEW] Handle Deactivation or Invalid Token explicitly
+        // Server explicitly rejected the token (4xx/5xx).
+        // This is a real auth failure — logout is appropriate.
         String errorMessage = "Session expired";
         if (responseData.containsKey('message')) {
           errorMessage = responseData['message'].toString();
         }
-
-        // Broadcast specific error (e.g. "Account deactivated: ...")
         _authErrorController.add(errorMessage);
-
-        await logout(); // [NEW] Trigger logout
+        await logout();
         throw Exception(errorMessage);
       }
+    } on http.ClientException catch (e) {
+      // Network error (no internet, timeout) — do NOT logout.
+      // The session may still be valid; user just has no connectivity right now.
+      print("Network error during token refresh (will not logout): $e");
+      throw Exception(
+          'Network error during refresh. Please check your connection.');
     } catch (e) {
-      // If already logging out, just throw
       if (_isLoggingOut) throw Exception('Session expired');
-
-      // If it's a network error, maybe we shouldn't logout?
-      // But if it's a "Refresh failed" from logic above, we already logged out.
-      // If it's a protocol exception, we might want to logout.
-
-      // For safety in this "horror movie" scenario, let's err on side of logging out if we can't refresh.
       if (!e.toString().contains("Session expired")) {
-        // Avoid double broadcast if we threw it above
         await logout();
       }
       throw Exception('Refresh token failed: ${e.toString()}');
